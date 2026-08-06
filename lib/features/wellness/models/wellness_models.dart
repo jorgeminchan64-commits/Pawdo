@@ -81,11 +81,15 @@ class CycleInsights {
     List<WellnessEntry> entries,
     WellnessSettings settings,
   ) {
-    final starts = entries
-        .where((entry) => entry.periodStarted)
-        .map((entry) => DateTime(entry.date.year, entry.date.month, entry.date.day))
-        .toList()
-      ..sort();
+    final starts =
+        entries
+            .where((entry) => entry.periodStarted)
+            .map(
+              (entry) =>
+                  DateTime(entry.date.year, entry.date.month, entry.date.day),
+            )
+            .toList()
+          ..sort();
     if (starts.isEmpty) {
       return CycleInsights(
         hasData: false,

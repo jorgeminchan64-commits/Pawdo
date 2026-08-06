@@ -29,7 +29,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (_passwordController.text.trim().length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('La contraseña debe tener mínimo 6 caracteres')),
+        const SnackBar(
+          content: Text('La contraseña debe tener mínimo 6 caracteres'),
+        ),
       );
       return;
     }
@@ -68,9 +70,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         error = 'Revisa tu conexión a internet';
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -89,10 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF6C63FF),
-              Color(0xFF8E7BFF),
-            ],
+            colors: [Color(0xFF6C63FF), Color(0xFF8E7BFF)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -107,7 +106,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: isLoading ? null : () => Navigator.pop(context),
+                      onPressed: isLoading
+                          ? null
+                          : () => Navigator.pop(context),
                     ),
                   ],
                 ),
@@ -152,10 +153,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildButton({
-    required String text,
-    required VoidCallback? onTap,
-  }) {
+  Widget _buildButton({required String text, required VoidCallback? onTap}) {
     return SizedBox(
       width: double.infinity,
       height: 55,

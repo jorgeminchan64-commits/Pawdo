@@ -95,12 +95,9 @@ class _ActiveShareBannerState extends State<_ActiveShareBanner> {
     final expiry = widget.share.expiresAt;
     if (expiry == null) return;
     final remaining = expiry.difference(DateTime.now());
-    _expiryTimer = Timer(
-      remaining.isNegative ? Duration.zero : remaining,
-      () {
-        if (mounted) setState(() {});
-      },
-    );
+    _expiryTimer = Timer(remaining.isNegative ? Duration.zero : remaining, () {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -115,9 +112,9 @@ class _ActiveShareBannerState extends State<_ActiveShareBanner> {
       await LocationSharingService.instance.stop();
     } on LocationSharingException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
       }
     } finally {
       if (mounted) setState(() => _stopping = false);
@@ -128,53 +125,53 @@ class _ActiveShareBannerState extends State<_ActiveShareBanner> {
   Widget build(BuildContext context) {
     if (widget.share.expired) return const SizedBox.shrink();
     return Material(
-        color: const Color(0xFFDFF5E8),
-        child: SafeArea(
-          top: false,
-          bottom: false,
-          child: InkWell(
-            onTap: widget.onOpen,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
-              child: Row(
-                children: [
-                  const Icon(Icons.location_on, color: Color(0xFF267B52)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Compartiendo ubicación',
-                          style: TextStyle(fontWeight: FontWeight.w900),
-                        ),
-                        Text(
-                          '${_modeLabel(widget.share.mode)} · '
-                          '${widget.share.approximate ? 'aproximada' : 'precisa'}',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ),
+      color: const Color(0xFFDFF5E8),
+      child: SafeArea(
+        top: false,
+        bottom: false,
+        child: InkWell(
+          onTap: widget.onOpen,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+            child: Row(
+              children: [
+                const Icon(Icons.location_on, color: Color(0xFF267B52)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Compartiendo ubicación',
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                      Text(
+                        '${_modeLabel(widget.share.mode)} · '
+                        '${widget.share.approximate ? 'aproximada' : 'precisa'}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
                   ),
-                  TextButton.icon(
-                    onPressed: _stopping ? null : _stop,
-                    icon: const Icon(Icons.stop_circle_outlined),
-                    label: Text(_stopping ? 'Deteniendo…' : 'Detener'),
-                  ),
-                ],
-              ),
+                ),
+                TextButton.icon(
+                  onPressed: _stopping ? null : _stop,
+                  icon: const Icon(Icons.stop_circle_outlined),
+                  label: Text(_stopping ? 'Deteniendo…' : 'Detener'),
+                ),
+              ],
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 }
 
 String _modeLabel(String mode) => switch (mode) {
-      '15m' => '15 min',
-      '1h' => '1 h',
-      '8h' => '8 h',
-      'until_stopped' => 'hasta detener',
-      _ => 'temporal',
-    };
+  '15m' => '15 min',
+  '1h' => '1 h',
+  '8h' => '8 h',
+  'until_stopped' => 'hasta detener',
+  _ => 'temporal',
+};

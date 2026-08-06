@@ -94,7 +94,5 @@ String dailyChestDateKey([DateTime? date]) {
 }
 
 String yesterdayChestDateKey() {
-  return dailyChestDateKey(
-    DateTime.now().subtract(const Duration(days: 1)),
-  );
+  return dailyChestDateKey(DateTime.now().subtract(const Duration(days: 1)));
 }

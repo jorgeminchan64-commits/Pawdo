@@ -104,7 +104,9 @@ class _DailyMissionsScreenState extends State<DailyMissionsScreen> {
             final coins = _toInt(data['coins'], 0);
             final completedCount = completedIds.length;
             final totalCount = dailyMissions.length;
-            final progress = totalCount == 0 ? 0.0 : completedCount / totalCount;
+            final progress = totalCount == 0
+                ? 0.0
+                : completedCount / totalCount;
 
             return Scaffold(
               backgroundColor: const Color(0xFFFFF3FA),
@@ -160,10 +162,7 @@ class _DailyMissionsScreenState extends State<DailyMissionsScreen> {
                   ...dailyMissions.map((mission) {
                     final completed = completedIds.contains(mission.id);
 
-                    return _missionCard(
-                      mission: mission,
-                      completed: completed,
-                    );
+                    return _missionCard(mission: mission, completed: completed);
                   }),
                 ],
               ),
@@ -183,10 +182,7 @@ class _DailyMissionsScreenState extends State<DailyMissionsScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFFFFD6EA),
-            Color(0xFFFFF2F8),
-          ],
+          colors: [Color(0xFFFFD6EA), Color(0xFFFFF2F8)],
         ),
         borderRadius: BorderRadius.circular(28),
       ),
@@ -223,74 +219,71 @@ class _DailyMissionsScreenState extends State<DailyMissionsScreen> {
       ),
     );
   }
-Widget _dailyChestShortcut(BuildContext context) {
-  return Material(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(26),
-    elevation: 5,
-    child: InkWell(
+
+  Widget _dailyChestShortcut(BuildContext context) {
+    return Material(
+      color: Colors.white,
       borderRadius: BorderRadius.circular(26),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const DailyChestScreen(),
-          ),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 62,
-              height: 62,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFEEF8),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Center(
-                child: Text(
-                  '🎁',
-                  style: TextStyle(fontSize: 32),
+      elevation: 5,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(26),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const DailyChestScreen()),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 62,
+                height: 62,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFEEF8),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Center(
+                  child: Text('🎁', style: TextStyle(fontSize: 32)),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Cofre diario',
-                    style: TextStyle(
-                      color: Colors.purple,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Cofre diario',
+                      style: TextStyle(
+                        color: Colors.purple,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Reclama recompensas y mantén tu racha de 7 días.',
-                    style: TextStyle(
-                      color: Colors.black.withOpacity(0.58),
-                      fontSize: 12,
+                    const SizedBox(height: 4),
+                    Text(
+                      'Reclama recompensas y mantén tu racha de 7 días.',
+                      style: TextStyle(
+                        color: Colors.black.withOpacity(0.58),
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.purple,
-              size: 18,
-            ),
-          ],
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.purple,
+                size: 18,
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
   Widget _missionCard({
     required DailyMission mission,
     required bool completed,

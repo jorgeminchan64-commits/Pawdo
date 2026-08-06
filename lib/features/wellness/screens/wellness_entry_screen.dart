@@ -67,9 +67,9 @@ class _WellnessEntryScreenState extends State<WellnessEntryScreen> {
       if (mounted) Navigator.pop(context);
     } on WellnessException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -81,7 +81,9 @@ class _WellnessEntryScreenState extends State<WellnessEntryScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7FA),
       appBar: AppBar(
-        title: Text(widget.entry == null ? 'Nuevo registro' : 'Editar registro'),
+        title: Text(
+          widget.entry == null ? 'Nuevo registro' : 'Editar registro',
+        ),
         actions: [
           TextButton(
             onPressed: _saving ? null : _save,
@@ -94,7 +96,9 @@ class _WellnessEntryScreenState extends State<WellnessEntryScreen> {
         children: [
           ListTile(
             tileColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
             leading: const Icon(Icons.calendar_today_outlined),
             title: const Text('Fecha'),
             subtitle: Text('${_date.day}/${_date.month}/${_date.year}'),
@@ -102,7 +106,10 @@ class _WellnessEntryScreenState extends State<WellnessEntryScreen> {
             onTap: _chooseDate,
           ),
           const SizedBox(height: 18),
-          Text('¿Cómo te sientes?', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            '¿Cómo te sientes?',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             initialValue: _mood,
@@ -112,7 +119,12 @@ class _WellnessEntryScreenState extends State<WellnessEntryScreen> {
               border: OutlineInputBorder(),
             ),
             items: wellnessMoodLabels.entries
-                .map((entry) => DropdownMenuItem(value: entry.key, child: Text(entry.value)))
+                .map(
+                  (entry) => DropdownMenuItem(
+                    value: entry.key,
+                    child: Text(entry.value),
+                  ),
+                )
                 .toList(),
             onChanged: (value) => setState(() => _mood = value ?? _mood),
           ),
@@ -127,7 +139,12 @@ class _WellnessEntryScreenState extends State<WellnessEntryScreen> {
               border: OutlineInputBorder(),
             ),
             items: wellnessFlowLabels.entries
-                .map((entry) => DropdownMenuItem(value: entry.key, child: Text(entry.value)))
+                .map(
+                  (entry) => DropdownMenuItem(
+                    value: entry.key,
+                    child: Text(entry.value),
+                  ),
+                )
                 .toList(),
             onChanged: (value) => setState(() => _flow = value ?? _flow),
           ),

@@ -1146,8 +1146,8 @@ class _LudoScreenState extends State<LudoScreen> {
                       child: Image.asset(
                         'assets/images/games/ludo/ludo_board.png',
                         fit: BoxFit.fill,
-                        cacheWidth:
-                            (side * View.of(context).devicePixelRatio).ceil(),
+                        cacheWidth: (side * View.of(context).devicePixelRatio)
+                            .ceil(),
                         errorBuilder: (_, _, _) {
                           return _fallbackBoardGrid(cell);
                         },

@@ -127,66 +127,66 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
 
     setState(() => _webLoading = true);
 
-    await _webViewController.loadRequest(
-      Uri.parse(source.embedUrl),
-    );
+    await _webViewController.loadRequest(Uri.parse(source.embedUrl));
   }
+
   String _sourceKey(CinemaSource source) {
-  return '${source.platform}_${source.embedUrl}';
-}
-
-Map<String, dynamic> _cinemaPlaybackData(Map<String, dynamic> data) {
-  final raw = data['cinemaPlayback'];
-
-  if (raw is Map) {
-    return Map<String, dynamic>.from(raw);
+    return '${source.platform}_${source.embedUrl}';
   }
 
-  return {};
-}
+  Map<String, dynamic> _cinemaPlaybackData(Map<String, dynamic> data) {
+    final raw = data['cinemaPlayback'];
 
-double _toDouble(dynamic value, double defaultValue) {
-  if (value is double) return value;
-  if (value is int) return value.toDouble();
-  if (value is num) return value.toDouble();
-  return defaultValue;
-}
+    if (raw is Map) {
+      return Map<String, dynamic>.from(raw);
+    }
 
-String _formatSeconds(double seconds) {
-  final total = seconds.floor();
-  final minutes = total ~/ 60;
-  final rest = total % 60;
-
-  return '${minutes.toString().padLeft(2, '0')}:${rest.toString().padLeft(2, '0')}';
-}
-
-Future<void> _savePlaybackCommand({
-  required String coupleCode,
-  required CinemaSource source,
-  required bool isPlaying,
-}) async {
-  if (_isSavingPlayback) return;
-
-  if (!source.isYoutube || source.videoId == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('La sincronización exacta solo está disponible para YouTube.'),
-      ),
-    );
-    return;
+    return {};
   }
 
-  setState(() => _isSavingPlayback = true);
+  double _toDouble(dynamic value, double defaultValue) {
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is num) return value.toDouble();
+    return defaultValue;
+  }
 
-  try {
-    final user = _auth.currentUser;
-    final userName = await _getUserName();
+  String _formatSeconds(double seconds) {
+    final total = seconds.floor();
+    final minutes = total ~/ 60;
+    final rest = total % 60;
 
-    final seconds = await _youtubeController.currentTime;
-    final actionId = DateTime.now().millisecondsSinceEpoch.toString();
+    return '${minutes.toString().padLeft(2, '0')}:${rest.toString().padLeft(2, '0')}';
+  }
 
-    await _db.collection('couples').doc(coupleCode).set(
-      {
+  Future<void> _savePlaybackCommand({
+    required String coupleCode,
+    required CinemaSource source,
+    required bool isPlaying,
+  }) async {
+    if (_isSavingPlayback) return;
+
+    if (!source.isYoutube || source.videoId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'La sincronización exacta solo está disponible para YouTube.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSavingPlayback = true);
+
+    try {
+      final user = _auth.currentUser;
+      final userName = await _getUserName();
+
+      final seconds = await _youtubeController.currentTime;
+      final actionId = DateTime.now().millisecondsSinceEpoch.toString();
+
+      await _db.collection('couples').doc(coupleCode).set({
         'cinemaPlayback': {
           'sourceKey': _sourceKey(source),
           'platform': source.platform,
@@ -202,57 +202,58 @@ Future<void> _savePlaybackCommand({
             ? 'Dieron play juntos en Cine Pawdo ▶️'
             : 'Pausaron juntos en Cine Pawdo ⏸️',
         'updatedAt': FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    );
+      }, SetOptions(merge: true));
 
-    if (isPlaying) {
-      await _youtubeController.playVideo();
-    } else {
-      await _youtubeController.pauseVideo();
+      if (isPlaying) {
+        await _youtubeController.playVideo();
+      } else {
+        await _youtubeController.pauseVideo();
+      }
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo sincronizar el cine. Intenta de nuevo.'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSavingPlayback = false);
     }
-  } catch (_) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('No se pudo sincronizar el cine. Intenta de nuevo.'),
-      ),
-    );
-  } finally {
-    if (mounted) setState(() => _isSavingPlayback = false);
-  }
-}
-
-Future<void> _syncCurrentYoutubePosition({
-  required String coupleCode,
-  required CinemaSource source,
-}) async {
-  if (_isSavingPlayback) return;
-
-  if (!source.isYoutube || source.videoId == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('La sincronización exacta solo está disponible para YouTube.'),
-      ),
-    );
-    return;
   }
 
-  setState(() => _isSavingPlayback = true);
+  Future<void> _syncCurrentYoutubePosition({
+    required String coupleCode,
+    required CinemaSource source,
+  }) async {
+    if (_isSavingPlayback) return;
 
-  try {
-    final user = _auth.currentUser;
-    final userName = await _getUserName();
+    if (!source.isYoutube || source.videoId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'La sincronización exacta solo está disponible para YouTube.',
+          ),
+        ),
+      );
+      return;
+    }
 
-    final seconds = await _youtubeController.currentTime;
-    final stateText = (await _youtubeController.playerState).toString().toLowerCase();
-    final isPlaying = stateText.contains('playing');
+    setState(() => _isSavingPlayback = true);
 
-    final actionId = DateTime.now().millisecondsSinceEpoch.toString();
+    try {
+      final user = _auth.currentUser;
+      final userName = await _getUserName();
 
-    await _db.collection('couples').doc(coupleCode).set(
-      {
+      final seconds = await _youtubeController.currentTime;
+      final stateText = (await _youtubeController.playerState)
+          .toString()
+          .toLowerCase();
+      final isPlaying = stateText.contains('playing');
+
+      final actionId = DateTime.now().millisecondsSinceEpoch.toString();
+
+      await _db.collection('couples').doc(coupleCode).set({
         'cinemaPlayback': {
           'sourceKey': _sourceKey(source),
           'platform': source.platform,
@@ -264,84 +265,83 @@ Future<void> _syncCurrentYoutubePosition({
           'updatedAt': FieldValue.serverTimestamp(),
           'actionId': actionId,
         },
-        'lastAction': 'Sincronizaron Cine Pawdo en ${_formatSeconds(seconds)} ⏱️',
+        'lastAction':
+            'Sincronizaron Cine Pawdo en ${_formatSeconds(seconds)} ⏱️',
         'updatedAt': FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    );
+      }, SetOptions(merge: true));
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Cine sincronizado en ${_formatSeconds(seconds)} ✅'),
-      ),
-    );
-  } catch (_) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('No se pudo sincronizar el segundo actual.'),
-      ),
-    );
-  } finally {
-    if (mounted) setState(() => _isSavingPlayback = false);
-  }
-}
-
-Future<void> _applyRemotePlayback(
-  CinemaSource source,
-  Map<String, dynamic> playback,
-) async {
-  if (_isApplyingRemotePlayback) return;
-  if (!source.isYoutube || source.videoId == null) return;
-
-  final actionId = playback['actionId']?.toString();
-  if (actionId == null || actionId.isEmpty) return;
-
-  if (_lastAppliedPlaybackActionId == actionId) return;
-
-  final playbackSourceKey = playback['sourceKey']?.toString();
-  if (playbackSourceKey != _sourceKey(source)) return;
-
-  _lastAppliedPlaybackActionId = actionId;
-  _isApplyingRemotePlayback = true;
-
-  try {
-    final isPlaying = playback['isPlaying'] == true;
-    final savedSeconds = _toDouble(playback['positionSeconds'], 0.0);
-
-    double targetSeconds = savedSeconds;
-
-    final updatedAt = playback['updatedAt'];
-
-    if (isPlaying && updatedAt is Timestamp) {
-      final elapsed = DateTime.now().difference(updatedAt.toDate()).inSeconds;
-      targetSeconds += elapsed;
-    }
-
-    final currentSeconds = await _youtubeController.currentTime;
-    final difference = (currentSeconds - targetSeconds).abs();
-
-    if (difference > 3) {
-      await _youtubeController.seekTo(
-        seconds: targetSeconds,
-        allowSeekAhead: true,
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Cine sincronizado en ${_formatSeconds(seconds)} ✅'),
+        ),
       );
-    }
+    } catch (_) {
+      if (!mounted) return;
 
-    if (isPlaying) {
-      await _youtubeController.playVideo();
-    } else {
-      await _youtubeController.pauseVideo();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo sincronizar el segundo actual.'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSavingPlayback = false);
     }
-  } catch (_) {
-    // No mostramos error aquí para no molestar al usuario con sincronizaciones internas.
-  } finally {
-    _isApplyingRemotePlayback = false;
   }
-}
+
+  Future<void> _applyRemotePlayback(
+    CinemaSource source,
+    Map<String, dynamic> playback,
+  ) async {
+    if (_isApplyingRemotePlayback) return;
+    if (!source.isYoutube || source.videoId == null) return;
+
+    final actionId = playback['actionId']?.toString();
+    if (actionId == null || actionId.isEmpty) return;
+
+    if (_lastAppliedPlaybackActionId == actionId) return;
+
+    final playbackSourceKey = playback['sourceKey']?.toString();
+    if (playbackSourceKey != _sourceKey(source)) return;
+
+    _lastAppliedPlaybackActionId = actionId;
+    _isApplyingRemotePlayback = true;
+
+    try {
+      final isPlaying = playback['isPlaying'] == true;
+      final savedSeconds = _toDouble(playback['positionSeconds'], 0.0);
+
+      double targetSeconds = savedSeconds;
+
+      final updatedAt = playback['updatedAt'];
+
+      if (isPlaying && updatedAt is Timestamp) {
+        final elapsed = DateTime.now().difference(updatedAt.toDate()).inSeconds;
+        targetSeconds += elapsed;
+      }
+
+      final currentSeconds = await _youtubeController.currentTime;
+      final difference = (currentSeconds - targetSeconds).abs();
+
+      if (difference > 3) {
+        await _youtubeController.seekTo(
+          seconds: targetSeconds,
+          allowSeekAhead: true,
+        );
+      }
+
+      if (isPlaying) {
+        await _youtubeController.playVideo();
+      } else {
+        await _youtubeController.pauseVideo();
+      }
+    } catch (_) {
+      // No mostramos error aquí para no molestar al usuario con sincronizaciones internas.
+    } finally {
+      _isApplyingRemotePlayback = false;
+    }
+  }
 
   Future<void> _saveVideoToFirebase(String coupleCode) async {
     if (_isSaving) return;
@@ -362,26 +362,21 @@ Future<void> _applyRemotePlayback(
     try {
       final user = _auth.currentUser;
 
-      await _db.collection('couples').doc(coupleCode).set(
-        {
-          'cinema': {
-            ...source.toJson(updatedBy: user?.uid),
-            'updatedAt': FieldValue.serverTimestamp(),
-          },
-          'lastAction': 'Abrieron Cine Pawdo 🎬',
+      await _db.collection('couples').doc(coupleCode).set({
+        'cinema': {
+          ...source.toJson(updatedBy: user?.uid),
           'updatedAt': FieldValue.serverTimestamp(),
         },
-        SetOptions(merge: true),
-      );
+        'lastAction': 'Abrieron Cine Pawdo 🎬',
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       _linkController.clear();
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${source.title} cargado en Cine Pawdo 🎬'),
-        ),
+        SnackBar(content: Text('${source.title} cargado en Cine Pawdo 🎬')),
       );
     } catch (_) {
       if (!mounted) return;
@@ -404,25 +399,18 @@ Future<void> _applyRemotePlayback(
     final uri = Uri.parse(source.originalUrl);
 
     try {
-      final opened = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
 
       if (!opened && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No se pudo abrir el enlace.'),
-          ),
+          const SnackBar(content: Text('No se pudo abrir el enlace.')),
         );
       }
     } catch (_) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No se pudo abrir el enlace.'),
-        ),
+        const SnackBar(content: Text('No se pudo abrir el enlace.')),
       );
     } finally {
       if (mounted) setState(() => _isOpeningOutside = false);
@@ -445,21 +433,17 @@ Future<void> _applyRemotePlayback(
           .collection('couples')
           .doc(coupleCode)
           .collection('cinemaReactions')
-          .add(
-        {
-          'emoji': emoji,
-          'senderId': user?.uid,
-          'senderName': userName,
-          'createdAt': FieldValue.serverTimestamp(),
-        },
-      );
+          .add({
+            'emoji': emoji,
+            'senderId': user?.uid,
+            'senderName': userName,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
     } catch (_) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No se pudo enviar la reacción.'),
-        ),
+        const SnackBar(content: Text('No se pudo enviar la reacción.')),
       );
     } finally {
       if (mounted) setState(() => _isSendingReaction = false);
@@ -486,14 +470,12 @@ Future<void> _applyRemotePlayback(
           .collection('couples')
           .doc(coupleCode)
           .collection('cinemaMessages')
-          .add(
-        {
-          'text': text,
-          'senderId': user?.uid,
-          'senderName': userName,
-          'createdAt': FieldValue.serverTimestamp(),
-        },
-      );
+          .add({
+            'text': text,
+            'senderId': user?.uid,
+            'senderName': userName,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
 
       if (forcedText == null) {
         _chatController.clear();
@@ -502,9 +484,7 @@ Future<void> _applyRemotePlayback(
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No se pudo enviar el mensaje.'),
-        ),
+        const SnackBar(content: Text('No se pudo enviar el mensaje.')),
       );
     } finally {
       if (mounted) setState(() => _isSendingMessage = false);
@@ -563,17 +543,17 @@ Future<void> _applyRemotePlayback(
         return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
           stream: _db.collection('couples').doc(coupleCode).snapshots(),
           builder: (context, snapshot) {
-final data = snapshot.data?.data() ?? {};
-final cinema = _cinemaData(data);
-final playback = _cinemaPlaybackData(data);
-final source = CinemaLinkHelper.fromFirebase(cinema);
+            final data = snapshot.data?.data() ?? {};
+            final cinema = _cinemaData(data);
+            final playback = _cinemaPlaybackData(data);
+            final source = CinemaLinkHelper.fromFirebase(cinema);
 
-if (source != null) {
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    _syncSource(source);
-    _applyRemotePlayback(source, playback);
-  });
-}
+            if (source != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _syncSource(source);
+                _applyRemotePlayback(source, playback);
+              });
+            }
             return Scaffold(
               backgroundColor: const Color(0xFF120B22),
               body: SafeArea(
@@ -586,15 +566,15 @@ if (source != null) {
                         children: [
                           _cinemaHeader(),
                           const SizedBox(height: 16),
-                        _videoCard(source),
-                        const SizedBox(height: 12),
-                        if (source != null) _fallbackCard(source),
-                        const SizedBox(height: 12),
-                        _syncControlPanel(
-                       coupleCode: coupleCode,
-                       source: source,
-                       playback: playback,
-                       ),
+                          _videoCard(source),
+                          const SizedBox(height: 12),
+                          if (source != null) _fallbackCard(source),
+                          const SizedBox(height: 12),
+                          _syncControlPanel(
+                            coupleCode: coupleCode,
+                            source: source,
+                            playback: playback,
+                          ),
                           const SizedBox(height: 14),
                           _reactionBar(coupleCode),
                           const SizedBox(height: 12),
@@ -668,10 +648,7 @@ if (source != null) {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF7B2FFF),
-            Color(0xFFFF5EA8),
-          ],
+          colors: [Color(0xFF7B2FFF), Color(0xFFFF5EA8)],
         ),
         borderRadius: BorderRadius.circular(28),
       ),
@@ -725,39 +702,31 @@ if (source != null) {
                 ),
               )
             : source.isYoutube
-                ? YoutubePlayer(
-                    controller: _youtubeController,
-                    aspectRatio: 16 / 9,
-                  )
-                : SizedBox(
-                    height: 300,
-                    child: Stack(
-                      children: [
-                        WebViewWidget(controller: _webViewController),
-                        if (_webLoading)
-                          Container(
-                            color: Colors.black.withOpacity(0.45),
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
+            ? YoutubePlayer(controller: _youtubeController, aspectRatio: 16 / 9)
+            : SizedBox(
+                height: 300,
+                child: Stack(
+                  children: [
+                    WebViewWidget(controller: _webViewController),
+                    if (_webLoading)
+                      Container(
+                        color: Colors.black.withOpacity(0.45),
+                        child: const Center(child: CircularProgressIndicator()),
+                      ),
+                  ],
+                ),
+              ),
       ),
     );
   }
 
-Widget _fallbackCard(CinemaSource source) {
-  
+  Widget _fallbackCard(CinemaSource source) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.10),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.14),
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.14)),
       ),
       child: Column(
         children: [
@@ -785,9 +754,7 @@ Widget _fallbackCard(CinemaSource source) {
             child: ElevatedButton.icon(
               onPressed: _isOpeningOutside ? null : () => _openOutside(source),
               icon: const Icon(Icons.open_in_new),
-              label: Text(
-                _isOpeningOutside ? 'Abriendo...' : 'Abrir afuera',
-              ),
+              label: Text(_isOpeningOutside ? 'Abriendo...' : 'Abrir afuera'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
                 foregroundColor: Colors.white,
@@ -802,41 +769,154 @@ Widget _fallbackCard(CinemaSource source) {
       ),
     );
   }
-  Widget _syncControlPanel({
-  required String coupleCode,
-  required CinemaSource? source,
-  required Map<String, dynamic> playback,
-}) {
-  if (source == null) {
-    return const SizedBox.shrink();
-  }
 
-  if (!source.isYoutube) {
+  Widget _syncControlPanel({
+    required String coupleCode,
+    required CinemaSource? source,
+    required Map<String, dynamic> playback,
+  }) {
+    if (source == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (!source.isYoutube) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.09),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withOpacity(0.12)),
+        ),
+        child: Row(
+          children: [
+            const Text('ℹ️', style: TextStyle(fontSize: 24)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'La sincronización play/pausa/segundo funciona nivel PRO con YouTube. '
+                'En ${source.title}, Pawdo comparte el mismo enlace, pero el reproductor puede no dejar controlar el segundo.',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.78),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final isSameSource =
+        playback['sourceKey']?.toString() == _sourceKey(source);
+    final isPlaying = isSameSource && playback['isPlaying'] == true;
+    final double seconds = isSameSource
+        ? _toDouble(playback['positionSeconds'], 0.0)
+        : 0.0;
+    final updatedByName = playback['updatedByName']?.toString() ?? 'Pawdo';
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.09),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.12),
-        ),
+        color: Colors.white.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: Colors.white.withOpacity(0.12)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'ℹ️',
-            style: TextStyle(fontSize: 24),
+            'Sincronización PRO',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'La sincronización play/pausa/segundo funciona nivel PRO con YouTube. '
-              'En ${source.title}, Pawdo comparte el mismo enlace, pero el reproductor puede no dejar controlar el segundo.',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.78),
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-                height: 1.3,
+          const SizedBox(height: 8),
+          Text(
+            isSameSource
+                ? '${isPlaying ? "▶️ Reproduciendo" : "⏸️ Pausado"} · ${_formatSeconds(seconds)} · por $updatedByName'
+                : 'Aún no hay sincronización para este video.',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.75),
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _isSavingPlayback
+                      ? null
+                      : () => _savePlaybackCommand(
+                          coupleCode: coupleCode,
+                          source: source,
+                          isPlaying: true,
+                        ),
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('Play juntos'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade700,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _isSavingPlayback
+                      ? null
+                      : () => _savePlaybackCommand(
+                          coupleCode: coupleCode,
+                          source: source,
+                          isPlaying: false,
+                        ),
+                  icon: const Icon(Icons.pause),
+                  label: const Text('Pausa'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade700,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: _isSavingPlayback
+                  ? null
+                  : () => _syncCurrentYoutubePosition(
+                      coupleCode: coupleCode,
+                      source: source,
+                    ),
+              icon: const Icon(Icons.sync),
+              label: Text(
+                _isSavingPlayback
+                    ? 'Sincronizando...'
+                    : 'Sincronizar segundo actual',
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey.shade700,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
               ),
             ),
           ),
@@ -844,120 +924,6 @@ Widget _fallbackCard(CinemaSource source) {
       ),
     );
   }
-
-  final isSameSource = playback['sourceKey']?.toString() == _sourceKey(source);
-  final isPlaying = isSameSource && playback['isPlaying'] == true;
- final double seconds = isSameSource ? _toDouble(playback['positionSeconds'], 0.0) : 0.0;
-  final updatedByName = playback['updatedByName']?.toString() ?? 'Pawdo';
-
-  return Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Colors.white.withOpacity(0.10),
-      borderRadius: BorderRadius.circular(26),
-      border: Border.all(color: Colors.white.withOpacity(0.12)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Sincronización PRO',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          isSameSource
-              ? '${isPlaying ? "▶️ Reproduciendo" : "⏸️ Pausado"} · ${_formatSeconds(seconds)} · por $updatedByName'
-              : 'Aún no hay sincronización para este video.',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.75),
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: _isSavingPlayback
-                    ? null
-                    : () => _savePlaybackCommand(
-                          coupleCode: coupleCode,
-                          source: source,
-                          isPlaying: true,
-                        ),
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Play juntos'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.grey.shade700,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: _isSavingPlayback
-                    ? null
-                    : () => _savePlaybackCommand(
-                          coupleCode: coupleCode,
-                          source: source,
-                          isPlaying: false,
-                        ),
-                icon: const Icon(Icons.pause),
-                label: const Text('Pausa'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.grey.shade700,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: ElevatedButton.icon(
-            onPressed: _isSavingPlayback
-                ? null
-                : () => _syncCurrentYoutubePosition(
-                      coupleCode: coupleCode,
-                      source: source,
-                    ),
-            icon: const Icon(Icons.sync),
-            label: Text(
-              _isSavingPlayback
-                  ? 'Sincronizando...'
-                  : 'Sincronizar segundo actual',
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.purple,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.grey.shade700,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
 
   Widget _reactionBar(String coupleCode) {
     final reactions = ['❤️', '😂', '🐶', '🍿', '😍', '😭'];
@@ -993,10 +959,8 @@ Widget _fallbackCard(CinemaSource source) {
                       borderRadius: BorderRadius.circular(18),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(18),
-                        onTap: () => _sendReaction(
-                          coupleCode: coupleCode,
-                          emoji: emoji,
-                        ),
+                        onTap: () =>
+                            _sendReaction(coupleCode: coupleCode, emoji: emoji),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 13,
@@ -1063,7 +1027,10 @@ Widget _fallbackCard(CinemaSource source) {
               final sender = data['senderName']?.toString() ?? 'Pawdo';
 
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(20),
@@ -1148,11 +1115,7 @@ Widget _fallbackCard(CinemaSource source) {
                       : () => _sendChatMessage(coupleCode: coupleCode),
                   child: const Padding(
                     padding: EdgeInsets.all(13),
-                    child: Icon(
-                      Icons.send,
-                      color: Colors.white,
-                      size: 22,
-                    ),
+                    child: Icon(Icons.send, color: Colors.white, size: 22),
                   ),
                 ),
               ),
@@ -1234,8 +1197,9 @@ Widget _fallbackCard(CinemaSource source) {
                     ),
                   ),
                   child: Column(
-                    crossAxisAlignment:
-                        mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                    crossAxisAlignment: mine
+                        ? CrossAxisAlignment.end
+                        : CrossAxisAlignment.start,
                     children: [
                       if (!mine)
                         Text(
@@ -1315,12 +1279,11 @@ Widget _fallbackCard(CinemaSource source) {
             width: double.infinity,
             height: 50,
             child: ElevatedButton.icon(
-              onPressed:
-                  _isSaving ? null : () => _saveVideoToFirebase(coupleCode),
+              onPressed: _isSaving
+                  ? null
+                  : () => _saveVideoToFirebase(coupleCode),
               icon: const Icon(Icons.play_circle),
-              label: Text(
-                _isSaving ? 'Cargando...' : 'Cargar en Cine Pawdo',
-              ),
+              label: Text(_isSaving ? 'Cargando...' : 'Cargar en Cine Pawdo'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pinkAccent,
                 foregroundColor: Colors.white,

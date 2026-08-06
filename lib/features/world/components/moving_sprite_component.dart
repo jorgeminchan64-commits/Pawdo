@@ -10,13 +10,13 @@ class MovingSpriteComponent extends SpriteComponent {
     required Vector2 size,
     Anchor anchor = Anchor.center,
     this.speed = 70,
-  })  : targetPosition = startPosition.clone(),
-        super(
-          sprite: sprite,
-          position: startPosition,
-          size: size,
-          anchor: anchor,
-        );
+  }) : targetPosition = startPosition.clone(),
+       super(
+         sprite: sprite,
+         position: startPosition,
+         size: size,
+         anchor: anchor,
+       );
 
   void moveTo(Vector2 target) {
     targetPosition = target.clone();

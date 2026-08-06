@@ -111,11 +111,15 @@ String? missionIdFromAction(String action) {
     return 'pet_pawdo';
   }
 
-  if (text.contains('sentaron') || text.contains('sofá') || text.contains('sofa')) {
+  if (text.contains('sentaron') ||
+      text.contains('sofá') ||
+      text.contains('sofa')) {
     return 'sit_together';
   }
 
-  if (text.contains('película') || text.contains('pelicula') || text.contains('peli')) {
+  if (text.contains('película') ||
+      text.contains('pelicula') ||
+      text.contains('peli')) {
     return 'watch_movie';
   }
 
@@ -123,7 +127,9 @@ String? missionIdFromAction(String action) {
     return 'eat_together';
   }
 
-  if (text.contains('descansaron') || text.contains('dormir') || text.contains('durmieron')) {
+  if (text.contains('descansaron') ||
+      text.contains('dormir') ||
+      text.contains('durmieron')) {
     return 'sleep_together';
   }
 

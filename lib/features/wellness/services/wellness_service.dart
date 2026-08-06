@@ -26,7 +26,8 @@ class WellnessService {
 
   String get _uid {
     final uid = _auth.currentUser?.uid;
-    if (uid == null) throw const WellnessException('Inicia sesión para continuar.');
+    if (uid == null)
+      throw const WellnessException('Inicia sesión para continuar.');
     return uid;
   }
 
@@ -45,7 +46,9 @@ class WellnessService {
       .orderBy('dateKey', descending: true)
       .limit(370)
       .snapshots()
-      .map((snapshot) => snapshot.docs.map(WellnessEntry.fromDocument).toList());
+      .map(
+        (snapshot) => snapshot.docs.map(WellnessEntry.fromDocument).toList(),
+      );
 
   Future<void> saveSettings({
     required int cycleLength,
@@ -85,7 +88,8 @@ class WellnessService {
   Future<void> deleteAllData() =>
       _call('deleteWellnessData', {'confirm': true});
 
-  Future<Stream<DocumentSnapshot<Map<String, dynamic>>>?> partnerSummary() async {
+  Future<Stream<DocumentSnapshot<Map<String, dynamic>>>?>
+  partnerSummary() async {
     final profile = await _firestore.collection('users').doc(_uid).get();
     final code = profile.data()?['coupleCode']?.toString() ?? '';
     if (code.isEmpty) return null;

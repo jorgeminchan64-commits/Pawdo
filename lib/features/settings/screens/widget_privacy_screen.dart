@@ -68,13 +68,20 @@ class _WidgetPrivacyScreenState extends State<WidgetPrivacyScreen> {
                   child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Pawdo está esperando 🐾',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                      Text(
+                        'Pawdo está esperando 🐾',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                       SizedBox(height: 6),
                       Text('Energía 70% · Racha 4 días'),
                       SizedBox(height: 8),
-                      Text('Vista previa del primer widget de texto y estado.',
-                          style: TextStyle(fontSize: 11)),
+                      Text(
+                        'Vista previa del primer widget de texto y estado.',
+                        style: TextStyle(fontSize: 11),
+                      ),
                     ],
                   ),
                 ),

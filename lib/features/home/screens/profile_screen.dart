@@ -138,9 +138,9 @@ class ProfileScreen extends StatelessWidget {
             icon: Icons.favorite_outline,
             title: 'Ciclo y bienestar',
             subtitle: 'Módulo opcional, privado y bajo tu control',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const WellnessScreen()),
-            ),
+            onTap: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const WellnessScreen())),
           ),
 
           _profileCard(

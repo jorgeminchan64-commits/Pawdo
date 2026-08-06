@@ -1,12 +1,6 @@
 import 'package:flame/components.dart';
 
-enum ActorState {
-  idle,
-  walking,
-  sitting,
-  sleeping,
-  waving,
-}
+enum ActorState { idle, walking, sitting, sleeping, waving }
 
 class WorldActorComponent extends SpriteComponent {
   Vector2 targetPosition;
@@ -19,13 +13,13 @@ class WorldActorComponent extends SpriteComponent {
     required Vector2 size,
     Anchor anchor = Anchor.center,
     this.speed = 120,
-  })  : targetPosition = startPosition.clone(),
-        super(
-          sprite: sprite,
-          position: startPosition,
-          size: size,
-          anchor: anchor,
-        );
+  }) : targetPosition = startPosition.clone(),
+       super(
+         sprite: sprite,
+         position: startPosition,
+         size: size,
+         anchor: anchor,
+       );
 
   void moveTo(Vector2 target) {
     targetPosition = target.clone();

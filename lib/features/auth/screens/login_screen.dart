@@ -39,9 +39,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (user != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login exitoso ✅')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Login exitoso ✅')));
 
         // Volvemos a la pantalla raíz. Ahí el StreamBuilder de main.dart
         // detecta la sesión y muestra MainScreen automáticamente.
@@ -64,9 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
         error = 'Revisa tu conexión a internet';
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
     } finally {
       if (mounted) {
         setState(() => isLoading = false);
@@ -87,10 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF6C63FF),
-              Color(0xFF8E7BFF),
-            ],
+            colors: [Color(0xFF6C63FF), Color(0xFF8E7BFF)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -158,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     'Crear cuenta',
                     style: TextStyle(color: Colors.white),
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -167,10 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildButton({
-    required String text,
-    required VoidCallback? onTap,
-  }) {
+  Widget _buildButton({required String text, required VoidCallback? onTap}) {
     return SizedBox(
       width: double.infinity,
       height: 55,

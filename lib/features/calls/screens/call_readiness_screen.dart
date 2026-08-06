@@ -28,7 +28,11 @@ class _CallReadinessScreenState extends State<CallReadinessScreen> {
     } on PlatformException catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.message ?? 'No se pudieron comprobar los permisos.')),
+          SnackBar(
+            content: Text(
+              error.message ?? 'No se pudieron comprobar los permisos.',
+            ),
+          ),
         );
       }
     } finally {
@@ -159,7 +163,11 @@ class _CallReadinessScreenState extends State<CallReadinessScreen> {
                       FilledButton.icon(
                         onPressed: _requesting ? null : _request,
                         icon: const Icon(Icons.fact_check_outlined),
-                        label: Text(_requesting ? 'Comprobando…' : 'Probar permisos ahora'),
+                        label: Text(
+                          _requesting
+                              ? 'Comprobando…'
+                              : 'Probar permisos ahora',
+                        ),
                       ),
                     ],
                   ),
@@ -217,59 +225,55 @@ class _HardwareProbeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Prueba local aislada',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Primero concede los permisos. Después puedes verificar cada dispositivo por separado.',
-              ),
-              const SizedBox(height: 14),
-              _ProbeButton(
-                icon: Icons.mic_none,
-                label: probingMicrophone
-                    ? 'Escuchando durante 1 segundo…'
-                    : 'Probar micrófono durante 1 segundo',
-                result: microphonePassed,
-                onPressed: probingMicrophone || probingCamera
-                    ? null
-                    : onMicrophone,
-              ),
-              if (microphonePassed == true && microphoneLevel != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: LinearProgressIndicator(
-                    value: (microphoneLevel! * 12)
-                        .clamp(0.04, 1.0)
-                        .toDouble(),
-                    minHeight: 7,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              const SizedBox(height: 10),
-              _ProbeButton(
-                icon: Icons.videocam_outlined,
-                label: probingCamera
-                    ? 'Comprobando cámara…'
-                    : 'Abrir y cerrar cámara sin capturar',
-                result: cameraPassed,
-                onPressed: probingCamera || probingMicrophone ? null : onCamera,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'El micrófono se procesa solo en memoria y la cámara no toma fotografías ni crea video.',
-                style: TextStyle(fontSize: 12, color: Colors.black54),
-              ),
-            ],
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Prueba local aislada',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
           ),
-        ),
-      );
+          const SizedBox(height: 6),
+          const Text(
+            'Primero concede los permisos. Después puedes verificar cada dispositivo por separado.',
+          ),
+          const SizedBox(height: 14),
+          _ProbeButton(
+            icon: Icons.mic_none,
+            label: probingMicrophone
+                ? 'Escuchando durante 1 segundo…'
+                : 'Probar micrófono durante 1 segundo',
+            result: microphonePassed,
+            onPressed: probingMicrophone || probingCamera ? null : onMicrophone,
+          ),
+          if (microphonePassed == true && microphoneLevel != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: LinearProgressIndicator(
+                value: (microphoneLevel! * 12).clamp(0.04, 1.0).toDouble(),
+                minHeight: 7,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          const SizedBox(height: 10),
+          _ProbeButton(
+            icon: Icons.videocam_outlined,
+            label: probingCamera
+                ? 'Comprobando cámara…'
+                : 'Abrir y cerrar cámara sin capturar',
+            result: cameraPassed,
+            onPressed: probingCamera || probingMicrophone ? null : onCamera,
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'El micrófono se procesa solo en memoria y la cámara no toma fotografías ni crea video.',
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _ProbeButton extends StatelessWidget {
@@ -287,89 +291,97 @@ class _ProbeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: double.infinity,
-        child: OutlinedButton.icon(
-          onPressed: onPressed,
-          icon: Icon(
-            result == true
-                ? Icons.check_circle
-                : result == false
-                    ? Icons.error_outline
-                    : icon,
-            color: result == true ? Colors.green : null,
-          ),
-          label: Text(result == true ? '$label · correcto' : label),
-        ),
-      );
+    width: double.infinity,
+    child: OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(
+        result == true
+            ? Icons.check_circle
+            : result == false
+            ? Icons.error_outline
+            : icon,
+        color: result == true ? Colors.green : null,
+      ),
+      label: Text(result == true ? '$label · correcto' : label),
+    ),
+  );
 }
 
 class _CapabilityRow extends StatelessWidget {
-  const _CapabilityRow({required this.icon, required this.label, required this.ready});
+  const _CapabilityRow({
+    required this.icon,
+    required this.label,
+    required this.ready,
+  });
   final IconData icon;
   final String label;
   final bool ready;
   @override
   Widget build(BuildContext context) => ListTile(
-        dense: true,
-        contentPadding: EdgeInsets.zero,
-        leading: Icon(icon),
-        title: Text(label),
-        trailing: Icon(
-          ready ? Icons.check_circle : Icons.cancel_outlined,
-          color: ready ? Colors.green : Colors.grey,
-        ),
-      );
+    dense: true,
+    contentPadding: EdgeInsets.zero,
+    leading: Icon(icon),
+    title: Text(label),
+    trailing: Icon(
+      ready ? Icons.check_circle : Icons.cancel_outlined,
+      color: ready ? Colors.green : Colors.grey,
+    ),
+  );
 }
 
 class _ArchitectureCard extends StatelessWidget {
   const _ArchitectureCard();
   @override
   Widget build(BuildContext context) => const Card(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Recomendación para el MVP',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
-              SizedBox(height: 8),
-              Text('• Proveedor administrado basado en WebRTC: LiveKit Cloud.'),
-              Text('• Tokens de sala emitidos únicamente por Cloud Functions.'),
-              Text('• Una sala privada por pareja y llamada.'),
-              Text('• TURN, reconexión y métricas administradas.'),
-              Text('• Sin grabación habilitada por defecto.'),
-              Text('• Migración futura posible al servidor LiveKit abierto.'),
-              SizedBox(height: 8),
-              Text(
-                'No se integra todavía porque requiere crear una cuenta/proyecto externo, aceptar costos y custodiar credenciales del proveedor.',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ],
+    child: Padding(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Recomendación para el MVP',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
           ),
-        ),
-      );
+          SizedBox(height: 8),
+          Text('• Proveedor administrado basado en WebRTC: LiveKit Cloud.'),
+          Text('• Tokens de sala emitidos únicamente por Cloud Functions.'),
+          Text('• Una sala privada por pareja y llamada.'),
+          Text('• TURN, reconexión y métricas administradas.'),
+          Text('• Sin grabación habilitada por defecto.'),
+          Text('• Migración futura posible al servidor LiveKit abierto.'),
+          SizedBox(height: 8),
+          Text(
+            'No se integra todavía porque requiere crear una cuenta/proyecto externo, aceptar costos y custodiar credenciales del proveedor.',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _DataSaverCard extends StatelessWidget {
   const _DataSaverCard();
   @override
   Widget build(BuildContext context) => const Card(
-        color: Color(0xFFE5F0FF),
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Perfil previsto de ahorro de datos',
-                  style: TextStyle(fontWeight: FontWeight.w900)),
-              SizedBox(height: 8),
-              Text('• Iniciar video en 360p y 15 FPS.'),
-              Text('• Usar capas adaptativas y pausar video no visible.'),
-              Text('• Bajar automáticamente a audio cuando empeore la red.'),
-              Text('• Cámara siempre apagada al ir a segundo plano.'),
-              Text('• Botones de silencio, cámara y cambio de cámara locales.'),
-            ],
+    color: Color(0xFFE5F0FF),
+    child: Padding(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Perfil previsto de ahorro de datos',
+            style: TextStyle(fontWeight: FontWeight.w900),
           ),
-        ),
-      );
+          SizedBox(height: 8),
+          Text('• Iniciar video en 360p y 15 FPS.'),
+          Text('• Usar capas adaptativas y pausar video no visible.'),
+          Text('• Bajar automáticamente a audio cuando empeore la red.'),
+          Text('• Cámara siempre apagada al ir a segundo plano.'),
+          Text('• Botones de silencio, cámara y cambio de cámara locales.'),
+        ],
+      ),
+    ),
+  );
 }

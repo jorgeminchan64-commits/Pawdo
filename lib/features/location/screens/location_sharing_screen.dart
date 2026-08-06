@@ -64,7 +64,10 @@ class _LocationSharingScreenState extends State<LocationSharingScreen> {
     if (consent != true) return;
     setState(() => _busy = true);
     try {
-      await _service.start(mode: selection.mode, approximate: selection.approximate);
+      await _service.start(
+        mode: selection.mode,
+        approximate: selection.approximate,
+      );
     } on LocationSharingException catch (error) {
       if (mounted) await _showError(error);
     } finally {
@@ -113,8 +116,8 @@ class _LocationSharingScreenState extends State<LocationSharingScreen> {
   }
 
   void _message(String text) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
-      );
+    SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
+  );
 
   Future<void> _openMap(LocationShare share) async {
     if (!share.hasPosition) return;
@@ -122,7 +125,8 @@ class _LocationSharingScreenState extends State<LocationSharingScreen> {
       'api': '1',
       'query': '${share.latitude},${share.longitude}',
     });
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication) &&
+        mounted) {
       _message('No se encontró una aplicación de mapas.');
     }
   }
@@ -142,7 +146,8 @@ class _LocationSharingScreenState extends State<LocationSharingScreen> {
             return Center(child: Text(codeSnapshot.error.toString()));
           }
           final code = codeSnapshot.data;
-          if (code == null) return const Center(child: CircularProgressIndicator());
+          if (code == null)
+            return const Center(child: CircularProgressIndicator());
           return StreamBuilder<List<LocationShare>>(
             stream: _service.watchShares(code),
             builder: (context, snapshot) {
@@ -157,7 +162,9 @@ class _LocationSharingScreenState extends State<LocationSharingScreen> {
                   partner = share;
                 }
               }
-              if (mine != null && mine.active && _resumedSession != mine.sessionId) {
+              if (mine != null &&
+                  mine.active &&
+                  _resumedSession != mine.sessionId) {
                 _resumedSession = mine.sessionId;
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _service.resume(mine!).catchError((_) {});
@@ -174,23 +181,32 @@ class _LocationSharingScreenState extends State<LocationSharingScreen> {
                     FilledButton.icon(
                       onPressed: _busy ? null : _start,
                       icon: const Icon(Icons.location_on_outlined),
-                      label: Text(_busy ? 'Preparando…' : 'Compartir mi ubicación'),
+                      label: Text(
+                        _busy ? 'Preparando…' : 'Compartir mi ubicación',
+                      ),
                     ),
                   const SizedBox(height: 20),
-                  Text('Tu pareja',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w900,
-                          )),
+                  Text(
+                    'Tu pareja',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   if (partner == null)
                     const Card(
                       child: Padding(
                         padding: EdgeInsets.all(18),
-                        child: Text('Tu pareja no está compartiendo ubicación.'),
+                        child: Text(
+                          'Tu pareja no está compartiendo ubicación.',
+                        ),
                       ),
                     )
                   else
-                    _PartnerShareCard(share: partner, onMap: () => _openMap(partner!)),
+                    _PartnerShareCard(
+                      share: partner,
+                      onMap: () => _openMap(partner!),
+                    ),
                   const SizedBox(height: 18),
                   const Card(
                     color: Color(0xFFFFF2D8),
@@ -223,49 +239,59 @@ class _ShareOptionsState extends State<_ShareOptions> {
 
   @override
   Widget build(BuildContext context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Cómo quieres compartir',
-                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 14),
-              DropdownButtonFormField<String>(
-                initialValue: _mode,
-                decoration: const InputDecoration(labelText: 'Duración'),
-                items: const [
-                  DropdownMenuItem(value: 'point', child: Text('Ubicación puntual')),
-                  DropdownMenuItem(value: '15m', child: Text('Durante 15 minutos')),
-                  DropdownMenuItem(value: '1h', child: Text('Durante 1 hora')),
-                  DropdownMenuItem(value: '8h', child: Text('Durante 8 horas')),
-                  DropdownMenuItem(value: 'until_stopped', child: Text('Hasta que yo la detenga')),
-                ],
-                onChanged: (value) => setState(() => _mode = value ?? _mode),
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Cómo quieres compartir',
+            style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            initialValue: _mode,
+            decoration: const InputDecoration(labelText: 'Duración'),
+            items: const [
+              DropdownMenuItem(
+                value: 'point',
+                child: Text('Ubicación puntual'),
               ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                value: _approximate,
-                title: const Text('Usar ubicación aproximada'),
-                subtitle: const Text('Recomendado: el servidor reduce la precisión antes de compartir.'),
-                onChanged: (value) => setState(() => _approximate = value),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(
-                    context,
-                    _LocationSelection(mode: _mode, approximate: _approximate),
-                  ),
-                  child: const Text('Continuar'),
-                ),
+              DropdownMenuItem(value: '15m', child: Text('Durante 15 minutos')),
+              DropdownMenuItem(value: '1h', child: Text('Durante 1 hora')),
+              DropdownMenuItem(value: '8h', child: Text('Durante 8 horas')),
+              DropdownMenuItem(
+                value: 'until_stopped',
+                child: Text('Hasta que yo la detenga'),
               ),
             ],
+            onChanged: (value) => setState(() => _mode = value ?? _mode),
           ),
-        ),
-      );
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _approximate,
+            title: const Text('Usar ubicación aproximada'),
+            subtitle: const Text(
+              'Recomendado: el servidor reduce la precisión antes de compartir.',
+            ),
+            onChanged: (value) => setState(() => _approximate = value),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => Navigator.pop(
+                context,
+                _LocationSelection(mode: _mode, approximate: _approximate),
+              ),
+              child: const Text('Continuar'),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _LocationSelection {
@@ -278,64 +304,72 @@ class _PrivacyNotice extends StatelessWidget {
   const _PrivacyNotice();
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFDDEBFF),
-          borderRadius: BorderRadius.circular(22),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xFFDDEBFF),
+      borderRadius: BorderRadius.circular(22),
+    ),
+    child: const Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.shield_outlined, color: Color(0xFF315D9C)),
+        SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            'Nunca se activa sola. Android pedirá permiso únicamente después de que confirmes. Las actualizaciones son solo en primer plano.',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
-        child: const Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.shield_outlined, color: Color(0xFF315D9C)),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Nunca se activa sola. Android pedirá permiso únicamente después de que confirmes. Las actualizaciones son solo en primer plano.',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ],
-        ),
-      );
+      ],
+    ),
+  );
 }
 
 class _OwnShareCard extends StatelessWidget {
-  const _OwnShareCard({required this.share, required this.busy, required this.onStop});
+  const _OwnShareCard({
+    required this.share,
+    required this.busy,
+    required this.onStop,
+  });
   final LocationShare share;
   final bool busy;
   final VoidCallback onStop;
   @override
   Widget build(BuildContext context) => Card(
-        color: const Color(0xFFDFF5E8),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    color: const Color(0xFFDFF5E8),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.location_on, color: Color(0xFF267B52)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      share.active ? 'Estás compartiendo' : 'Ubicación puntual enviada',
-                      style: const TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text('${_modeLabel(share.mode)} · ${share.approximate ? 'Aproximada' : 'Precisa'}'),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: busy ? null : onStop,
-                icon: const Icon(Icons.stop_circle_outlined),
-                label: const Text('Detener y eliminar ahora'),
+              const Icon(Icons.location_on, color: Color(0xFF267B52)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  share.active
+                      ? 'Estás compartiendo'
+                      : 'Ubicación puntual enviada',
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
               ),
             ],
           ),
-        ),
-      );
+          const SizedBox(height: 6),
+          Text(
+            '${_modeLabel(share.mode)} · ${share.approximate ? 'Aproximada' : 'Precisa'}',
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: busy ? null : onStop,
+            icon: const Icon(Icons.stop_circle_outlined),
+            label: const Text('Detener y eliminar ahora'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _PartnerShareCard extends StatelessWidget {
@@ -344,41 +378,45 @@ class _PartnerShareCard extends StatelessWidget {
   final VoidCallback onMap;
   @override
   Widget build(BuildContext context) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                share.approximate ? 'Ubicación aproximada compartida' : 'Ubicación precisa compartida',
-                style: const TextStyle(fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 6),
-              Text(share.updatedAt == null
-                  ? 'Esperando el primer punto…'
-                  : 'Actualizada ${_age(share.updatedAt!)}'),
-              if (share.accuracyMeters != null)
-                Text('Precisión aproximada: ${share.accuracyMeters!.round()} m'),
-              const SizedBox(height: 10),
-              FilledButton.icon(
-                onPressed: share.hasPosition ? onMap : null,
-                icon: const Icon(Icons.map_outlined),
-                label: const Text('Abrir en mapas'),
-              ),
-            ],
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            share.approximate
+                ? 'Ubicación aproximada compartida'
+                : 'Ubicación precisa compartida',
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
-        ),
-      );
+          const SizedBox(height: 6),
+          Text(
+            share.updatedAt == null
+                ? 'Esperando el primer punto…'
+                : 'Actualizada ${_age(share.updatedAt!)}',
+          ),
+          if (share.accuracyMeters != null)
+            Text('Precisión aproximada: ${share.accuracyMeters!.round()} m'),
+          const SizedBox(height: 10),
+          FilledButton.icon(
+            onPressed: share.hasPosition ? onMap : null,
+            icon: const Icon(Icons.map_outlined),
+            label: const Text('Abrir en mapas'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 String _modeLabel(String mode) => switch (mode) {
-      'point' => 'Ubicación puntual',
-      '15m' => '15 minutos',
-      '1h' => '1 hora',
-      '8h' => '8 horas',
-      'until_stopped' => 'Hasta detener',
-      _ => 'Temporal',
-    };
+  'point' => 'Ubicación puntual',
+  '15m' => '15 minutos',
+  '1h' => '1 hora',
+  '8h' => '8 horas',
+  'until_stopped' => 'Hasta detener',
+  _ => 'Temporal',
+};
 
 String _age(DateTime date) {
   final difference = DateTime.now().difference(date);

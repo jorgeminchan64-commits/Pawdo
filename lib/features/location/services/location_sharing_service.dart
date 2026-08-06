@@ -174,8 +174,9 @@ class LocationSharingService with WidgetsBindingObserver {
     await _ensurePermission();
     // A GPS failure cannot leave an empty share document on the server.
     final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy:
-          approximate ? LocationAccuracy.low : LocationAccuracy.high,
+      desiredAccuracy: approximate
+          ? LocationAccuracy.low
+          : LocationAccuracy.high,
       timeLimit: const Duration(seconds: 20),
     );
     final result = await _call('startLocationSharing', {
@@ -232,23 +233,23 @@ class LocationSharingService with WidgetsBindingObserver {
 
   Future<void> _startPositionStream() async {
     await _positionSubscription?.cancel();
-    _positionSubscription = Geolocator.getPositionStream(
-      locationSettings: LocationSettings(
-        accuracy: _approximate ? LocationAccuracy.low : LocationAccuracy.high,
-        distanceFilter: _approximate ? 500 : 50,
-      ),
-    ).listen(
-      (position) {
-        _lastPosition = position;
-        final last = _lastPublishedAt;
-        if (last != null &&
-            DateTime.now().difference(last) < const Duration(seconds: 25)) {
-          return;
-        }
-        unawaited(_publishIfIdle(position));
-      },
-      onError: (_) => unawaited(_pauseTrackingOnly()),
-    );
+    _positionSubscription =
+        Geolocator.getPositionStream(
+          locationSettings: LocationSettings(
+            accuracy: _approximate
+                ? LocationAccuracy.low
+                : LocationAccuracy.high,
+            distanceFilter: _approximate ? 500 : 50,
+          ),
+        ).listen((position) {
+          _lastPosition = position;
+          final last = _lastPublishedAt;
+          if (last != null &&
+              DateTime.now().difference(last) < const Duration(seconds: 25)) {
+            return;
+          }
+          unawaited(_publishIfIdle(position));
+        }, onError: (_) => unawaited(_pauseTrackingOnly()));
     _heartbeatTimer?.cancel();
     _heartbeatTimer = Timer.periodic(const Duration(minutes: 5), (_) async {
       final position = _lastPosition ?? await Geolocator.getLastKnownPosition();

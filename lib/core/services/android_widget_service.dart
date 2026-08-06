@@ -36,7 +36,9 @@ class AndroidWidgetService {
 
   Future<AndroidWidgetPreferences> preferences() async {
     try {
-      final data = await _channel.invokeMapMethod<String, dynamic>('getPreferences');
+      final data = await _channel.invokeMapMethod<String, dynamic>(
+        'getPreferences',
+      );
       return AndroidWidgetPreferences(
         enabled: data?['enabled'] != false,
         showContent: data?['showContent'] == true,

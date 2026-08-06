@@ -47,7 +47,9 @@ class _WellnessPrivacyScreenState extends State<WellnessPrivacyScreen> {
       }
     } on WellnessException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -113,7 +115,9 @@ class _WellnessPrivacyScreenState extends State<WellnessPrivacyScreen> {
       if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
     } on WellnessException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -126,7 +130,10 @@ class _WellnessPrivacyScreenState extends State<WellnessPrivacyScreen> {
       appBar: AppBar(
         title: const Text('Privacidad de bienestar'),
         actions: [
-          TextButton(onPressed: _saving ? null : _save, child: const Text('Guardar')),
+          TextButton(
+            onPressed: _saving ? null : _save,
+            child: const Text('Guardar'),
+          ),
         ],
       ),
       body: ListView(
@@ -153,53 +160,73 @@ class _WellnessPrivacyScreenState extends State<WellnessPrivacyScreen> {
           const SizedBox(height: 12),
           DropdownButtonFormField<int>(
             initialValue: _cycleLength,
-            decoration: const InputDecoration(labelText: 'Duración habitual del ciclo'),
-            items: [for (var day = 21; day <= 45; day++)
-              DropdownMenuItem(value: day, child: Text('$day días'))],
-            onChanged: (value) => setState(() => _cycleLength = value ?? _cycleLength),
+            decoration: const InputDecoration(
+              labelText: 'Duración habitual del ciclo',
+            ),
+            items: [
+              for (var day = 21; day <= 45; day++)
+                DropdownMenuItem(value: day, child: Text('$day días')),
+            ],
+            onChanged: (value) =>
+                setState(() => _cycleLength = value ?? _cycleLength),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<int>(
             initialValue: _periodLength,
-            decoration: const InputDecoration(labelText: 'Duración habitual del periodo'),
-            items: [for (var day = 2; day <= 10; day++)
-              DropdownMenuItem(value: day, child: Text('$day días'))],
-            onChanged: (value) => setState(() => _periodLength = value ?? _periodLength),
+            decoration: const InputDecoration(
+              labelText: 'Duración habitual del periodo',
+            ),
+            items: [
+              for (var day = 2; day <= 10; day++)
+                DropdownMenuItem(value: day, child: Text('$day días')),
+            ],
+            onChanged: (value) =>
+                setState(() => _periodLength = value ?? _periodLength),
           ),
           SwitchListTile(
             value: _reminders,
             title: const Text('Recordatorio privado'),
-            subtitle: const Text('Mostrar la próxima estimación dentro del módulo.'),
+            subtitle: const Text(
+              'Mostrar la próxima estimación dentro del módulo.',
+            ),
             onChanged: (value) => setState(() => _reminders = value),
           ),
           const Divider(height: 28),
           SwitchListTile(
             value: _sharing,
             title: const Text('Compartir apoyo con mi pareja'),
-            subtitle: const Text('Requiere consentimiento explícito y revocable.'),
+            subtitle: const Text(
+              'Requiere consentimiento explícito y revocable.',
+            ),
             onChanged: _saving ? null : _toggleSharing,
           ),
           if (_sharing) ...[
             CheckboxListTile(
               value: _fields.contains('mood'),
               title: const Text('Estado de ánimo'),
-              onChanged: (value) => setState(() => value == true
-                  ? _fields.add('mood')
-                  : _fields.remove('mood')),
+              onChanged: (value) => setState(
+                () => value == true
+                    ? _fields.add('mood')
+                    : _fields.remove('mood'),
+              ),
             ),
             CheckboxListTile(
               value: _fields.contains('intensity'),
               title: const Text('Intensidad del día'),
-              onChanged: (value) => setState(() => value == true
-                  ? _fields.add('intensity')
-                  : _fields.remove('intensity')),
+              onChanged: (value) => setState(
+                () => value == true
+                    ? _fields.add('intensity')
+                    : _fields.remove('intensity'),
+              ),
             ),
             CheckboxListTile(
               value: _fields.contains('symptoms'),
               title: const Text('Síntomas seleccionados'),
-              onChanged: (value) => setState(() => value == true
-                  ? _fields.add('symptoms')
-                  : _fields.remove('symptoms')),
+              onChanged: (value) => setState(
+                () => value == true
+                    ? _fields.add('symptoms')
+                    : _fields.remove('symptoms'),
+              ),
             ),
             const Padding(
               padding: EdgeInsets.all(12),

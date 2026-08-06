@@ -10,7 +10,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-
   final AuthService _auth = AuthService();
 
   final _emailController = TextEditingController();
@@ -39,9 +38,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (user != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login exitoso ✅")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Login exitoso ✅")));
       }
     } catch (e) {
       if (!mounted) return;
@@ -59,9 +58,9 @@ class _LoginScreenState extends State<LoginScreen> {
         error = "Correo o contraseña incorrectos";
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
     }
 
     if (mounted) {
@@ -73,13 +72,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF6C63FF),
-              Color(0xFF8E7BFF),
-            ],
+            colors: [Color(0xFF6C63FF), Color(0xFF8E7BFF)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -90,7 +85,6 @@ class _LoginScreenState extends State<LoginScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 25),
             child: Column(
               children: [
-
                 const SizedBox(height: 40),
 
                 Row(
@@ -150,16 +144,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const RegisterScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
                     );
                   },
                   child: const Text(
                     "Crear cuenta",
                     style: TextStyle(color: Colors.white),
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -168,10 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildButton({
-    required String text,
-    required VoidCallback? onTap,
-  }) {
+  Widget _buildButton({required String text, required VoidCallback? onTap}) {
     return SizedBox(
       width: double.infinity,
       height: 55,

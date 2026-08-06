@@ -16,9 +16,7 @@ class CinemaSource {
   bool get isYoutube => platform == 'youtube';
   bool get isWebView => platform != 'youtube';
 
-  Map<String, dynamic> toJson({
-    required String? updatedBy,
-  }) {
+  Map<String, dynamic> toJson({required String? updatedBy}) {
     return {
       'platform': platform,
       'originalUrl': originalUrl,

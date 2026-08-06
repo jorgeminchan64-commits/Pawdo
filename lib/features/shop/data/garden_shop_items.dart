@@ -38,7 +38,6 @@ final List<GardenShopItem> gardenShopItems = [
   // =========================
   // DECORACIÓN DEL JARDÍN
   // =========================
-
   GardenShopItem(
     id: 'flower_pot_pink',
     name: 'Maceta Rosa',
@@ -142,7 +141,6 @@ final List<GardenShopItem> gardenShopItems = [
   // =========================
   // CASAS CON MONEDAS
   // =========================
-
   GardenShopItem(
     id: 'house_basic1',
     name: 'Casa Básica',
@@ -154,7 +152,7 @@ final List<GardenShopItem> gardenShopItems = [
     currency: 'coins',
     emoji: '🏡',
   ),
-  
+
   GardenShopItem(
     id: 'house_basic',
     name: 'Casa Básica',
@@ -225,7 +223,6 @@ final List<GardenShopItem> gardenShopItems = [
   // =========================
   // PREMIUM PRÓXIMAMENTE
   // =========================
-
   GardenShopItem(
     id: 'house_fairy_dream',
     name: 'Casa Fairy Dream',

@@ -11,11 +11,7 @@ class WelcomeScreen extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF6C63FF),
-              Color(0xFF8E7BFF),
-              Color(0xFFB39DFF),
-            ],
+            colors: [Color(0xFF6C63FF), Color(0xFF8E7BFF), Color(0xFFB39DFF)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -40,10 +36,7 @@ class WelcomeScreen extends StatelessWidget {
                     SizedBox(height: 10),
                     Text(
                       'Diversión en pareja',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white70,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.white70),
                     ),
                   ],
                 ),
@@ -82,7 +75,9 @@ class WelcomeScreen extends StatelessWidget {
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Primero inicia sesión o crea una cuenta'),
+                            content: Text(
+                              'Primero inicia sesión o crea una cuenta',
+                            ),
                           ),
                         );
                         Navigator.push(

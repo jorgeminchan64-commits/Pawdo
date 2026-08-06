@@ -43,12 +43,16 @@ class CallReadinessService {
   static const _channel = MethodChannel('pawdo/call_readiness');
 
   Future<CallCapabilities> capabilities() async {
-    final data = await _channel.invokeMapMethod<String, dynamic>('capabilities');
+    final data = await _channel.invokeMapMethod<String, dynamic>(
+      'capabilities',
+    );
     return CallCapabilities.fromMap(data);
   }
 
   Future<CallCapabilities> requestPermissions() async {
-    final data = await _channel.invokeMapMethod<String, dynamic>('requestPermissions');
+    final data = await _channel.invokeMapMethod<String, dynamic>(
+      'requestPermissions',
+    );
     return CallCapabilities.fromMap(data);
   }
 

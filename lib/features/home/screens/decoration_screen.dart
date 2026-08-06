@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 class DecorationScreen extends StatefulWidget {
   final String coupleCode;
 
-  const DecorationScreen({
-    super.key,
-    required this.coupleCode,
-  });
+  const DecorationScreen({super.key, required this.coupleCode});
 
   @override
   State<DecorationScreen> createState() => _DecorationScreenState();
@@ -29,36 +26,12 @@ class _DecorationScreenState extends State<DecorationScreen> {
   };
 
   final Map<String, Map<String, dynamic>> furnitureData = {
-    "bed": {
-      "emoji": "🛏️",
-      "name": "Cama",
-      "size": 70.0,
-    },
-    "sofa": {
-      "emoji": "🛋️",
-      "name": "Sofá",
-      "size": 68.0,
-    },
-    "table": {
-      "emoji": "🍽️",
-      "name": "Mesa",
-      "size": 62.0,
-    },
-    "tv": {
-      "emoji": "📺",
-      "name": "TV",
-      "size": 62.0,
-    },
-    "plant": {
-      "emoji": "🪴",
-      "name": "Planta",
-      "size": 60.0,
-    },
-    "lamp": {
-      "emoji": "💡",
-      "name": "Lámpara",
-      "size": 58.0,
-    },
+    "bed": {"emoji": "🛏️", "name": "Cama", "size": 70.0},
+    "sofa": {"emoji": "🛋️", "name": "Sofá", "size": 68.0},
+    "table": {"emoji": "🍽️", "name": "Mesa", "size": 62.0},
+    "tv": {"emoji": "📺", "name": "TV", "size": 62.0},
+    "plant": {"emoji": "🪴", "name": "Planta", "size": 60.0},
+    "lamp": {"emoji": "💡", "name": "Lámpara", "size": 58.0},
   };
 
   @override
@@ -73,8 +46,9 @@ class _DecorationScreenState extends State<DecorationScreen> {
       final data = doc.data();
 
       if (data != null && data['furniturePositions'] != null) {
-        final savedPositions =
-            Map<String, dynamic>.from(data['furniturePositions']);
+        final savedPositions = Map<String, dynamic>.from(
+          data['furniturePositions'],
+        );
 
         savedPositions.forEach((key, value) {
           if (value is Map) {
@@ -82,10 +56,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
             final y = value['y'];
 
             if (x is num && y is num) {
-              furniturePositions[key] = Offset(
-                x.toDouble(),
-                y.toDouble(),
-              );
+              furniturePositions[key] = Offset(x.toDouble(), y.toDouble());
             }
           }
         });
@@ -109,19 +80,13 @@ class _DecorationScreenState extends State<DecorationScreen> {
     final Map<String, dynamic> positionsToSave = {};
 
     furniturePositions.forEach((key, value) {
-      positionsToSave[key] = {
-        "x": value.dx,
-        "y": value.dy,
-      };
+      positionsToSave[key] = {"x": value.dx, "y": value.dy};
     });
 
-    await _db.collection('couples').doc(widget.coupleCode).set(
-      {
-        "furniturePositions": positionsToSave,
-        "updatedAt": FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    );
+    await _db.collection('couples').doc(widget.coupleCode).set({
+      "furniturePositions": positionsToSave,
+      "updatedAt": FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
 
     if (!mounted) return;
 
@@ -129,11 +94,9 @@ class _DecorationScreenState extends State<DecorationScreen> {
       isSaving = false;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Decoración guardada ✅"),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Decoración guardada ✅")));
   }
 
   void resetFurniture() {
@@ -152,9 +115,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -187,9 +148,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
                         ),
                         Text(
                           "Arrastra los muebles",
-                          style: TextStyle(
-                            color: Colors.black54,
-                          ),
+                          style: TextStyle(color: Colors.black54),
                         ),
                       ],
                     ),
@@ -208,18 +167,12 @@ class _DecorationScreenState extends State<DecorationScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFFFFD6E7),
-                        Color(0xFFFFF7EC),
-                      ],
+                      colors: [Color(0xFFFFD6E7), Color(0xFFFFF7EC)],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 4,
-                    ),
+                    border: Border.all(color: Colors.white, width: 4),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.08),
@@ -295,10 +248,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
 
                           // Muebles arrastrables
                           for (final id in furnitureData.keys)
-                            _editableFurniture(
-                              id: id,
-                              areaSize: areaSize,
-                            ),
+                            _editableFurniture(id: id, areaSize: areaSize),
 
                           // Personitas y mascota fijas por ahora
                           const Positioned(
@@ -322,10 +272,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
                             right: 0,
                             bottom: 45,
                             child: Center(
-                              child: Text(
-                                "🐶",
-                                style: TextStyle(fontSize: 54),
-                              ),
+                              child: Text("🐶", style: TextStyle(fontSize: 54)),
                             ),
                           ),
                         ],
@@ -367,10 +314,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
     );
   }
 
-  Widget _editableFurniture({
-    required String id,
-    required Size areaSize,
-  }) {
+  Widget _editableFurniture({required String id, required Size areaSize}) {
     final data = furnitureData[id]!;
     final emoji = data["emoji"].toString();
     final name = data["name"].toString();
@@ -422,18 +366,12 @@ class _DecorationScreenState extends State<DecorationScreen> {
                 ],
               ),
               child: Center(
-                child: Text(
-                  emoji,
-                  style: TextStyle(fontSize: size * 0.55),
-                ),
+                child: Text(emoji, style: TextStyle(fontSize: size * 0.55)),
               ),
             ),
             const SizedBox(height: 3),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 7,
-                vertical: 3,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.55),
                 borderRadius: BorderRadius.circular(10),
