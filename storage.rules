@@ -1,0 +1,81 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isCoupleMember(coupleId) {
+      let couple = firestore.get(
+        /databases/(default)/documents/couples/$(coupleId)
+      );
+      return signedIn() && couple != null &&
+        couple.data.user1 != null && couple.data.user2 != null &&
+        (!couple.data.keys().hasAny(['status']) || couple.data.status == 'paired') &&
+        (couple.data.user1 == request.auth.uid ||
+         couple.data.user2 == request.auth.uid);
+    }
+
+    function isValidImageUpload() {
+      return request.resource != null &&
+        request.resource.size > 0 &&
+        request.resource.size <= 1 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+
+    function isPartnerProfilePhoto(fileName, code) {
+      let couple = firestore.get(
+        /databases/(default)/documents/couples/$(code)
+      );
+      return code is string && couple != null &&
+        couple.data.user1 != null && couple.data.user2 != null &&
+        (!couple.data.keys().hasAny(['status']) || couple.data.status == 'paired') &&
+        (couple.data.user1 == request.auth.uid &&
+         fileName == couple.data.user2 + '.jpg' ||
+         couple.data.user2 == request.auth.uid &&
+         fileName == couple.data.user1 + '.jpg');
+    }
+
+    function canReadPartnerProfilePhoto(fileName) {
+      let profile = firestore.get(
+        /databases/(default)/documents/users/$(request.auth.uid)
+      );
+      return profile != null && profile.data.keys().hasAny(['coupleCode']) &&
+        isPartnerProfilePhoto(fileName, profile.data.coupleCode);
+    }
+
+    function canReadProfilePhoto(fileName) {
+      return signedIn() &&
+        (fileName == request.auth.uid + '.jpg' ||
+         canReadPartnerProfilePhoto(fileName));
+    }
+
+    // Shared couple photos. A file is always addressed through its storagePath;
+    // the app does not persist token-bearing download URLs.
+    match /couples/{coupleId}/photos/{fileName} {
+      allow read: if isCoupleMember(coupleId);
+      allow create: if resource == null &&
+        isCoupleMember(coupleId) && isValidImageUpload() &&
+        fileName.matches('[A-Za-z0-9_-]{10,160}\\.jpg') &&
+        request.resource.contentType == 'image/jpeg' &&
+        request.resource.metadata.uploadedBy == request.auth.uid &&
+        request.resource.metadata.coupleCode == coupleId;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // Existing profile-photo feature, kept private to authenticated Pawdo users.
+    match /profile_photos/{fileName} {
+      allow read: if canReadProfilePhoto(fileName);
+      allow create, update: if signedIn() &&
+        fileName == request.auth.uid + '.jpg' &&
+        isValidImageUpload();
+      allow delete: if signedIn() && fileName == request.auth.uid + '.jpg';
+    }
+
+    // Explicit deny for every path not listed above.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

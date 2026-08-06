@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "339068064370",
+    "project_id": "pawdo-aeda8",
+    "storage_bucket": "pawdo-aeda8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:339068064370:android:272631d811d7ed7d7da8eb",
+        "android_client_info": {
+          "package_name": "com.pawdo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCa40UwCBTaeKTQl_bnGMK1IIAqhbRQm6U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

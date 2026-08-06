@@ -1,0 +1,12 @@
+{
+  "name": "pawdo-firebase-rules-tests",
+  "private": true,
+  "scripts": {
+    "test": "mocha --timeout 20000 firestore.rules.test.js && mocha --timeout 20000 storage.rules.test.js"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "3.0.4",
+    "firebase": "10.14.1",
+    "mocha": "11.7.6"
+  }
+}

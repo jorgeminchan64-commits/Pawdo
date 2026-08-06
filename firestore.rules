@@ -1,0 +1,226 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function member(code) {
+      return signedIn() &&
+        get(/databases/$(database)/documents/couples/$(code)).data.user1 != null &&
+        get(/databases/$(database)/documents/couples/$(code)).data.user2 != null &&
+        (!get(/databases/$(database)/documents/couples/$(code)).data.keys().hasAny(['status']) ||
+         get(/databases/$(database)/documents/couples/$(code)).data.status == 'paired') &&
+        (get(/databases/$(database)/documents/couples/$(code)).data.user1 == request.auth.uid ||
+         get(/databases/$(database)/documents/couples/$(code)).data.user2 == request.auth.uid);
+    }
+
+    function validTextMessage(code) {
+      return request.resource.data.keys().hasOnly([
+          'type', 'text', 'uploadedBy', 'createdAt', 'timestamp', 'coupleId'
+        ]) &&
+        request.resource.data.type == 'text' &&
+        request.resource.data.text is string &&
+        request.resource.data.text.size() > 0 &&
+        request.resource.data.text.size() <= 2000 &&
+        request.resource.data.uploadedBy == request.auth.uid &&
+        request.resource.data.coupleId == code &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.timestamp == request.time;
+    }
+
+    function validPhotoMessage(code) {
+      return request.resource.data.keys().hasOnly([
+          'type', 'storagePath', 'uploadedBy', 'createdAt', 'coupleCode',
+          'fileName', 'contentType', 'sizeBytes', 'timestamp'
+        ]) &&
+        request.resource.data.type == 'image' &&
+        request.resource.data.storagePath is string &&
+        request.resource.data.storagePath ==
+          'couples/' + code + '/photos/' + request.resource.data.fileName &&
+        request.resource.data.fileName is string &&
+        request.resource.data.fileName.size() > 0 &&
+        request.resource.data.uploadedBy == request.auth.uid &&
+        request.resource.data.coupleCode == code &&
+        request.resource.data.contentType in ['image/jpeg', 'image/png', 'image/webp'] &&
+        request.resource.data.sizeBytes is int &&
+        request.resource.data.sizeBytes > 0 &&
+        request.resource.data.sizeBytes <= 1 * 1024 * 1024 &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.timestamp == request.time;
+    }
+
+    match /users/{userId} {
+      allow create: if signedIn() && request.auth.uid == userId &&
+        (!request.resource.data.keys().hasAny(['uid']) ||
+         request.resource.data.uid == userId) &&
+        (!request.resource.data.keys().hasAny(['coupleCode']) ||
+         request.resource.data.coupleCode == '') &&
+        (!request.resource.data.keys().hasAny(['pendingCoupleCode']) ||
+         request.resource.data.pendingCoupleCode == '');
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow update: if signedIn() && request.auth.uid == userId &&
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['coupleCode', 'pendingCoupleCode']) &&
+        (
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['uid']) ||
+          (
+            !resource.data.keys().hasAny(['uid']) &&
+            request.resource.data.uid == userId
+          )
+        );
+
+      match /devices/{deviceId} {
+        allow read, delete: if signedIn() && request.auth.uid == userId;
+        allow create, update: if signedIn() && request.auth.uid == userId &&
+          request.resource.data.keys().hasOnly([
+            'token', 'platform', 'enabled', 'updatedAt'
+          ]) &&
+          request.resource.data.token is string &&
+          request.resource.data.token.size() >= 20 &&
+          request.resource.data.token.size() <= 4096 &&
+          request.resource.data.platform == 'android' &&
+          request.resource.data.enabled is bool &&
+          request.resource.data.updatedAt == request.time;
+      }
+
+      match /settings/notifications {
+        allow read: if signedIn() && request.auth.uid == userId;
+        allow create, update: if signedIn() && request.auth.uid == userId &&
+          request.resource.data.keys().hasOnly([
+            'chatEnabled', 'quickMessagesEnabled', 'hideSensitiveContent',
+            'quietHoursEnabled', 'quietStartHour', 'quietEndHour', 'updatedAt'
+          ]) &&
+          request.resource.data.chatEnabled is bool &&
+          request.resource.data.quickMessagesEnabled is bool &&
+          request.resource.data.hideSensitiveContent is bool &&
+          request.resource.data.quietHoursEnabled is bool &&
+          request.resource.data.quietStartHour is int &&
+          request.resource.data.quietStartHour >= 0 &&
+          request.resource.data.quietStartHour <= 23 &&
+          request.resource.data.quietEndHour is int &&
+          request.resource.data.quietEndHour >= 0 &&
+          request.resource.data.quietEndHour <= 23 &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if false;
+      }
+
+      // Wellness data is sensitive and private by default. Only Cloud
+      // Functions may mutate it; not even a partner can read this path.
+      match /wellness/{documentId} {
+        allow read: if signedIn() && request.auth.uid == userId;
+        allow create, update, delete: if false;
+      }
+
+      match /wellnessEntries/{entryId} {
+        allow read: if signedIn() && request.auth.uid == userId;
+        allow create, update, delete: if false;
+      }
+    }
+
+    match /couples/{code} {
+      // Creation and membership changes are atomic server operations.
+      allow create: if false;
+
+      allow read: if member(code) ||
+        (signedIn() &&
+         resource.data.user1 == request.auth.uid &&
+         resource.data.user2 == null &&
+         (!resource.data.keys().hasAny(['status']) ||
+          resource.data.status == 'pending'));
+
+      // Economy, identities and winner/reward fields are server-only.
+      allow update: if member(code) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'coins', 'love', 'energy', 'plantsWatered', 'ownedGardenItems',
+          'ownedInteriorItems', 'dailyChest', 'dailyMissions', 'user1',
+          'user2', 'winner', 'winnerSide', 'rewardClaimed',
+          'rewardClaimedAt', 'rewardClaimedBy', 'rewardGranted',
+          'rewardedAt', 'rewardedTo', 'balances', 'code', 'createdBy',
+          'status', 'inviteExpiresAt', 'consumedAt', 'consumedBy',
+          'memberProfiles', 'memberPresence', 'memberProfilesUpdatedAt',
+          'chatReadState', 'lastShopPurchase', 'gardenLayout',
+          'gardenUpdatedAt', 'gardenRevision', 'selectedHouseId',
+          'houseUpdatedAt', 'interiorLayout', 'interiorUpdatedAt',
+          'interiorRevision', 'furniturePositions', 'gardenPlant'
+        ]);
+
+      match /chat/{messageId} {
+        allow read: if member(code);
+        allow create, update, delete: if false;
+      }
+
+      match /typing/{userId} {
+        allow read: if member(code);
+        allow create, update: if member(code) &&
+          request.auth.uid == userId &&
+          request.resource.data.keys().hasOnly(['uid', 'isTyping', 'updatedAt']) &&
+          request.resource.data.uid == userId &&
+          request.resource.data.isTyping is bool &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if member(code) && request.auth.uid == userId;
+      }
+
+      match /chatRateLimits/{userId} {
+        allow read, write: if false;
+      }
+
+      match /games/{gameId} {
+        allow read: if member(code);
+        allow create, update, delete: if false;
+      }
+
+      match /actionClaims/{document=**} {
+        allow read, write: if false;
+      }
+
+      match /missionClaims/{document=**} {
+        allow read, write: if false;
+      }
+
+      match /gameRewardClaims/{document=**} {
+        allow read, write: if false;
+      }
+
+      match /economyLedger/{entryId} {
+        allow read: if member(code);
+        allow create, update, delete: if false;
+      }
+
+      // This collection contains only the small set of fields the owner
+      // explicitly consented to share. Private notes never enter this path.
+      match /wellnessShared/{ownerUid} {
+        allow read: if member(code);
+        allow create, update, delete: if false;
+      }
+
+      // Location is temporary, consent-based and written only by validated
+      // server functions. Members can see only the current share document.
+      match /locationShares/{ownerUid} {
+        allow read: if member(code);
+        allow create, update, delete: if false;
+      }
+
+      match /state/{document=**} {
+        allow read, write: if member(code);
+      }
+
+      match /cinemaReactions/{document=**} {
+        allow read, write: if member(code);
+      }
+
+      match /cinemaMessages/{document=**} {
+        allow read, write: if member(code);
+      }
+
+      match /{unknownPath=**} {
+        allow read, write: if false;
+      }
+    }
+
+    match /{unknownPath=**} {
+      allow read, write: if false;
+    }
+  }
+}
