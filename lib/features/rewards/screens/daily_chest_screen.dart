@@ -40,12 +40,6 @@ class _DailyChestScreenState extends State<DailyChestScreen> {
     return defaultValue;
   }
 
-  int _limit100(int value) {
-    if (value > 100) return 100;
-    if (value < 0) return 0;
-    return value;
-  }
-
   Map<String, dynamic> _dailyChestData(Map<String, dynamic> data) {
     final raw = data['dailyChest'];
 
@@ -174,7 +168,7 @@ class _DailyChestScreenState extends State<DailyChestScreen> {
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -248,7 +242,7 @@ class _DailyChestScreenState extends State<DailyChestScreen> {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.purple.withOpacity(0.16),
+            color: Colors.purple.withValues(alpha: 0.16),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -279,7 +273,7 @@ class _DailyChestScreenState extends State<DailyChestScreen> {
                 : 'Recompensa: 🪙 ${reward.coins}  ❤️ ${reward.love}  ⚡ ${reward.energy}',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.black.withOpacity(0.62),
+              color: Colors.black.withValues(alpha: 0.62),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -330,7 +324,7 @@ class _DailyChestScreenState extends State<DailyChestScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),

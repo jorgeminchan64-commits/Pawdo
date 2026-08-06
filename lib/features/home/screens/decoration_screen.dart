@@ -175,7 +175,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
                     border: Border.all(color: Colors.white, width: 4),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 18,
                         offset: const Offset(0, 8),
                       ),
@@ -351,15 +351,15 @@ class _DecorationScreenState extends State<DecorationScreen> {
               width: size,
               height: size,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: const Color(0xFF6C63FF).withOpacity(0.35),
+                  color: const Color(0xFF6C63FF).withValues(alpha: 0.35),
                   width: 2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.10),
+                    color: Colors.black.withValues(alpha: 0.10),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -373,7 +373,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.55),
+                color: Colors.black.withValues(alpha: 0.55),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(

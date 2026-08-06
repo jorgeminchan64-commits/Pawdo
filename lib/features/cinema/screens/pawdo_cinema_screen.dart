@@ -604,7 +604,7 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
       child: Row(
         children: [
           Material(
-            color: Colors.white.withOpacity(0.12),
+            color: Colors.white.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(18),
             child: InkWell(
               borderRadius: BorderRadius.circular(18),
@@ -679,7 +679,7 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.purple.withOpacity(0.35),
+            color: Colors.purple.withValues(alpha: 0.35),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -710,7 +710,7 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
                     WebViewWidget(controller: _webViewController),
                     if (_webLoading)
                       Container(
-                        color: Colors.black.withOpacity(0.45),
+                        color: Colors.black.withValues(alpha: 0.45),
                         child: const Center(child: CircularProgressIndicator()),
                       ),
                   ],
@@ -724,9 +724,9 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.10),
+        color: Colors.white.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.14)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
       ),
       child: Column(
         children: [
@@ -738,7 +738,7 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
                 child: Text(
                   'Plataforma: ${source.title}. Si no carga dentro de Pawdo, ábrelo afuera.',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.82),
+                    color: Colors.white.withValues(alpha: 0.82),
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                     height: 1.3,
@@ -783,9 +783,9 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.09),
+          color: Colors.white.withValues(alpha: 0.09),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withOpacity(0.12)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
         ),
         child: Row(
           children: [
@@ -796,7 +796,7 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
                 'La sincronización play/pausa/segundo funciona nivel PRO con YouTube. '
                 'En ${source.title}, Pawdo comparte el mismo enlace, pero el reproductor puede no dejar controlar el segundo.',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.78),
+                  color: Colors.white.withValues(alpha: 0.78),
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
                   height: 1.3,
@@ -819,9 +819,9 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.10),
+        color: Colors.white.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: Colors.white.withOpacity(0.12)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -840,7 +840,7 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
                 ? '${isPlaying ? "▶️ Reproduciendo" : "⏸️ Pausado"} · ${_formatSeconds(seconds)} · por $updatedByName'
                 : 'Aún no hay sincronización para este video.',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.75),
+              color: Colors.white.withValues(alpha: 0.75),
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),
@@ -931,9 +931,9 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.10),
+        color: Colors.white.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: Colors.white.withOpacity(0.12)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -955,7 +955,7 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
                   runSpacing: 8,
                   children: reactions.map((emoji) {
                     return Material(
-                      color: Colors.white.withOpacity(0.13),
+                      color: Colors.white.withValues(alpha: 0.13),
                       borderRadius: BorderRadius.circular(18),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(18),
@@ -1020,7 +1020,7 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: docs.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
               final data = docs[index].data();
               final emoji = data['emoji']?.toString() ?? '❤️';
@@ -1032,9 +1032,11 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.12),
+                  color: Colors.white.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withOpacity(0.12)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.12),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -1043,7 +1045,7 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
                     Text(
                       sender,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.82),
+                        color: Colors.white.withValues(alpha: 0.82),
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
                       ),
@@ -1062,9 +1064,9 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.10),
+        color: Colors.white.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: Colors.white.withOpacity(0.12)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1090,9 +1092,11 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
                   maxLines: 3,
                   decoration: InputDecoration(
                     hintText: 'Escribe algo mientras ven...',
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.55)),
+                    hintStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.55),
+                    ),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.10),
+                    fillColor: Colors.white.withValues(alpha: 0.10),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
                       borderSide: BorderSide.none,
@@ -1143,13 +1147,13 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
             height: 120,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.16),
+              color: Colors.black.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
               'Aún no hay mensajes en el cine 🍿',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.65),
+                color: Colors.white.withValues(alpha: 0.65),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -1160,7 +1164,7 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
           height: 210,
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.16),
+            color: Colors.black.withValues(alpha: 0.16),
             borderRadius: BorderRadius.circular(20),
           ),
           child: ListView.builder(
@@ -1187,8 +1191,8 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
                   constraints: const BoxConstraints(maxWidth: 280),
                   decoration: BoxDecoration(
                     color: mine
-                        ? Colors.pinkAccent.withOpacity(0.92)
-                        : Colors.white.withOpacity(0.14),
+                        ? Colors.pinkAccent.withValues(alpha: 0.92)
+                        : Colors.white.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),
@@ -1205,7 +1209,7 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
                         Text(
                           senderName,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.75),
+                            color: Colors.white.withValues(alpha: 0.75),
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1222,7 +1226,7 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
                       Text(
                         _formatTime(createdAt),
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.62),
+                          color: Colors.white.withValues(alpha: 0.62),
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
                         ),
@@ -1242,9 +1246,9 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.10),
+        color: Colors.white.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: Colors.white.withOpacity(0.12)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1264,10 +1268,10 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
             keyboardType: TextInputType.url,
             decoration: InputDecoration(
               hintText: 'YouTube, OK.ru, Drive o link web',
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.55)),
+              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.55)),
               prefixIcon: const Icon(Icons.link, color: Colors.white70),
               filled: true,
-              fillColor: Colors.white.withOpacity(0.10),
+              fillColor: Colors.white.withValues(alpha: 0.10),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
                 borderSide: BorderSide.none,
@@ -1303,14 +1307,14 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Text(
         'Cine V4: video compartido, reacciones en vivo, mini chat y sincronización YouTube. '
         'Pawdo guarda el mismo enlace para ambos. Si una plataforma bloquea el reproductor interno, ambos pueden abrir el mismo enlace afuera.',
         style: TextStyle(
-          color: Colors.white.withOpacity(0.75),
+          color: Colors.white.withValues(alpha: 0.75),
           fontWeight: FontWeight.w600,
           fontSize: 12,
           height: 1.35,

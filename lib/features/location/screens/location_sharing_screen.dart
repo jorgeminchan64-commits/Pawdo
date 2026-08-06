@@ -146,8 +146,9 @@ class _LocationSharingScreenState extends State<LocationSharingScreen> {
             return Center(child: Text(codeSnapshot.error.toString()));
           }
           final code = codeSnapshot.data;
-          if (code == null)
+          if (code == null) {
             return const Center(child: CircularProgressIndicator());
+          }
           return StreamBuilder<List<LocationShare>>(
             stream: _service.watchShares(code),
             builder: (context, snapshot) {

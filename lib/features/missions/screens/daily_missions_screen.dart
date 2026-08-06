@@ -132,7 +132,7 @@ class _DailyMissionsScreenState extends State<DailyMissionsScreen> {
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -203,7 +203,7 @@ class _DailyMissionsScreenState extends State<DailyMissionsScreen> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 12,
-              backgroundColor: Colors.white.withOpacity(0.8),
+              backgroundColor: Colors.white.withValues(alpha: 0.8),
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.purple),
             ),
           ),
@@ -265,7 +265,7 @@ class _DailyMissionsScreenState extends State<DailyMissionsScreen> {
                     Text(
                       'Reclama recompensas y mantén tu racha de 7 días.',
                       style: TextStyle(
-                        color: Colors.black.withOpacity(0.58),
+                        color: Colors.black.withValues(alpha: 0.58),
                         fontSize: 12,
                       ),
                     ),
@@ -300,7 +300,7 @@ class _DailyMissionsScreenState extends State<DailyMissionsScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 14,
             offset: const Offset(0, 7),
           ),
@@ -339,7 +339,7 @@ class _DailyMissionsScreenState extends State<DailyMissionsScreen> {
                 Text(
                   mission.description,
                   style: TextStyle(
-                    color: Colors.black.withOpacity(0.58),
+                    color: Colors.black.withValues(alpha: 0.58),
                     fontSize: 12,
                   ),
                 ),

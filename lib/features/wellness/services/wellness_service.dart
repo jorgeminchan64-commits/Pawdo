@@ -26,8 +26,9 @@ class WellnessService {
 
   String get _uid {
     final uid = _auth.currentUser?.uid;
-    if (uid == null)
+    if (uid == null) {
       throw const WellnessException('Inicia sesión para continuar.');
+    }
     return uid;
   }
 

@@ -56,12 +56,6 @@ class _InteriorHouseScreenState extends State<InteriorHouseScreen> {
     return defaultValue;
   }
 
-  int _limit100(int value) {
-    if (value > 100) return 100;
-    if (value < 0) return 0;
-    return value;
-  }
-
   Map<String, Offset> _getFurniturePositions(Map<String, dynamic> data) {
     final Map<String, Offset> positions = Map.from(defaultFurniturePositions);
 
@@ -263,7 +257,7 @@ class _InteriorHouseScreenState extends State<InteriorHouseScreen> {
                             border: Border.all(color: Colors.white, width: 4),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
+                                color: Colors.black.withValues(alpha: 0.08),
                                 blurRadius: 18,
                                 offset: const Offset(0, 8),
                               ),
@@ -384,7 +378,9 @@ class _InteriorHouseScreenState extends State<InteriorHouseScreen> {
                                         vertical: 10,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.95),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.95,
+                                        ),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text(
@@ -494,7 +490,7 @@ class _InteriorHouseScreenState extends State<InteriorHouseScreen> {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 5),
           ),
@@ -516,11 +512,11 @@ class _InteriorHouseScreenState extends State<InteriorHouseScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.96),
+        color: Colors.white.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 5),
           ),

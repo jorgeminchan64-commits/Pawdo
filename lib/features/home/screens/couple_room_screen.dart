@@ -38,12 +38,6 @@ class _CoupleRoomScreenState extends State<CoupleRoomScreen> {
     return defaultValue;
   }
 
-  int _limit100(int value) {
-    if (value > 100) return 100;
-    if (value < 0) return 0;
-    return value;
-  }
-
   Future<void> _updateStats({
     required String coupleCode,
     required String actionId,
@@ -290,7 +284,7 @@ class _CoupleRoomScreenState extends State<CoupleRoomScreen> {
               borderRadius: BorderRadius.circular(22),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.07),
+                  color: Colors.black.withValues(alpha: 0.07),
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),
@@ -322,7 +316,7 @@ class _CoupleRoomScreenState extends State<CoupleRoomScreen> {
               border: Border.all(color: Colors.white, width: 4),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
@@ -352,7 +346,7 @@ class _CoupleRoomScreenState extends State<CoupleRoomScreen> {
                         bottom: roomHeight * 0.38,
                         child: Container(
                           width: 2,
-                          color: Colors.white.withOpacity(0.45),
+                          color: Colors.white.withValues(alpha: 0.45),
                         ),
                       ),
 
@@ -362,7 +356,7 @@ class _CoupleRoomScreenState extends State<CoupleRoomScreen> {
                         top: 42,
                         child: Icon(
                           Icons.favorite_border,
-                          color: Colors.white.withOpacity(0.45),
+                          color: Colors.white.withValues(alpha: 0.45),
                           size: 22,
                         ),
                       ),
@@ -383,7 +377,7 @@ class _CoupleRoomScreenState extends State<CoupleRoomScreen> {
                         bottom: i * 38.0,
                         child: Container(
                           height: 1,
-                          color: Colors.teal.withOpacity(0.25),
+                          color: Colors.teal.withValues(alpha: 0.25),
                         ),
                       ),
 
@@ -466,7 +460,7 @@ class _CoupleRoomScreenState extends State<CoupleRoomScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.85),
+                          color: Colors.white.withValues(alpha: 0.85),
                           borderRadius: BorderRadius.circular(18),
                         ),
                         child: const Row(
@@ -503,11 +497,11 @@ class _CoupleRoomScreenState extends State<CoupleRoomScreen> {
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.96),
+        color: Colors.white.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 5),
           ),
@@ -653,7 +647,7 @@ class _CoupleRoomScreenState extends State<CoupleRoomScreen> {
         borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(
-            color: Colors.teal.withOpacity(0.25),
+            color: Colors.teal.withValues(alpha: 0.25),
             blurRadius: 14,
             offset: const Offset(0, 8),
           ),
@@ -678,7 +672,7 @@ class _CoupleRoomScreenState extends State<CoupleRoomScreen> {
               width: 72,
               height: 60,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(25),
               ),
               child: const Icon(Icons.pets, color: Colors.pinkAccent),
@@ -729,7 +723,7 @@ class _CoupleRoomScreenState extends State<CoupleRoomScreen> {
         borderRadius: BorderRadius.circular(90),
         boxShadow: [
           BoxShadow(
-            color: Colors.pink.withOpacity(0.22),
+            color: Colors.pink.withValues(alpha: 0.22),
             blurRadius: 14,
             offset: const Offset(0, 7),
           ),
@@ -1017,7 +1011,7 @@ class _CoupleRoomScreenState extends State<CoupleRoomScreen> {
         border: Border.all(color: Colors.grey.shade300),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),

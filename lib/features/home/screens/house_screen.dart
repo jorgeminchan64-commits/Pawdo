@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../economy/services/economy_service.dart';
 import 'couple_room_screen.dart';
-import 'interior_house_screen.dart';
 
 class HouseScreen extends StatefulWidget {
   const HouseScreen({super.key});
@@ -180,7 +179,7 @@ class _HouseScreenState extends State<HouseScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.orange.withOpacity(0.35),
+                              color: Colors.orange.withValues(alpha: 0.35),
                               blurRadius: 30,
                               spreadRadius: 8,
                             ),
@@ -319,7 +318,7 @@ class _HouseScreenState extends State<HouseScreen> {
                           vertical: 9,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(18),
                         ),
                         child: Text(
@@ -372,7 +371,7 @@ class _HouseScreenState extends State<HouseScreen> {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 5),
           ),
@@ -406,7 +405,7 @@ class _HouseScreenState extends State<HouseScreen> {
         border: Border.all(color: border, width: isPremium ? 4 : 3),
         boxShadow: [
           BoxShadow(
-            color: border.withOpacity(0.28),
+            color: border.withValues(alpha: 0.28),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -427,7 +426,7 @@ class _HouseScreenState extends State<HouseScreen> {
                 borderRadius: BorderRadius.circular(isModern ? 14 : 24),
                 boxShadow: [
                   BoxShadow(
-                    color: roof.withOpacity(0.35),
+                    color: roof.withValues(alpha: 0.35),
                     blurRadius: 12,
                     offset: const Offset(0, 6),
                   ),
