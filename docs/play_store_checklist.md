@@ -28,19 +28,19 @@ Verificado el 2026-08-06. Los requisitos pueden cambiar y deben reconfirmarse an
 
 - [ ] Política de privacidad pública, estable y accesible dentro de la app.
 - [ ] Términos y condiciones públicos y accesibles.
-- [ ] Eliminación de cuenta iniciable dentro de Pawdo.
+- [x] Eliminación de cuenta iniciable dentro de Pawdo.
 - [ ] Recurso web externo para solicitar eliminación de cuenta/datos.
-- [ ] Borrado server-side de Auth, Firestore, Storage y datos de pareja probado.
-- [ ] Exportación/descarga de datos definida.
+- [x] Borrado server-side de Auth, Firestore, Storage y datos de pareja probado en emuladores.
+- [x] Exportación/descarga JSON definida y probada para el volumen actual.
 - [ ] Formulario Data Safety completado para autenticación, fotos, chat, ubicación, bienestar, notificaciones y diagnósticos.
 - [ ] Retención y excepciones legales documentadas.
 - [ ] Consentimiento explícito y reversible para bienestar compartido.
 
 ## Seguridad y estabilidad
 
-- [x] Firestore Rules pasan 18 tests.
+- [x] Firestore Rules pasan 19 tests.
 - [x] Storage Rules pasan 14 tests.
-- [x] Functions pasan 43 tests.
+- [x] Functions pasan 46 tests.
 - [ ] Reglas amplias de `state` y cinema endurecidas.
 - [ ] App Check integrado, probado sin enforcement y luego evaluado.
 - [ ] Crashlytics integrado sin PII ni contenido íntimo.
@@ -59,7 +59,7 @@ Verificado el 2026-08-06. Los requisitos pueden cambiar y deben reconfirmarse an
 - [x] APK release compila.
 - [ ] APK/AAB firmado.
 - [ ] `flutter build appbundle --release` aprobado.
-- [ ] Tamaño de descarga por dispositivo medido desde AAB; APK universal actual: 105.36 MiB.
+- [ ] Tamaño de descarga por dispositivo medido desde AAB; APK universal actual: 105.91 MiB.
 - [ ] Símbolos y mappings de release preservados si se habilita ofuscación.
 - [ ] Play App Signing configurado y upload key respaldada.
 
@@ -71,4 +71,3 @@ Verificado el 2026-08-06. Los requisitos pueden cambiar y deben reconfirmarse an
 - Eliminación de cuenta: https://support.google.com/googleplay/android-developer/answer/13327111
 - Data Safety: https://support.google.com/googleplay/android-developer/answer/10787469
 - Políticas de privacidad y datos: https://support.google.com/googleplay/android-developer/answer/17190352
-

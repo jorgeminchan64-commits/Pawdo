@@ -1,13 +1,13 @@
 # Pawdo — auditoría inicial de producción
 
 Fecha de actualización: 2026-08-07
-Alcance actualizado hasta FASE 5. Este documento no declara la aplicación lista para producción.
+Alcance actualizado hasta la implementación técnica de FASE 6. Este documento no declara la aplicación lista para producción.
 
 ## Resumen ejecutivo
 
-Pawdo tiene una base funcional considerable: 104 archivos Dart en `lib`, separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, paginación de chat y 104 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
+Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, paginación de chat y 110 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
 
-Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, falta de eliminación de cuenta y documentos legales, ausencia de App Check/Crashlytics, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK de 105.59 MiB. No deben añadirse módulos grandes antes de resolver los elementos críticos por fase.
+Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, recursos legales externos y soporte sin valores reales, ausencia de App Check/Crashlytics, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK de 105.91 MiB. No deben añadirse módulos grandes antes de resolver los elementos críticos por fase.
 
 ## Arquitectura observada
 
@@ -26,8 +26,8 @@ Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, fa
 | Git inválido | Crítica | `.git`, `.gitignore` | Carpeta `.git` vacía; exclusiones incompletas para Node/credenciales | Sin rollback seguro | Inicializar, excluir artefactos y crear baseline | Resuelto en FASE 1 (`6591847`) |
 | Release Android sin firma | Crítica | `android/app/build.gradle.kts` | No existe signing config de release | APK/AAB no publicable | Crear upload keystore seguro fuera del repo y configurar firma mediante propiedades locales/CI | Pendiente FASE 25 |
 | Target SDK insuficiente | Crítica | `android/app/build.gradle.kts:16` | `targetSdk = 34` | Rechazo o limitación en Google Play | Migrar y probar `targetSdk = 36` | Pendiente FASE 25 |
-| Eliminación de cuenta ausente | Crítica | Perfil, Functions, Firestore, Storage | No hay flujo in-app ni endpoint/web externo | Incumplimiento Play y retención de datos personales | Diseñar borrado server-side, desvinculación, limpieza y URL externa | Pendiente FASE 6 |
-| Privacidad/Términos/soporte sin URLs reales | Alta | Auth y perfil | Solo hay texto de aceptación/accesos parciales | Riesgo legal y de revisión | Publicar recursos legales reales y enlazarlos dentro de la app/Play Console | Pendiente FASE 6/25 |
+| Eliminación de cuenta ausente | Crítica | Perfil, Functions, Firestore, Storage | No existía flujo in-app ni limpieza integral | Incumplimiento Play y retención de datos personales | Borrado server-side, reautenticación, confirmación escrita y limpieza integral | Resuelto en código FASE 6; despliegue/staging pendiente |
+| Privacidad/Términos/soporte sin URLs reales | Alta | Cuenta y Play Console | La app ya contiene textos y configuración, pero el repositorio no aporta identidad, correo ni URLs públicas | Riesgo legal y de revisión | Publicar recursos reales y compilar con `PAWDO_*` | Bloqueo externo FASE 6/25 |
 | Reconexión incompleta | Alta | Services, Functions, Storage, widget | Firestore persiste offline, pero callables y Storage no; además, una selección de foto no puede reconstruirse después de cerrar el proceso | Acciones no persistentes pueden requerir reintento explícito tras cierre forzado | Estado central por eventos, lifecycle, backoff acotado e idempotencia; cola durable sólo para operaciones serializables que lo justifiquen | Mitigado FASE 3 (`0224ea5`, `577bfda`); persistencia entre procesos y widget siguen en sus fases |
 | Widget sin recuperación programada | Alta | `android_widget_service.dart`, `PawdoWidgetProvider.kt` | Actualización depende del canal/app y preferencias locales; no hay trabajo diferido/backoff | Datos congelados después de desconexión o cierre | Caché versionada y WorkManager solo cuando aporte valor, con restricciones de red | Pendiente FASE 17 |
 | App Check ausente | Alta | Firebase cliente/Functions | Dependencia e inicialización inexistentes | Mayor exposición a clientes abusivos | Integrar sin enforcement, validar dos teléfonos y observar métricas | Pendiente FASE 21 |
@@ -35,7 +35,7 @@ Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, fa
 | Inicialización crítica sin fallback | Alta | `lib/main.dart` | `Firebase.initializeApp()` bloqueaba antes de `runApp` y no tenía UI de recuperación | Fallo de configuración/red nativa podía impedir arrancar | Bootstrap observable con pantalla de error/reintento y reporte no sensible | Resuelto FASE 2 (`dd4c12a`) |
 | Rutas Firestore con escritura amplia | Alta | `firestore.rules:205-214` | `state`, `cinemaReactions` y `cinemaMessages` permiten escritura de miembros sin esquema/campos/límites | Riesgo de datos inválidos, abuso y crecimiento | Inventariar consumidores y restringir esquemas, tamaños y frecuencia | Pendiente FASE 23 |
 | Permisos sensibles declarados | Alta | `AndroidManifest.xml` | Cámara, audio y ubicación están en el manifiesto; llamadas reales están aplazadas | Mayor fricción y superficie de privacidad/políticas | Vincular cada permiso a función visible, solicitud contextual y retirar lo no necesario | Pendiente FASE 6/25 |
-| APK grande | Alta | assets/build | 50.50 MB de assets PNG y dependencias nativas; APK universal de 105.59 MiB | Descarga, almacenamiento y retención peores | Medir AAB por ABI, optimizar assets con validación visual y eliminar solo referencias confirmadas | Pendiente FASE 20 |
+| APK grande | Alta | assets/build | 50.50 MB de assets PNG y dependencias nativas; APK universal de 105.91 MiB | Descarga, almacenamiento y retención peores | Medir AAB por ABI, optimizar assets con validación visual y eliminar solo referencias confirmadas | Pendiente FASE 20 |
 | Lifecycle y snapshots de juegos frágiles | Alta | Ludo, Atrapa a Pawdo, Memoria y host online | Temporizadores continuaban en background; Ludo mantenía efectos; algunas listas remotas se indexaban sin validar longitud/tipo | Trabajo innecesario, sala que parecía congelada o cierre por `RangeError` ante estado parcial | Pausar recursos, recuperar salas idempotentemente y normalizar snapshots antes de renderizar | Mitigado FASE 4 (`fe6e841`, `09f80ed`); profiling físico pendiente FASE 20/24 |
 | Perfil final no editable | Alta | `profile_screen.dart`, ProfileService, Storage | La pantalla ignoraba los datos guardados y mostraba “Pronto podrás editarlo”; una tarjeta de Casa no ejecutaba ninguna acción | Perfil incompleto, poco comercial y datos desactualizados para la pareja | Formulario compatible, foto privada, temas, fechas, resumen seguro y accesos reales | Resuelto FASE 5 (`ec4d809`, `f91efad`) |
 | Dependencias atrasadas | Media | `pubspec.yaml`, `pubspec.lock` | 63 paquetes fuera de las restricciones; familia Firebase dos generaciones mayores disponible | Mantenimiento, API obsoleta y compatibilidad futura | Actualización escalonada con matriz de compatibilidad y tests | Pendiente FASE 20 |
@@ -64,16 +64,16 @@ Fortalezas confirmadas:
 - Firestore y Storage terminan en reglas deny-by-default.
 - Escrituras sensibles de chat, economía, pareja, juegos y bienestar pasan por Functions.
 - Shared photos limitadas a imágenes válidas de hasta 1 MB y miembros activos.
-- 43 tests de Functions, 18 de Firestore Rules y 14 de Storage Rules pasan en emuladores.
+- 46 tests de Functions, 19 de Firestore Rules y 14 de Storage Rules pasan en emuladores.
 
 Pendiente de validar:
 
-- App Check, eliminación/exportación de cuenta, retención, logs productivos y secretos de CI.
+- App Check, URLs/retención legal final, despliegue y prueba destructiva en staging, logs productivos y secretos de CI.
 - Consentimiento y borrado completo de bienestar/ubicación en producción.
 - Inventario Data Safety real y URLs legales públicas.
 - Reglas amplias de `state` y cinema.
 
-## Estado de FASE 0–5
+## Estado de FASE 0–6
 
 - Auditoría estática y documental: completada.
 - Git y respaldo: completados.
@@ -87,5 +87,8 @@ Pendiente de validar:
 - Puerta de FASE 4: 24 tests Flutter, 43 Functions, 18 Firestore Rules y 14 Storage Rules aprobados; APK de 110,549,753 bytes recompilado y verificado como no firmado.
 - FASE 5: perfil editable y comercial, foto privada cacheada, nombre visible seguro, fechas, pareja, accesos útiles y tres estilos compatibles con documentos legacy.
 - Puerta de FASE 5: 29 tests Flutter, 43 Functions, 18 Firestore Rules y 14 Storage Rules aprobados; APK de 110,714,193 bytes recompilado y verificado como no firmado.
+- FASE 6 técnica: cambio de correo con verificación, exportación JSON, centro de privacidad/soporte configurable, borrado completo con autenticación reciente y reglas de perfil restringidas.
+- Puerta técnica de FASE 6: analyze limpio; 31 tests Flutter, 46 Functions, 19 Firestore Rules y 14 Storage Rules aprobados; APK de 111,058,781 bytes recompilado y verificado como no firmado.
+- FASE 6 permanece bloqueada externamente hasta recibir identidad legal, correo, URLs públicas y completar la prueba destructiva de staging.
 - Pruebas físicas y profiling: no ejecutados en esta fase.
-- Siguiente paso autorizado por el roadmap: FASE 6, cuenta, privacidad y seguridad.
+- Siguiente paso autorizado por el roadmap: cerrar los bloqueos externos de FASE 6; FASE 7 aún no está autorizada.

@@ -11,9 +11,10 @@
 | 2. Errores críticos | Completada | Analyze limpio; 15 tests Flutter; bootstrap recuperable probado | Firma/target permanecen en FASE 25 | Iniciar FASE 3 |
 | 3. Conectividad | Completada | 19 tests Flutter; recuperación por evento, lifecycle y backoff acotado | La carga de fotos no puede reconstruirse tras cerrar el proceso; el widget conserva su fase propia | Iniciar FASE 4 |
 | 4. Juegos actuales | Completada | 24 tests Flutter; 43 Functions; 32 reglas; APK recompilado | FPS, memoria y batería requieren profiling físico en FASE 20/24 | Iniciar FASE 5 |
-| 5. Perfil | Completada | 29 tests Flutter; 43 Functions; 32 reglas; APK recompilado | Cuenta/correo en FASE 6; fecha compartida canónica en FASE 15 | Iniciar FASE 6 |
-| 6–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
-| 25. Play Store | Bloqueada | APK unsigned de 105.59 MiB | Firma, target 36, privacidad, AAB y dispositivos | Resolver fases anteriores |
+| 5. Perfil | Completada | 29 tests Flutter; 43 Functions; 32 reglas; APK recompilado | Fecha compartida canónica en FASE 15 | Iniciar FASE 6 |
+| 6. Cuenta, privacidad y seguridad | Implementada; bloqueada externamente | 31 tests Flutter; 46 Functions; 33 reglas; APK recompilado | Faltan identidad, correo y URLs públicas reales; prueba destructiva en staging | Recibir recursos externos y cerrar FASE 6 |
+| 7–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 25. Play Store | Bloqueada | APK unsigned de 105.91 MiB | Firma, target 36, privacidad, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
 
@@ -21,7 +22,7 @@
 - Refuerzo de `.gitignore` contra dependencias, artefactos y credenciales privadas.
 - Punto de retorno del proyecto original.
 - Formato automático aislado en commit propio.
-- 29 tests Flutter, 43 de Functions, 18 de Firestore Rules y 14 de Storage Rules aprobados.
+- 31 tests Flutter, 46 de Functions, 19 de Firestore Rules y 14 de Storage Rules aprobados.
 - APK release compilado y verificado como no firmado.
 - Inventario inicial de assets y checklist Play Store.
 - 78 hallazgos estáticos corregidos; `flutter analyze` queda limpio.
@@ -47,15 +48,19 @@
 - Foto cacheada por revisión para evitar descargas repetidas y refrescar al reemplazar el archivo en la misma ruta.
 - Cinco pruebas nuevas cubren compatibilidad legacy, fechas, temas, guardado y validación; suite Flutter aumentada de 24 a 29 tests.
 - APK release de FASE 5: 110,714,193 bytes (105.59 MiB), todavía sin firma.
+- Centro de cuenta con cambio de correo verificado, descarga JSON, privacidad, términos, soporte configurable y borrado definitivo.
+- Eliminación server-side probada de Auth, perfil/subcolecciones, fotos, parejas compartidas y estado privado de juegos; confirmación reciente y frase exacta obligatorias.
+- Reglas del perfil endurecidas contra campos arbitrarios, tipos inválidos, temas no permitidos y rutas de foto ajenas.
+- APK release de FASE 6: 111,058,781 bytes (105.91 MiB), todavía sin firma.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 6: cuenta, privacidad y seguridad.
-2. Diseñar eliminación server-side, exportación y desvinculación sin pérdida accidental.
-3. Definir recursos legales y soporte con URLs reales antes de enlazarlos.
-4. No abordar aún navegación, casa, jardín, mascota, voz o widgets.
+1. Recibir identidad legal, correo de soporte y tres URLs públicas reales.
+2. Desplegar y validar Functions/reglas en staging; ejecutar el borrado controlado con dos cuentas.
+3. Completar Data Safety y revisar que coincida con la política publicada.
+4. No iniciar FASE 7 mientras estos bloqueos externos de FASE 6 sigan abiertos.
 
-## Archivos modificados en FASE 0–5
+## Archivos modificados en FASE 0–6
 
 - `.gitignore`.
 - 47 archivos Dart, únicamente por `dart format .`.
@@ -91,5 +96,6 @@
 - Firestore mantiene su persistencia offline nativa; los callables y cargas de Storage requieren la recuperación explícita implementada o una nueva acción del usuario.
 - El APK universal sigue excediendo 100 MiB y no está firmado; ambos puntos permanecen reservados para FASE 20/25.
 - No se ejecutó profiling de FPS/RAM/GPU en dispositivo durante FASE 4; queda como gate físico de FASE 20/24.
-- El correo, eliminación de cuenta, exportación, PIN, biometría y URLs legales permanecen en FASE 6.
+- PIN/biometría no se añadió: la reautenticación de Firebase protege las acciones sensibles sin guardar otro secreto local. Puede evaluarse más adelante como bloqueo opcional de interfaz.
+- Las URLs legales y el canal de soporte siguen bloqueados por información externa no presente en el proyecto; no se inventaron valores.
 - La fecha editada en FASE 5 sigue siendo el dato personal compatible existente; la fuente compartida y el contador completo se resolverán en FASE 15.
