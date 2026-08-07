@@ -11,8 +11,9 @@
 | 2. Errores críticos | Completada | Analyze limpio; 15 tests Flutter; bootstrap recuperable probado | Firma/target permanecen en FASE 25 | Iniciar FASE 3 |
 | 3. Conectividad | Completada | 19 tests Flutter; recuperación por evento, lifecycle y backoff acotado | La carga de fotos no puede reconstruirse tras cerrar el proceso; el widget conserva su fase propia | Iniciar FASE 4 |
 | 4. Juegos actuales | Completada | 24 tests Flutter; 43 Functions; 32 reglas; APK recompilado | FPS, memoria y batería requieren profiling físico en FASE 20/24 | Iniciar FASE 5 |
-| 5–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
-| 25. Play Store | Bloqueada | APK unsigned de 105.43 MiB | Firma, target 36, privacidad, AAB y dispositivos | Resolver fases anteriores |
+| 5. Perfil | Completada | 29 tests Flutter; 43 Functions; 32 reglas; APK recompilado | Cuenta/correo en FASE 6; fecha compartida canónica en FASE 15 | Iniciar FASE 6 |
+| 6–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 25. Play Store | Bloqueada | APK unsigned de 105.59 MiB | Firma, target 36, privacidad, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
 
@@ -20,7 +21,7 @@
 - Refuerzo de `.gitignore` contra dependencias, artefactos y credenciales privadas.
 - Punto de retorno del proyecto original.
 - Formato automático aislado en commit propio.
-- 24 tests Flutter, 43 de Functions, 18 de Firestore Rules y 14 de Storage Rules aprobados.
+- 29 tests Flutter, 43 de Functions, 18 de Firestore Rules y 14 de Storage Rules aprobados.
 - APK release compilado y verificado como no firmado.
 - Inventario inicial de assets y checklist Play Store.
 - 78 hallazgos estáticos corregidos; `flutter analyze` queda limpio.
@@ -40,15 +41,21 @@
 - Los seis minijuegos online compartidos reabren su sala tras recuperar red; las jugadas no se reenvían a ciegas.
 - Cinco pruebas nuevas cubren snapshots malformados y pause/resume; suite Flutter aumentada de 19 a 24 tests.
 - APK release de FASE 4: 110,549,753 bytes (105.43 MiB), todavía sin firma.
+- Perfil comercial conectado a los datos reales, sin el texto “Pronto podrás editarlo”.
+- Edición de nombre, nombre visible, foto comprimida, cumpleaños, fecha personal de relación y tres estilos visuales.
+- Resumen de pareja limitado a nombre visible y ruta de foto validada; nombre privado no se replica al documento compartido.
+- Foto cacheada por revisión para evitar descargas repetidas y refrescar al reemplazar el archivo en la misma ruta.
+- Cinco pruebas nuevas cubren compatibilidad legacy, fechas, temas, guardado y validación; suite Flutter aumentada de 24 a 29 tests.
+- APK release de FASE 5: 110,714,193 bytes (105.59 MiB), todavía sin firma.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 5: perfil editable y presentación comercial.
-2. Inventariar campos actuales, consumidores, Storage y compatibilidad antes de cambiar el modelo.
-3. Mantener intactos los contratos Firebase y la vinculación de pareja.
-4. No abordar aún cuenta, casa, jardín, mascota, voz o widgets.
+1. Iniciar FASE 6: cuenta, privacidad y seguridad.
+2. Diseñar eliminación server-side, exportación y desvinculación sin pérdida accidental.
+3. Definir recursos legales y soporte con URLs reales antes de enlazarlos.
+4. No abordar aún navegación, casa, jardín, mascota, voz o widgets.
 
-## Archivos modificados en FASE 0–4
+## Archivos modificados en FASE 0–5
 
 - `.gitignore`.
 - 47 archivos Dart, únicamente por `dart format .`.
@@ -63,6 +70,10 @@
 - `lib/features/games/game_snapshot.dart` y seis consumidores para normalización defensiva.
 - Ludo, Atrapa a Pawdo, Memoria offline, `mini_game_host.dart` y su servicio para lifecycle y reconexión.
 - `test/game_snapshot_test.dart` y `test/game_lifecycle_test.dart` con cinco pruebas nuevas.
+- Modelo, servicio, formulario y avatar cacheado bajo `lib/features/profile/`.
+- `lib/features/home/screens/profile_screen.dart` rediseñado sobre streams existentes.
+- `functions/index.js` conserva el contrato `memberProfiles.name`, pero prioriza `displayName`.
+- `test/profile_data_test.dart`, `test/edit_profile_screen_test.dart` y casos Firebase ampliados.
 - `docs/pre_modification_baseline.md`.
 - `docs/final_production_audit.md`.
 - `docs/production_progress.md`.
@@ -80,3 +91,5 @@
 - Firestore mantiene su persistencia offline nativa; los callables y cargas de Storage requieren la recuperación explícita implementada o una nueva acción del usuario.
 - El APK universal sigue excediendo 100 MiB y no está firmado; ambos puntos permanecen reservados para FASE 20/25.
 - No se ejecutó profiling de FPS/RAM/GPU en dispositivo durante FASE 4; queda como gate físico de FASE 20/24.
+- El correo, eliminación de cuenta, exportación, PIN, biometría y URLs legales permanecen en FASE 6.
+- La fecha editada en FASE 5 sigue siendo el dato personal compatible existente; la fuente compartida y el contador completo se resolverán en FASE 15.
