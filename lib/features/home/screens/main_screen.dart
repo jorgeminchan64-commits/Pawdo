@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/widgets/network_status_banner.dart';
 import '../../chat/screens/chat_screen.dart';
 import '../../games/screens/games_hub_screen.dart';
+import '../../interior/screens/pawdo_interior_screen.dart';
 import '../../missions/screens/daily_missions_screen.dart';
 import '../../location/screens/location_sharing_screen.dart';
 import '../../location/widgets/location_sharing_status_banner.dart';
@@ -36,7 +37,7 @@ class _MainScreenState extends State<MainScreen> {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
   }
 
-  void _openWorld() {
+  void _openGarden() {
     _open(
       WorldScreen(
         onNavigate: (legacyIndex) {
@@ -53,11 +54,14 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  void _openHouse() => _open(const PawdoInteriorScreen());
+
   @override
   Widget build(BuildContext context) {
     final pages = [
       HomeDashboardScreen(
-        onOpenWorld: _openWorld,
+        onOpenHouse: _openHouse,
+        onOpenGarden: _openGarden,
         onOpenGames: () => _open(const GamesHubScreen()),
         onOpenMissions: () => _open(const DailyMissionsScreen()),
         onNavigate: changeTab,

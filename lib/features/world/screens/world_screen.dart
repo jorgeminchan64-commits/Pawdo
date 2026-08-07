@@ -365,7 +365,9 @@ class _WorldScreenState extends State<WorldScreen> {
             left: 18,
             child: SafeArea(
               child: _glassButton(
-                text: isEditingGarden ? "Editando jardín ✏️" : "Casa Pawdo 🏡",
+                text: isEditingGarden
+                    ? "Editando jardín ✏️"
+                    : "Jardín Pawdo 🌿",
                 onTap: () {},
               ),
             ),
