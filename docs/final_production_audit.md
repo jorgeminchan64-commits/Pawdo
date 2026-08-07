@@ -5,7 +5,7 @@ Alcance: FASE 0 y FASE 1. Este documento no declara la aplicación lista para pr
 
 ## Resumen ejecutivo
 
-Pawdo tiene una base funcional considerable: 98 archivos Dart en `lib`, separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, paginación de chat y 88 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
+Pawdo tiene una base funcional considerable: 98 archivos Dart en `lib`, separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, paginación de chat y 90 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
 
 Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, falta de eliminación de cuenta y documentos legales, ausencia de App Check/Crashlytics, recuperación de red incompleta para operaciones no persistentes y un APK de 105.36 MiB. No deben añadirse módulos grandes antes de resolver los elementos críticos por fase.
 
@@ -32,13 +32,13 @@ Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, fa
 | Widget sin recuperación programada | Alta | `android_widget_service.dart`, `PawdoWidgetProvider.kt` | Actualización depende del canal/app y preferencias locales; no hay trabajo diferido/backoff | Datos congelados después de desconexión o cierre | Caché versionada y WorkManager solo cuando aporte valor, con restricciones de red | Pendiente FASE 17 |
 | App Check ausente | Alta | Firebase cliente/Functions | Dependencia e inicialización inexistentes | Mayor exposición a clientes abusivos | Integrar sin enforcement, validar dos teléfonos y observar métricas | Pendiente FASE 21 |
 | Crashlytics/captura global ausente | Alta | `main.dart`, dependencias | No hay Crashlytics, `FlutterError.onError`, `PlatformDispatcher.onError` ni zona protegida | Crashes y fallos async sin telemetría | Integrar con redacción estricta de PII | Pendiente FASE 22 |
-| Inicialización crítica sin fallback | Alta | `lib/main.dart` | `Firebase.initializeApp()` bloquea antes de `runApp` y no tiene UI de recuperación | Fallo de configuración/red nativa puede impedir arrancar | Bootstrap observable con pantalla de error/reintento y reporte no sensible | Pendiente FASE 2 |
+| Inicialización crítica sin fallback | Alta | `lib/main.dart` | `Firebase.initializeApp()` bloqueaba antes de `runApp` y no tenía UI de recuperación | Fallo de configuración/red nativa podía impedir arrancar | Bootstrap observable con pantalla de error/reintento y reporte no sensible | Resuelto FASE 2 (`dd4c12a`) |
 | Rutas Firestore con escritura amplia | Alta | `firestore.rules:205-214` | `state`, `cinemaReactions` y `cinemaMessages` permiten escritura de miembros sin esquema/campos/límites | Riesgo de datos inválidos, abuso y crecimiento | Inventariar consumidores y restringir esquemas, tamaños y frecuencia | Pendiente FASE 23 |
 | Permisos sensibles declarados | Alta | `AndroidManifest.xml` | Cámara, audio y ubicación están en el manifiesto; llamadas reales están aplazadas | Mayor fricción y superficie de privacidad/políticas | Vincular cada permiso a función visible, solicitud contextual y retirar lo no necesario | Pendiente FASE 6/25 |
 | APK grande | Alta | assets/build | 50.50 MB de assets PNG y dependencias nativas; APK universal de 105.36 MiB | Descarga, almacenamiento y retención peores | Medir AAB por ABI, optimizar assets con validación visual y eliminar solo referencias confirmadas | Pendiente FASE 20 |
 | Dependencias atrasadas | Media | `pubspec.yaml`, `pubspec.lock` | 63 paquetes fuera de las restricciones; familia Firebase dos generaciones mayores disponible | Mantenimiento, API obsoleta y compatibilidad futura | Actualización escalonada con matriz de compatibilidad y tests | Pendiente FASE 20 |
 | Functions usa release candidate | Alta | `functions/package.json` | `firebase-functions ^7.3.2-rc.0` | Riesgo de cambios/bugs pre-release en backend | Evaluar versión estable compatible antes de producción | Pendiente FASE 23 |
-| Analizador no limpio | Media | Varios | 4 warnings y 74 infos | Puerta de calidad falla y oculta regresiones futuras | Corregir en commit mecánico, sin mezclar funciones | Pendiente FASE 2 |
+| Analizador no limpio | Media | Varios | 4 warnings y 74 infos en la línea base | La puerta de calidad fallaba y podía ocultar regresiones futuras | Corregir en commit mecánico, sin mezclar funciones | Resuelto FASE 2 (`f760274`); 0 hallazgos |
 | Arquitectura de estado inconsistente | Media | `app_providers.dart` y pantallas | Servicios inyectados conviven con acceso directo a Firebase | Tests y reconexión transversal más difíciles | Migración incremental por feature; no reescritura global | Pendiente gradual |
 | Código legacy/duplicado | Media | `login_screen_new.dart`, `uth_gate.dart`, `features/home/screens/chat_screen.dart`, `pet_screen.dart` | Implementaciones antiguas no importadas por flujo activo | Confusión, tamaño fuente y riesgo de editar archivo equivocado | Confirmar rutas y eliminar en commit separado con tests | Pendiente FASE 2 |
 | Functions monolítica | Media | `functions/index.js` (~115 KB) | Múltiples dominios y exports en un solo archivo | Revisión, ownership y pruebas selectivas difíciles | Modularizar sin cambiar contratos/export names | Pendiente gradual |
@@ -71,10 +71,12 @@ Pendiente de validar:
 - Inventario Data Safety real y URLs legales públicas.
 - Reglas amplias de `state` y cinema.
 
-## Estado de FASE 0/1
+## Estado de FASE 0–2
 
 - Auditoría estática y documental: completada.
 - Git y respaldo: completados.
 - Baseline Flutter/Android/Firebase: completado con hallazgos registrados.
+- FASE 2: analizador limpio; bootstrap con carga, error, reintento y captura global segura; dos widget tests añadidos.
+- Puerta final de FASE 2: 15 tests Flutter, 43 Functions, 18 Firestore Rules y 14 Storage Rules aprobados; APK recompilado.
 - Pruebas físicas y profiling: no ejecutados en esta fase.
-- Siguiente paso autorizado por el roadmap: FASE 2, comenzando por bloqueos críticos y una puerta `flutter analyze` limpia.
+- Siguiente paso autorizado por el roadmap: FASE 3, conectividad y sincronización.
