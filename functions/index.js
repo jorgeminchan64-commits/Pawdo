@@ -276,7 +276,11 @@ function isActiveCouple(couple) {
 }
 
 function safeMemberProfile(uid, profile) {
-  const rawName = typeof profile?.name === 'string' ? profile.name.trim() : '';
+  const visibleName = typeof profile?.displayName === 'string'
+    ? profile.displayName.trim()
+    : '';
+  const rawName = visibleName ||
+    (typeof profile?.name === 'string' ? profile.name.trim() : '');
   const rawPath = typeof profile?.photoStoragePath === 'string'
     ? profile.photoStoragePath
     : '';

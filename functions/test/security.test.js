@@ -376,7 +376,8 @@ describe('Pawdo callable security', () => {
   it('refreshes safe member summaries and shared presence', async () => {
     await db.doc(`users/${user1}`).set({
       uid: user1, coupleCode: code, profileCompleted: true,
-      name: 'Uno', photoStoragePath: `profile_photos/${user1}.jpg`,
+      name: 'Nombre privado', displayName: 'Uno visible',
+      photoStoragePath: `profile_photos/${user1}.jpg`,
     });
     await db.doc(`users/${user2}`).set({
       uid: user2, coupleCode: code, profileCompleted: true,
@@ -386,7 +387,7 @@ describe('Pawdo callable security', () => {
     const refreshed = await handlers.refreshCoupleProfilesHandler(request(user1, {}));
     assert.equal(refreshed.refreshed, true);
     let couple = (await db.doc(`couples/${code}`).get()).data();
-    assert.equal(couple.memberProfiles[user1].name, 'Uno');
+    assert.equal(couple.memberProfiles[user1].name, 'Uno visible');
     assert.equal(couple.memberProfiles[user1].photoStoragePath, `profile_photos/${user1}.jpg`);
     assert.equal(couple.memberProfiles[user2].photoStoragePath, undefined);
 
