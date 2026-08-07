@@ -1,13 +1,13 @@
 # Pawdo — auditoría inicial de producción
 
 Fecha de actualización: 2026-08-07
-Alcance actualizado hasta la implementación técnica de FASE 6. Este documento no declara la aplicación lista para producción.
+Alcance actualizado hasta el cierre de FASE 6. Este documento no declara la aplicación lista para producción.
 
 ## Resumen ejecutivo
 
-Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, paginación de chat y 110 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
+Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, paginación de chat y 111 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
 
-Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, recursos legales externos y soporte sin valores reales, ausencia de App Check/Crashlytics, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK de 105.91 MiB. No deben añadirse módulos grandes antes de resolver los elementos críticos por fase.
+Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, Data Safety y prueba staging pendientes, ausencia de App Check/Crashlytics, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK de 105.91 MiB. No deben añadirse módulos grandes fuera del orden de fases.
 
 ## Arquitectura observada
 
@@ -27,7 +27,7 @@ Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, re
 | Release Android sin firma | Crítica | `android/app/build.gradle.kts` | No existe signing config de release | APK/AAB no publicable | Crear upload keystore seguro fuera del repo y configurar firma mediante propiedades locales/CI | Pendiente FASE 25 |
 | Target SDK insuficiente | Crítica | `android/app/build.gradle.kts:16` | `targetSdk = 34` | Rechazo o limitación en Google Play | Migrar y probar `targetSdk = 36` | Pendiente FASE 25 |
 | Eliminación de cuenta ausente | Crítica | Perfil, Functions, Firestore, Storage | No existía flujo in-app ni limpieza integral | Incumplimiento Play y retención de datos personales | Borrado server-side, reautenticación, confirmación escrita y limpieza integral | Resuelto en código FASE 6; despliegue/staging pendiente |
-| Privacidad/Términos/soporte sin URLs reales | Alta | Cuenta y Play Console | La app ya contiene textos y configuración, pero el repositorio no aporta identidad, correo ni URLs públicas | Riesgo legal y de revisión | Publicar recursos reales y compilar con `PAWDO_*` | Bloqueo externo FASE 6/25 |
+| Privacidad/Términos/soporte sin URLs reales | Alta | Cuenta y Play Console | Faltaban identidad, correos y recursos públicos | Riesgo legal y de revisión | Sitio público con tres rutas, identidad personal y contactos separados | Resuelto FASE 6 |
 | Reconexión incompleta | Alta | Services, Functions, Storage, widget | Firestore persiste offline, pero callables y Storage no; además, una selección de foto no puede reconstruirse después de cerrar el proceso | Acciones no persistentes pueden requerir reintento explícito tras cierre forzado | Estado central por eventos, lifecycle, backoff acotado e idempotencia; cola durable sólo para operaciones serializables que lo justifiquen | Mitigado FASE 3 (`0224ea5`, `577bfda`); persistencia entre procesos y widget siguen en sus fases |
 | Widget sin recuperación programada | Alta | `android_widget_service.dart`, `PawdoWidgetProvider.kt` | Actualización depende del canal/app y preferencias locales; no hay trabajo diferido/backoff | Datos congelados después de desconexión o cierre | Caché versionada y WorkManager solo cuando aporte valor, con restricciones de red | Pendiente FASE 17 |
 | App Check ausente | Alta | Firebase cliente/Functions | Dependencia e inicialización inexistentes | Mayor exposición a clientes abusivos | Integrar sin enforcement, validar dos teléfonos y observar métricas | Pendiente FASE 21 |
@@ -68,9 +68,9 @@ Fortalezas confirmadas:
 
 Pendiente de validar:
 
-- App Check, URLs/retención legal final, despliegue y prueba destructiva en staging, logs productivos y secretos de CI.
+- App Check, revisión legal/Data Safety final, despliegue y prueba destructiva en staging, logs productivos y secretos de CI.
 - Consentimiento y borrado completo de bienestar/ubicación en producción.
-- Inventario Data Safety real y URLs legales públicas.
+- Inventario Data Safety real y verificación operativa de los correos publicados.
 - Reglas amplias de `state` y cinema.
 
 ## Estado de FASE 0–6
@@ -88,7 +88,7 @@ Pendiente de validar:
 - FASE 5: perfil editable y comercial, foto privada cacheada, nombre visible seguro, fechas, pareja, accesos útiles y tres estilos compatibles con documentos legacy.
 - Puerta de FASE 5: 29 tests Flutter, 43 Functions, 18 Firestore Rules y 14 Storage Rules aprobados; APK de 110,714,193 bytes recompilado y verificado como no firmado.
 - FASE 6 técnica: cambio de correo con verificación, exportación JSON, centro de privacidad/soporte configurable, borrado completo con autenticación reciente y reglas de perfil restringidas.
-- Puerta técnica de FASE 6: analyze limpio; 31 tests Flutter, 46 Functions, 19 Firestore Rules y 14 Storage Rules aprobados; APK de 111,058,781 bytes recompilado y verificado como no firmado.
-- FASE 6 permanece bloqueada externamente hasta recibir identidad legal, correo, URLs públicas y completar la prueba destructiva de staging.
+- Puerta final de FASE 6: analyze limpio; sitio público validado; 32 tests Flutter, 46 Functions, 19 Firestore Rules y 14 Storage Rules aprobados; APK de 111,058,781 bytes recompilado y verificado como no firmado.
+- FASE 6 cerrada con identidad personal, correos diferenciados y sitio legal público enlazado dentro de Pawdo. La prueba destructiva de staging permanece como gate de lanzamiento.
 - Pruebas físicas y profiling: no ejecutados en esta fase.
-- Siguiente paso autorizado por el roadmap: cerrar los bloqueos externos de FASE 6; FASE 7 aún no está autorizada.
+- Siguiente paso autorizado por el roadmap: FASE 7, navegación e Inicio.

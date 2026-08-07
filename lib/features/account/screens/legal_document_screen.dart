@@ -88,6 +88,13 @@ class _LegalSection extends StatelessWidget {
 
 const _privacySections = <({String title, String body})>[
   (
+    title: 'Responsable',
+    body:
+        'Pawdo es desarrollada de forma independiente en Perú por Jorge Luis '
+        'Minchan Huaman. Para privacidad o soporte puedes escribir a '
+        'soporte.pawdo@gmail.com.',
+  ),
+  (
     title: 'Qu\u00e9 datos utiliza Pawdo',
     body:
         'La cuenta usa correo e identificador de Firebase. El perfil puede incluir '
@@ -138,6 +145,13 @@ const _privacySections = <({String title, String body})>[
 ];
 
 const _termsSections = <({String title, String body})>[
+  (
+    title: 'Responsable y aceptación',
+    body:
+        'Pawdo es desarrollada de forma independiente por Jorge Luis Minchan '
+        'Huaman. Al crear una cuenta o usarla, aceptas estas condiciones y la '
+        'política de privacidad.',
+  ),
   (
     title: 'Uso de Pawdo',
     body:

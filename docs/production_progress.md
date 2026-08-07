@@ -12,7 +12,7 @@
 | 3. Conectividad | Completada | 19 tests Flutter; recuperación por evento, lifecycle y backoff acotado | La carga de fotos no puede reconstruirse tras cerrar el proceso; el widget conserva su fase propia | Iniciar FASE 4 |
 | 4. Juegos actuales | Completada | 24 tests Flutter; 43 Functions; 32 reglas; APK recompilado | FPS, memoria y batería requieren profiling físico en FASE 20/24 | Iniciar FASE 5 |
 | 5. Perfil | Completada | 29 tests Flutter; 43 Functions; 32 reglas; APK recompilado | Fecha compartida canónica en FASE 15 | Iniciar FASE 6 |
-| 6. Cuenta, privacidad y seguridad | Implementada; bloqueada externamente | 31 tests Flutter; 46 Functions; 33 reglas; APK recompilado | Faltan identidad, correo y URLs públicas reales; prueba destructiva en staging | Recibir recursos externos y cerrar FASE 6 |
+| 6. Cuenta, privacidad y seguridad | Completada | Centro de cuenta; sitio legal público; 32 tests Flutter; 46 Functions; 33 reglas; APK recompilado | Data Safety, staging y despliegue quedan como gates de lanzamiento | Iniciar FASE 7 |
 | 7–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
 | 25. Play Store | Bloqueada | APK unsigned de 105.91 MiB | Firma, target 36, privacidad, AAB y dispositivos | Resolver fases anteriores |
 
@@ -22,7 +22,7 @@
 - Refuerzo de `.gitignore` contra dependencias, artefactos y credenciales privadas.
 - Punto de retorno del proyecto original.
 - Formato automático aislado en commit propio.
-- 31 tests Flutter, 46 de Functions, 19 de Firestore Rules y 14 de Storage Rules aprobados.
+- 32 tests Flutter, 46 de Functions, 19 de Firestore Rules y 14 de Storage Rules aprobados.
 - APK release compilado y verificado como no firmado.
 - Inventario inicial de assets y checklist Play Store.
 - 78 hallazgos estáticos corregidos; `flutter analyze` queda limpio.
@@ -52,13 +52,15 @@
 - Eliminación server-side probada de Auth, perfil/subcolecciones, fotos, parejas compartidas y estado privado de juegos; confirmación reciente y frase exacta obligatorias.
 - Reglas del perfil endurecidas contra campos arbitrarios, tipos inválidos, temas no permitidos y rutas de foto ajenas.
 - APK release de FASE 6: 111,058,781 bytes (105.91 MiB), todavía sin firma.
+- Sitio público de Pawdo con privacidad, términos y borrado externo, identificado a nombre de Jorge Luis Minchan Huaman.
+- Soporte configurado en `soporte.pawdo@gmail.com` y solicitudes externas de borrado en `borrado.pawdo@gmail.com`.
 
 ## Pendiente inmediato
 
-1. Recibir identidad legal, correo de soporte y tres URLs públicas reales.
-2. Desplegar y validar Functions/reglas en staging; ejecutar el borrado controlado con dos cuentas.
-3. Completar Data Safety y revisar que coincida con la política publicada.
-4. No iniciar FASE 7 mientras estos bloqueos externos de FASE 6 sigan abiertos.
+1. Iniciar FASE 7: navegación e Inicio.
+2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
+3. Completar Data Safety y comprobar ambos correos antes de Play Store.
+4. No abordar todavía Casa, Jardín, personajes, mascota, voz o widgets.
 
 ## Archivos modificados en FASE 0–6
 
@@ -97,5 +99,5 @@
 - El APK universal sigue excediendo 100 MiB y no está firmado; ambos puntos permanecen reservados para FASE 20/25.
 - No se ejecutó profiling de FPS/RAM/GPU en dispositivo durante FASE 4; queda como gate físico de FASE 20/24.
 - PIN/biometría no se añadió: la reautenticación de Firebase protege las acciones sensibles sin guardar otro secreto local. Puede evaluarse más adelante como bloqueo opcional de interfaz.
-- Las URLs legales y el canal de soporte siguen bloqueados por información externa no presente en el proyecto; no se inventaron valores.
+- Identidad personal, URLs legales públicas y correos de soporte/borrado quedaron configurados y enlazados en la aplicación.
 - La fecha editada en FASE 5 sigue siendo el dato personal compatible existente; la fuente compartida y el contador completo se resolverán en FASE 15.

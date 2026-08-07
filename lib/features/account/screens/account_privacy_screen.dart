@@ -160,6 +160,7 @@ class _AccountPrivacyScreenState extends State<AccountPrivacyScreen> {
                     ListTile(
                       leading: const Icon(Icons.open_in_new),
                       title: const Text('Solicitud de borrado en la web'),
+                      subtitle: Text(PawdoLegalConfig.deletionEmail),
                       onTap: () => launchUrl(
                         Uri.parse(PawdoLegalConfig.deletionUrl),
                         mode: LaunchMode.externalApplication,

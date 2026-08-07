@@ -22,14 +22,14 @@ Verificado el 2026-08-06. Los requisitos pueden cambiar y deben reconfirmarse an
 - [ ] Iconos, splash y recortes revisados en todas las densidades.
 - [ ] Título, descripciones, capturas, feature graphic y categoría finales.
 - [ ] Clasificación de contenido completada.
-- [ ] Email y URL de soporte reales.
+- [x] Email y URL de soporte configurados; falta confirmar recepción real antes del release.
 
 ## Privacidad, cuenta y datos
 
-- [ ] Política de privacidad pública, estable y accesible dentro de la app.
-- [ ] Términos y condiciones públicos y accesibles.
+- [x] Política de privacidad pública y accesible dentro de la app.
+- [x] Términos y condiciones públicos y accesibles.
 - [x] Eliminación de cuenta iniciable dentro de Pawdo.
-- [ ] Recurso web externo para solicitar eliminación de cuenta/datos.
+- [x] Recurso web externo para solicitar eliminación de cuenta/datos.
 - [x] Borrado server-side de Auth, Firestore, Storage y datos de pareja probado en emuladores.
 - [x] Exportación/descarga JSON definida y probada para el volumen actual.
 - [ ] Formulario Data Safety completado para autenticación, fotos, chat, ubicación, bienestar, notificaciones y diagnósticos.

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pawdo/core/config/legal_config.dart';
 import 'package:pawdo/features/account/services/account_service.dart';
 
 void main() {
@@ -25,5 +26,14 @@ void main() {
       'persona@example.com',
     );
     expect(encoded, contains('\n  "schemaVersion"'));
+  });
+
+  test('published legal and support resources are configured by default', () {
+    expect(PawdoLegalConfig.publicationLinksReady, isTrue);
+    expect(PawdoLegalConfig.privacyUrl, startsWith('https://'));
+    expect(PawdoLegalConfig.termsUrl, startsWith('https://'));
+    expect(PawdoLegalConfig.deletionUrl, startsWith('https://'));
+    expect(PawdoLegalConfig.supportEmail, 'soporte.pawdo@gmail.com');
+    expect(PawdoLegalConfig.deletionEmail, 'borrado.pawdo@gmail.com');
   });
 }
