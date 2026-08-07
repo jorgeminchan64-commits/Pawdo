@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/services/android_widget_service.dart';
 import '../../../core/services/notification_service.dart';
+import '../../account/screens/account_privacy_screen.dart';
 import '../../calls/screens/call_readiness_screen.dart';
 import '../../couple/services/couple_service.dart';
 import '../../location/screens/location_sharing_screen.dart';
@@ -97,7 +98,7 @@ class ProfileScreen extends StatelessWidget {
         final profile = ProfileData.fromMap(<String, dynamic>{
           ...raw,
           'uid': user.uid,
-          'email': raw['email'] ?? user.email ?? '',
+          'email': user.email ?? raw['email'] ?? '',
         });
         return _ProfileBody(
           profile: profile,
@@ -194,6 +195,13 @@ class _ProfileBody extends StatelessWidget {
               title: 'Llamadas',
               subtitle: 'En desarrollo · revisa cámara y micrófono',
               onTap: () => _open(context, const CallReadinessScreen()),
+            ),
+            const _SectionTitle('Cuenta'),
+            _ProfileTile(
+              icon: Icons.admin_panel_settings_outlined,
+              title: 'Cuenta y privacidad',
+              subtitle: 'Correo, datos, ayuda y eliminaci\u00f3n',
+              onTap: () => _open(context, const AccountPrivacyScreen()),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
