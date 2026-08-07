@@ -1,13 +1,13 @@
 # Pawdo — auditoría inicial de producción
 
 Fecha de actualización: 2026-08-07
-Alcance actualizado hasta el cierre de FASE 6. Este documento no declara la aplicación lista para producción.
+Alcance actualizado hasta el cierre de FASE 7. Este documento no declara la aplicación lista para producción.
 
 ## Resumen ejecutivo
 
-Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, paginación de chat y 111 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
+Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, paginación de chat y 116 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
 
-Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, Data Safety y prueba staging pendientes, ausencia de App Check/Crashlytics, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK de 105.91 MiB. No deben añadirse módulos grandes fuera del orden de fases.
+Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, dominio propio/Data Safety y prueba staging pendientes, ausencia de App Check/Crashlytics, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK de 105.98 MiB. No deben añadirse módulos grandes fuera del orden de fases.
 
 ## Arquitectura observada
 
@@ -35,7 +35,7 @@ Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, Da
 | Inicialización crítica sin fallback | Alta | `lib/main.dart` | `Firebase.initializeApp()` bloqueaba antes de `runApp` y no tenía UI de recuperación | Fallo de configuración/red nativa podía impedir arrancar | Bootstrap observable con pantalla de error/reintento y reporte no sensible | Resuelto FASE 2 (`dd4c12a`) |
 | Rutas Firestore con escritura amplia | Alta | `firestore.rules:205-214` | `state`, `cinemaReactions` y `cinemaMessages` permiten escritura de miembros sin esquema/campos/límites | Riesgo de datos inválidos, abuso y crecimiento | Inventariar consumidores y restringir esquemas, tamaños y frecuencia | Pendiente FASE 23 |
 | Permisos sensibles declarados | Alta | `AndroidManifest.xml` | Cámara, audio y ubicación están en el manifiesto; llamadas reales están aplazadas | Mayor fricción y superficie de privacidad/políticas | Vincular cada permiso a función visible, solicitud contextual y retirar lo no necesario | Pendiente FASE 6/25 |
-| APK grande | Alta | assets/build | 50.50 MB de assets PNG y dependencias nativas; APK universal de 105.91 MiB | Descarga, almacenamiento y retención peores | Medir AAB por ABI, optimizar assets con validación visual y eliminar solo referencias confirmadas | Pendiente FASE 20 |
+| APK grande | Alta | assets/build | 50.50 MB de assets PNG y dependencias nativas; APK universal de 105.98 MiB | Descarga, almacenamiento y retención peores | Medir AAB por ABI, optimizar assets con validación visual y eliminar solo referencias confirmadas | Pendiente FASE 20 |
 | Lifecycle y snapshots de juegos frágiles | Alta | Ludo, Atrapa a Pawdo, Memoria y host online | Temporizadores continuaban en background; Ludo mantenía efectos; algunas listas remotas se indexaban sin validar longitud/tipo | Trabajo innecesario, sala que parecía congelada o cierre por `RangeError` ante estado parcial | Pausar recursos, recuperar salas idempotentemente y normalizar snapshots antes de renderizar | Mitigado FASE 4 (`fe6e841`, `09f80ed`); profiling físico pendiente FASE 20/24 |
 | Perfil final no editable | Alta | `profile_screen.dart`, ProfileService, Storage | La pantalla ignoraba los datos guardados y mostraba “Pronto podrás editarlo”; una tarjeta de Casa no ejecutaba ninguna acción | Perfil incompleto, poco comercial y datos desactualizados para la pareja | Formulario compatible, foto privada, temas, fechas, resumen seguro y accesos reales | Resuelto FASE 5 (`ec4d809`, `f91efad`) |
 | Dependencias atrasadas | Media | `pubspec.yaml`, `pubspec.lock` | 63 paquetes fuera de las restricciones; familia Firebase dos generaciones mayores disponible | Mantenimiento, API obsoleta y compatibilidad futura | Actualización escalonada con matriz de compatibilidad y tests | Pendiente FASE 20 |
@@ -73,7 +73,7 @@ Pendiente de validar:
 - Inventario Data Safety real y verificación operativa de los correos publicados.
 - Reglas amplias de `state` y cinema.
 
-## Estado de FASE 0–6
+## Estado de FASE 0–7
 
 - Auditoría estática y documental: completada.
 - Git y respaldo: completados.
@@ -90,5 +90,7 @@ Pendiente de validar:
 - FASE 6 técnica: cambio de correo con verificación, exportación JSON, centro de privacidad/soporte configurable, borrado completo con autenticación reciente y reglas de perfil restringidas.
 - Puerta final de FASE 6: analyze limpio; sitio público validado; 32 tests Flutter, 46 Functions, 19 Firestore Rules y 14 Storage Rules aprobados; APK de 111,058,781 bytes recompilado y verificado como no firmado.
 - FASE 6 cerrada con identidad personal, correos diferenciados y sitio legal público enlazado dentro de Pawdo. La prueba destructiva de staging permanece como gate de lanzamiento.
+- FASE 7: Inicio contextual con hora, nombre visible, relación, próximo aniversario, tema visual y accesos rápidos; Casa y Jardín ya no comparten el mismo destino.
+- Puerta final de FASE 7: analyze limpio; 37 tests Flutter aprobados; APK de 111,124,317 bytes recompilado y verificado como no firmado. Backend y reglas no cambiaron, por lo que conservan sus puertas aprobadas de FASE 6.
 - Pruebas físicas y profiling: no ejecutados en esta fase.
-- Siguiente paso autorizado por el roadmap: FASE 7, navegación e Inicio.
+- Siguiente paso autorizado por el roadmap: FASE 8, Casa.

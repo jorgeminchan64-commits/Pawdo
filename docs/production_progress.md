@@ -13,8 +13,9 @@
 | 4. Juegos actuales | Completada | 24 tests Flutter; 43 Functions; 32 reglas; APK recompilado | FPS, memoria y batería requieren profiling físico en FASE 20/24 | Iniciar FASE 5 |
 | 5. Perfil | Completada | 29 tests Flutter; 43 Functions; 32 reglas; APK recompilado | Fecha compartida canónica en FASE 15 | Iniciar FASE 6 |
 | 6. Cuenta, privacidad y seguridad | Completada | Centro de cuenta; sitio legal público; 32 tests Flutter; 46 Functions; 33 reglas; APK recompilado | Data Safety, staging y despliegue quedan como gates de lanzamiento | Iniciar FASE 7 |
-| 7–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
-| 25. Play Store | Bloqueada | APK unsigned de 105.91 MiB | Firma, target 36, privacidad, AAB y dispositivos | Resolver fases anteriores |
+| 7. Navegación e Inicio | Completada | Rutas directas; saludo, reloj y relación; 37 tests Flutter; APK recompilado | Validación visual pendiente en dos teléfonos; fecha canónica compartida queda en FASE 15 | Iniciar FASE 8 |
+| 8–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 25. Play Store | Bloqueada | APK unsigned de 105.98 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
 
@@ -22,7 +23,7 @@
 - Refuerzo de `.gitignore` contra dependencias, artefactos y credenciales privadas.
 - Punto de retorno del proyecto original.
 - Formato automático aislado en commit propio.
-- 32 tests Flutter, 46 de Functions, 19 de Firestore Rules y 14 de Storage Rules aprobados.
+- 37 tests Flutter, 46 de Functions, 19 de Firestore Rules y 14 de Storage Rules aprobados.
 - APK release compilado y verificado como no firmado.
 - Inventario inicial de assets y checklist Play Store.
 - 78 hallazgos estáticos corregidos; `flutter analyze` queda limpio.
@@ -54,15 +55,19 @@
 - APK release de FASE 6: 111,058,781 bytes (105.91 MiB), todavía sin firma.
 - Sitio público de Pawdo con privacidad, términos y borrado externo, identificado a nombre de Jorge Luis Minchan Huaman.
 - Soporte configurado en `soporte.pawdo@gmail.com` y solicitudes externas de borrado en `borrado.pawdo@gmail.com`.
+- Inicio renovado con saludo según la hora, reloj, nombre visible, pareja, relación, próximo aniversario, métricas y fondo asociado al tema de perfil.
+- Navegación redundante eliminada: Casa abre directamente el interior, Jardín abre el mundo exterior y Mascota conserva su pestaña dedicada.
+- Cinco pruebas nuevas cubren saludo, reloj, duración de relación, aniversario y ausencia de fecha; suite Flutter aumentada de 32 a 37 tests.
+- APK release de FASE 7: 111,124,317 bytes (105.98 MiB), todavía sin firma.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 7: navegación e Inicio.
+1. Iniciar FASE 8: Casa.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
-3. Completar Data Safety y comprobar ambos correos antes de Play Store.
-4. No abordar todavía Casa, Jardín, personajes, mascota, voz o widgets.
+3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
+4. Completar Data Safety y comprobar ambos correos antes de Play Store.
 
-## Archivos modificados en FASE 0–6
+## Archivos modificados en FASE 0–7
 
 - `.gitignore`.
 - 47 archivos Dart, únicamente por `dart format .`.
@@ -86,6 +91,9 @@
 - `docs/production_progress.md`.
 - `docs/play_store_checklist.md`.
 - `docs/optimization_report.md`.
+- Modelo de presentación, reloj y resumen temporal bajo `lib/features/home/models/`.
+- `home_dashboard_screen.dart`, `main_screen.dart` y `world_screen.dart` para Inicio y destinos directos.
+- `test/home_dashboard_summary_test.dart` con cinco pruebas de presentación temporal.
 
 ## Riesgos de seguimiento
 
@@ -100,4 +108,5 @@
 - No se ejecutó profiling de FPS/RAM/GPU en dispositivo durante FASE 4; queda como gate físico de FASE 20/24.
 - PIN/biometría no se añadió: la reautenticación de Firebase protege las acciones sensibles sin guardar otro secreto local. Puede evaluarse más adelante como bloqueo opcional de interfaz.
 - Identidad personal, URLs legales públicas y correos de soporte/borrado quedaron configurados y enlazados en la aplicación.
-- La fecha editada en FASE 5 sigue siendo el dato personal compatible existente; la fuente compartida y el contador completo se resolverán en FASE 15.
+- El resumen de relación de Inicio utiliza la fecha personal compatible existente; la fuente compartida canónica y el contador completo se resolverán en FASE 15.
+- `pawdo.site` está vinculado en Sites pero pendiente de compra y DNS. No se debe sustituir la URL operativa hasta validar HTTPS.

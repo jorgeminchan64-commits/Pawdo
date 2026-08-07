@@ -2,6 +2,21 @@
 
 Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agrupar toda la validación al final.
 
+## Navegación e Inicio — FASE 7
+
+| Caso | Resultado esperado |
+|---|---|
+| Pulsar Mascota desde Inicio | Cambia directamente a la pestaña Mascota, sin pantalla intermedia |
+| Pulsar Casa desde Inicio | Abre directamente el interior compartido en horizontal |
+| Pulsar Jardín desde Inicio | Abre directamente el mundo exterior identificado como Jardín Pawdo |
+| Volver desde Casa o Jardín | Restaura orientación vertical y conserva la pestaña Inicio |
+| Cambiar tema en Perfil | El fondo de Inicio adopta rosa, lavanda o atardecer sin perder contraste |
+| Cambiar nombre visible o foto | Inicio refleja el perfil actualizado y mantiene fallback seguro |
+| Cambiar hora del dispositivo | Saludo y reloj se actualizan sin reabrir Pawdo |
+| Fecha de relación configurada | Muestra duración de calendario y días para el próximo aniversario |
+| Fecha ausente o futura | Muestra una invitación segura para corregirla en Perfil |
+| Pantalla pequeña y texto ampliado | No hay overflow en cabecera, tarjeta de relación, métricas ni accesos |
+
 ## Dos teléfonos reales
 
 | Caso | Teléfono A | Teléfono B | Resultado esperado |
