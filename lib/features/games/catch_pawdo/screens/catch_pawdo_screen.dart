@@ -10,7 +10,8 @@ class CatchPawdoScreen extends StatefulWidget {
   State<CatchPawdoScreen> createState() => _CatchPawdoScreenState();
 }
 
-class _CatchPawdoScreenState extends State<CatchPawdoScreen> {
+class _CatchPawdoScreenState extends State<CatchPawdoScreen>
+    with WidgetsBindingObserver {
   final Random _random = Random.secure();
   Timer? _timer;
   int _seconds = 20;
@@ -18,6 +19,12 @@ class _CatchPawdoScreenState extends State<CatchPawdoScreen> {
   double _x = .5;
   double _y = .5;
   bool _running = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   void _start() {
     _timer?.cancel();
@@ -27,16 +34,36 @@ class _CatchPawdoScreenState extends State<CatchPawdoScreen> {
       _running = true;
       _move();
     });
+    _resumeTimer();
+  }
+
+  void _resumeTimer() {
+    if (!_running || (_timer?.isActive ?? false)) return;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
       setState(() {
-        _seconds--;
-        if (_seconds <= 0) {
+        if (_seconds <= 1) {
+          _seconds = 0;
           _running = false;
           timer.cancel();
+        } else {
+          _seconds--;
         }
       });
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _resumeTimer();
+    } else {
+      _timer?.cancel();
+      _timer = null;
+    }
   }
 
   void _move() {
@@ -54,6 +81,7 @@ class _CatchPawdoScreenState extends State<CatchPawdoScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
   }

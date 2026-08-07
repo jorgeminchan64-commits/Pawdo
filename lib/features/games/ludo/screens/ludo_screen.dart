@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:audioplayers/audioplayers.dart';
@@ -7,6 +8,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/services/network_recovery_service.dart';
+import '../../game_snapshot.dart';
 import '../../services/ludo_service.dart';
 
 class LudoScreen extends StatefulWidget {
@@ -16,7 +19,7 @@ class LudoScreen extends StatefulWidget {
   State<LudoScreen> createState() => _LudoScreenState();
 }
 
-class _LudoScreenState extends State<LudoScreen> {
+class _LudoScreenState extends State<LudoScreen> with WidgetsBindingObserver {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final LudoService _ludoService = LudoService();
@@ -24,7 +27,8 @@ class _LudoScreenState extends State<LudoScreen> {
   late final ConfettiController _confettiController;
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  late final Future<String?> _coupleCodeFuture;
+  late Future<String?> _coupleCodeFuture;
+  late final VoidCallback _unregisterRecovery;
 
   String? _joinedCoupleCode;
   String? _joinError;
@@ -128,8 +132,13 @@ class _LudoScreenState extends State<LudoScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     _coupleCodeFuture = _getCoupleCode();
+    _unregisterRecovery = NetworkRecoveryService.instance.registerRecoveryTask(
+      'ludo_${identityHashCode(this)}',
+      _recoverRoom,
+    );
 
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 3),
@@ -138,9 +147,18 @@ class _LudoScreenState extends State<LudoScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _unregisterRecovery();
     _confettiController.dispose();
     _audioPlayer.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) return;
+    _confettiController.stop();
+    unawaited(_audioPlayer.stop());
   }
 
   double _clampDouble(double value, double min, double max) {
@@ -265,8 +283,32 @@ class _LudoScreenState extends State<LudoScreen> {
     final user = _auth.currentUser;
     if (user == null) return null;
 
-    final doc = await _db.collection('users').doc(user.uid).get();
-    return doc.data()?['coupleCode']?.toString();
+    try {
+      final doc = await _db.collection('users').doc(user.uid).get();
+      return doc.data()?['coupleCode']?.toString();
+    } catch (_) {
+      NetworkRecoveryService.instance.reportTransientFailure();
+      rethrow;
+    }
+  }
+
+  Future<void> _recoverRoom() async {
+    final coupleCode = await _getCoupleCode();
+    if (coupleCode == null || coupleCode.isEmpty) return;
+    await _ludoService.join(coupleCode);
+    if (!mounted) return;
+    setState(() {
+      _coupleCodeFuture = Future<String?>.value(coupleCode);
+      _joinedCoupleCode = coupleCode;
+      _joinError = null;
+    });
+  }
+
+  void _retryInitialLoad() {
+    setState(() {
+      _joinError = null;
+      _coupleCodeFuture = _getCoupleCode();
+    });
   }
 
   DocumentReference<Map<String, dynamic>> _gameRef(String coupleCode) {
@@ -331,17 +373,33 @@ class _LudoScreenState extends State<LudoScreen> {
       await _ludoService.join(coupleCode);
       if (mounted) setState(() => _joinedCoupleCode = coupleCode);
     } on FirebaseFunctionsException catch (error) {
+      _reportTransientFailure(error);
       if (mounted) {
         setState(
           () => _joinError = error.message ?? 'No se pudo entrar a la sala.',
         );
       }
     } catch (_) {
+      NetworkRecoveryService.instance.reportTransientFailure();
       if (mounted) {
         setState(() => _joinError = 'Sin conexión. Reintenta para entrar.');
       }
     } finally {
       if (mounted) setState(() => _joining = false);
+    }
+  }
+
+  void _reportTransientFailure(FirebaseFunctionsException error) {
+    if (const {
+      'aborted',
+      'cancelled',
+      'deadline-exceeded',
+      'internal',
+      'resource-exhausted',
+      'unavailable',
+      'unknown',
+    }.contains(error.code)) {
+      NetworkRecoveryService.instance.reportTransientFailure();
     }
   }
 
@@ -381,6 +439,7 @@ class _LudoScreenState extends State<LudoScreen> {
     try {
       await _ludoService.rollDice(coupleCode);
     } on FirebaseFunctionsException catch (error) {
+      _reportTransientFailure(error);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -422,6 +481,7 @@ class _LudoScreenState extends State<LudoScreen> {
         );
       }
     } on FirebaseFunctionsException catch (error) {
+      _reportTransientFailure(error);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error.message ?? 'Movimiento rechazado.')),
@@ -439,6 +499,7 @@ class _LudoScreenState extends State<LudoScreen> {
     try {
       result = await _ludoService.reset(coupleCode);
     } on FirebaseFunctionsException catch (error) {
+      _reportTransientFailure(error);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error.message ?? 'No se pudo reiniciar.')),
@@ -491,6 +552,7 @@ class _LudoScreenState extends State<LudoScreen> {
     try {
       await _ludoService.abandon(coupleCode);
     } on FirebaseFunctionsException catch (error) {
+      _reportTransientFailure(error);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error.message ?? 'No se pudo abandonar.')),
@@ -558,6 +620,35 @@ class _LudoScreenState extends State<LudoScreen> {
           );
         }
 
+        if (codeSnapshot.hasError) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFFFF4FA),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.cloud_off, size: 46, color: Colors.purple),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'No se pudo consultar tu sala de pareja.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 14),
+                    FilledButton.icon(
+                      onPressed: _retryInitialLoad,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Reintentar'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
         if (coupleCode == null || coupleCode.isEmpty) {
           return const Scaffold(
             backgroundColor: Color(0xFFFFF4FA),
@@ -583,6 +674,41 @@ class _LudoScreenState extends State<LudoScreen> {
           stream: _gameRef(coupleCode).snapshots(),
           builder: (context, snapshot) {
             final data = snapshot.data?.data();
+
+            if (snapshot.hasError && data == null) {
+              return Scaffold(
+                backgroundColor: const Color(0xFFFFF4FA),
+                body: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.sync_problem,
+                          size: 46,
+                          color: Colors.purple,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Se perdió la conexión con la partida.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 14),
+                        FilledButton.icon(
+                          onPressed: _joining
+                              ? null
+                              : () => _ensureJoined(coupleCode),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Reconectar'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
 
             if (data == null) {
               if (_joinError != null) {
@@ -625,7 +751,8 @@ class _LudoScreenState extends State<LudoScreen> {
               _celebratedVictoryKey = victoryKey;
               final names = _stringMap(data['playerNames']);
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                _playSound('audio/ludo_win.mp3');
+                if (!mounted) return;
+                unawaited(_playSound('audio/ludo_win.mp3'));
                 _showVictoryDialog(
                   winnerName: names[winnerSide] ?? 'Jugador $winnerSide',
                   winnerSide: winnerSide,
@@ -678,11 +805,9 @@ class _LudoScreenState extends State<LudoScreen> {
     final phase = data['phase']?.toString() ?? 'roll';
     final dice = _toInt(data['dice'], 0);
     final winnerSide = data['winnerSide']?.toString() ?? '';
-    final joinedBy = List<String>.from(data['joinedBy'] as List? ?? const []);
+    final joinedBy = GameSnapshot.strings(data['joinedBy']);
     final bothReady = joinedBy.length >= 2;
-    final restartRequestedBy = List<String>.from(
-      data['restartRequestedBy'] as List? ?? const [],
-    );
+    final restartRequestedBy = GameSnapshot.strings(data['restartRequestedBy']);
     final lastMove = data['lastMove']?.toString() ?? 'Ludo Pawdo 🎲';
 
     final mySide = _mySide(data);

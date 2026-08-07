@@ -5,18 +5,28 @@ import 'package:flutter/material.dart';
 import '../models/offline_memory_game.dart';
 
 class OfflineMemoryScreen extends StatefulWidget {
-  const OfflineMemoryScreen({super.key});
+  const OfflineMemoryScreen({super.key, this.game});
+
+  final OfflineMemoryGame? game;
 
   @override
   State<OfflineMemoryScreen> createState() => _OfflineMemoryScreenState();
 }
 
-class _OfflineMemoryScreenState extends State<OfflineMemoryScreen> {
-  final OfflineMemoryGame _game = OfflineMemoryGame();
+class _OfflineMemoryScreenState extends State<OfflineMemoryScreen>
+    with WidgetsBindingObserver {
+  late final OfflineMemoryGame _game = widget.game ?? OfflineMemoryGame();
   Timer? _hideTimer;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _hideTimer?.cancel();
     super.dispose();
   }
@@ -26,16 +36,32 @@ class _OfflineMemoryScreenState extends State<OfflineMemoryScreen> {
     if (result == OfflineMemoryTurn.ignored) return;
     setState(() {});
     if (result == OfflineMemoryTurn.mismatch) {
+      _scheduleMismatchResolution();
+    }
+  }
+
+  void _scheduleMismatchResolution() {
+    _hideTimer?.cancel();
+    _hideTimer = Timer(const Duration(milliseconds: 900), () {
+      _hideTimer = null;
+      if (!mounted || !_game.locked) return;
+      setState(_game.resolveMismatch);
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (_game.locked) _scheduleMismatchResolution();
+    } else {
       _hideTimer?.cancel();
-      _hideTimer = Timer(const Duration(milliseconds: 900), () {
-        if (!mounted) return;
-        setState(_game.resolveMismatch);
-      });
+      _hideTimer = null;
     }
   }
 
   void _reset() {
     _hideTimer?.cancel();
+    _hideTimer = null;
     setState(_game.reset);
   }
 
@@ -125,6 +151,7 @@ class _OfflineMemoryScreenState extends State<OfflineMemoryScreen> {
                             ? 'Carta ${_game.cards[index]}'
                             : 'Carta oculta ${index + 1}',
                         child: InkWell(
+                          key: ValueKey('offline_memory_card_$index'),
                           borderRadius: BorderRadius.circular(16),
                           onTap: !_game.locked && !visible && !_game.complete
                               ? () => _flip(index)

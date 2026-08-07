@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/services/network_recovery_service.dart';
+import '../game_snapshot.dart';
 import '../services/mini_game_service.dart';
 
 typedef MiniGameAction =
@@ -30,6 +32,7 @@ class MiniGameHost extends StatefulWidget {
 
 class _MiniGameHostState extends State<MiniGameHost> {
   final MiniGameService _service = MiniGameService();
+  late final VoidCallback _unregisterRecovery;
   String? _coupleCode;
   String? _error;
   bool _busy = false;
@@ -38,7 +41,27 @@ class _MiniGameHostState extends State<MiniGameHost> {
   @override
   void initState() {
     super.initState();
+    _unregisterRecovery = NetworkRecoveryService.instance.registerRecoveryTask(
+      'mini_game_${widget.gameId}_${identityHashCode(this)}',
+      _recoverRoom,
+    );
     _open();
+  }
+
+  @override
+  void dispose() {
+    _unregisterRecovery();
+    super.dispose();
+  }
+
+  Future<void> _recoverRoom() async {
+    final coupleCode = _coupleCode ?? await _service.requireCoupleCode();
+    await _service.openGame(coupleCode, widget.gameId);
+    if (!mounted) return;
+    setState(() {
+      _coupleCode = coupleCode;
+      _error = null;
+    });
   }
 
   Future<void> _open() async {
@@ -48,11 +71,12 @@ class _MiniGameHostState extends State<MiniGameHost> {
       _error = null;
     });
     try {
-      final coupleCode = await _service.requireCoupleCode();
-      if (mounted) setState(() => _coupleCode = coupleCode);
-      await _service.openGame(coupleCode, widget.gameId);
+      await _recoverRoom();
     } on MiniGameException catch (error) {
       if (mounted) setState(() => _error = error.message);
+      if (error.retryable) {
+        NetworkRecoveryService.instance.reportTransientFailure();
+      }
     } finally {
       if (mounted) setState(() => _opening = false);
     }
@@ -73,6 +97,9 @@ class _MiniGameHostState extends State<MiniGameHost> {
         payload: payload ?? const <String, dynamic>{},
       );
     } on MiniGameException catch (error) {
+      if (error.retryable) {
+        NetworkRecoveryService.instance.reportTransientFailure();
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -142,9 +169,7 @@ class _MiniGameHostState extends State<MiniGameHost> {
           );
         }
         final data = snapshot.data!.data() ?? const <String, dynamic>{};
-        final joinedBy = List<String>.from(
-          data['joinedBy'] as List? ?? const [],
-        );
+        final joinedBy = GameSnapshot.strings(data['joinedBy']);
         if (joinedBy.length < 2) {
           return PawdoGameScaffold(
             title: 'Sala de pareja',
@@ -314,9 +339,7 @@ class OnlineGameControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final complete = data['phase'] == 'complete';
-    final votes = List<String>.from(
-      data['restartRequestedBy'] as List? ?? const [],
-    );
+    final votes = GameSnapshot.strings(data['restartRequestedBy']);
     final alreadyRequested = votes.contains(currentUid);
     if (complete) {
       return Column(

@@ -3,9 +3,10 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class MiniGameException implements Exception {
-  const MiniGameException(this.message);
+  const MiniGameException(this.message, {this.retryable = false});
 
   final String message;
+  final bool retryable;
 
   @override
   String toString() => message;
@@ -88,12 +89,28 @@ class MiniGameService {
     } on FirebaseFunctionsException catch (error) {
       throw MiniGameException(
         error.message ?? 'No se pudo completar la jugada.',
+        retryable: const {
+          'aborted',
+          'cancelled',
+          'deadline-exceeded',
+          'internal',
+          'resource-exhausted',
+          'unavailable',
+          'unknown',
+        }.contains(error.code),
       );
     } on FirebaseException catch (error) {
-      throw MiniGameException(error.message ?? 'Error de conexión con Pawdo.');
+      throw MiniGameException(
+        error.message ?? 'Error de conexión con Pawdo.',
+        retryable: const {
+          'network-request-failed',
+          'unavailable',
+        }.contains(error.code),
+      );
     } catch (_) {
       throw const MiniGameException(
         'No se pudo conectar con el juego. Inténtalo otra vez.',
+        retryable: true,
       );
     }
   }
