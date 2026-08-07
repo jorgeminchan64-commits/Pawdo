@@ -70,6 +70,12 @@ describe('Pawdo Firestore Rules', () => {
     await assertSucceeds(setDoc(doc(db(user1), 'users', user1), {
       uid: user1, name: 'Uno', profileCompleted: true,
     }));
+    await assertSucceeds(updateDoc(doc(db(user1), 'users', user1), {
+      displayName: 'Uno visible',
+      profileTheme: 'lavender',
+      birthday: serverTimestamp(),
+      relationshipStartDate: serverTimestamp(),
+    }));
     await assertFails(updateDoc(doc(db(user1), 'users', user1), {
       coupleCode: code,
     }));
