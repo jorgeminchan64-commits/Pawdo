@@ -84,6 +84,33 @@ describe('Pawdo Firestore Rules', () => {
     }));
   });
 
+  it('validates editable profile fields and rejects arbitrary personal data', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'users', user1), {
+        uid: user1,
+        name: 'Uno',
+        profileCompleted: true,
+      });
+    });
+    await assertFails(updateDoc(doc(db(user1), 'users', user1), {
+      admin: true,
+    }));
+    await assertFails(updateDoc(doc(db(user1), 'users', user1), {
+      displayName: '',
+    }));
+    await assertFails(updateDoc(doc(db(user1), 'users', user1), {
+      profileTheme: 'unknown',
+    }));
+    await assertFails(updateDoc(doc(db(user1), 'users', user1), {
+      photoStoragePath: `profile_photos/${user2}.jpg`,
+    }));
+    await assertSucceeds(updateDoc(doc(db(user1), 'users', user1), {
+      displayName: 'Nombre seguro',
+      photoStoragePath: `profile_photos/${user1}.jpg`,
+      updatedAt: serverTimestamp(),
+    }));
+  });
+
   it('does not treat a pending invitation as a complete couple', async () => {
     const pendingCode = 'WAIT24';
     await testEnv.withSecurityRulesDisabled(async (context) => {

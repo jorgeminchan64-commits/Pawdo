@@ -1042,4 +1042,124 @@ describe('Pawdo callable security', () => {
     const publicAfter = (await db.doc(`couples/${code}/games/movie_guess`).get()).data();
     assert.equal(publicAfter.answer, privateGame.answer);
   });
+
+  it('exports the authenticated account and its nested Pawdo documents', async () => {
+    await db.doc(`users/${user1}`).set({
+      uid: user1,
+      email: `${user1}@example.test`,
+      coupleCode: code,
+    });
+    await db.doc(`users/${user1}/wellnessEntries/2026-08-07`).set({
+      ownerUid: user1,
+      mood: 'good',
+      updatedAt: Timestamp.fromDate(new Date('2026-08-07T12:00:00Z')),
+    });
+    await db.doc(`couples/${code}/chat/export-message`).set({
+      type: 'text', text: 'Hola', uploadedBy: user1,
+    });
+    const result = await handlers.exportAccountDataHandler(
+      request(user1, {}),
+      {
+        db,
+        auth: {
+          getUser: async () => ({
+            uid: user1,
+            email: `${user1}@example.test`,
+            emailVerified: true,
+            disabled: false,
+            metadata: {},
+            providerData: [{ providerId: 'password' }],
+          }),
+        },
+      },
+    );
+    const paths = result.firestoreDocuments.map((document) => document.path);
+    assert.equal(result.schemaVersion, 1);
+    assert.ok(paths.includes(`users/${user1}`));
+    assert.ok(paths.includes(`users/${user1}/wellnessEntries/2026-08-07`));
+    assert.ok(paths.includes(`couples/${code}/chat/export-message`));
+    assert.equal(result.account.emailVerified, true);
+
+    await db.doc(`couples/${code}`).update({ status: 'unlinked' });
+    const afterUnlink = await handlers.exportAccountDataHandler(
+      request(user1, {}),
+      {
+        db,
+        auth: {
+          getUser: async () => ({
+            uid: user1,
+            email: `${user1}@example.test`,
+            emailVerified: true,
+            disabled: false,
+            metadata: {},
+            providerData: [],
+          }),
+        },
+      },
+    );
+    assert.equal(
+      afterUnlink.firestoreDocuments.some(
+        (document) => document.path.startsWith(`couples/${code}`),
+      ),
+      false,
+    );
+  });
+
+  it('requires recent authentication and a typed account deletion confirmation', async () => {
+    const nowMillis = Date.parse('2026-08-07T12:00:00Z');
+    const stale = request(user1, { confirm: true, confirmation: 'ELIMINAR' });
+    stale.auth.token.auth_time = Math.floor(nowMillis / 1000) - 601;
+    await rejectsCode(
+      () => handlers.deleteAccountHandler(stale, { nowMillis }),
+      'failed-precondition',
+    );
+    const recent = request(user1, { confirm: true, confirmation: 'eliminar' });
+    recent.auth.token.auth_time = Math.floor(nowMillis / 1000);
+    await rejectsCode(
+      () => handlers.deleteAccountHandler(recent, { nowMillis }),
+      'invalid-argument',
+    );
+  });
+
+  it('deletes account data, shared couple history and the auth user', async () => {
+    await db.doc(`users/${user1}`).set({ uid: user1, coupleCode: code });
+    await db.doc(`users/${user2}`).set({ uid: user2, coupleCode: code });
+    await db.doc(`users/${user1}/devices/device`).set({ token: 'secret' });
+    await db.doc(`couples/${code}/chat/delete-message`).set({
+      uploadedBy: user1, text: 'Eliminar',
+    });
+    await db.doc(`privateGameState/${code}__movie_guess`).set({
+      answer: 'Privada',
+    });
+    const deletedPrefixes = [];
+    const deletedFiles = [];
+    const deletedUsers = [];
+    const recent = request(user1, { confirm: true, confirmation: 'ELIMINAR' });
+    const nowMillis = Date.parse('2026-08-07T12:00:00Z');
+    recent.auth.token.auth_time = Math.floor(nowMillis / 1000);
+    const result = await handlers.deleteAccountHandler(recent, {
+      db,
+      nowMillis,
+      auth: { deleteUser: async (uid) => deletedUsers.push(uid) },
+      bucket: {
+        deleteFiles: async ({ prefix }) => deletedPrefixes.push(prefix),
+        file: (pathValue) => ({
+          delete: async () => deletedFiles.push(pathValue),
+        }),
+      },
+    });
+    assert.equal(result.deleted, true);
+    assert.equal((await db.doc(`users/${user1}`).get()).exists, false);
+    assert.equal((await db.doc(`users/${user1}/devices/device`).get()).exists, false);
+    assert.equal((await db.doc(`couples/${code}`).get()).exists, false);
+    assert.equal((await db.doc(`couples/${code}/chat/delete-message`).get()).exists, false);
+    assert.equal(
+      (await db.doc(`privateGameState/${code}__movie_guess`).get()).exists,
+      false,
+    );
+    assert.equal((await db.doc(`users/${user2}`).get()).data().coupleCode, undefined);
+    assert.deepEqual(deletedUsers, [user1]);
+    assert.ok(deletedPrefixes.includes(`couples/${code}/`));
+    assert.ok(deletedFiles.includes(`profile_photos/${user1}.jpg`));
+  });
 });

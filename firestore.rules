@@ -50,26 +50,85 @@ service cloud.firestore {
         request.resource.data.timestamp == request.time;
     }
 
-    match /users/{userId} {
-      allow create: if signedIn() && request.auth.uid == userId &&
+    function validProfileName(value) {
+      return value is string && value.size() > 0 && value.size() <= 80;
+    }
+
+    function validProfileDate(value) {
+      return value is timestamp &&
+        value >= timestamp.date(1900, 1, 1) && value <= request.time;
+    }
+
+    function validProfileCreate(userId) {
+      return request.resource.data.keys().hasOnly([
+          'uid', 'email', 'name', 'displayName', 'birthday',
+          'relationshipStartDate', 'profileTheme', 'profileCompleted',
+          'photoStoragePath', 'createdAt', 'updatedAt', 'coupleCode',
+          'pendingCoupleCode'
+        ]) &&
         (!request.resource.data.keys().hasAny(['uid']) ||
          request.resource.data.uid == userId) &&
+        (!request.resource.data.keys().hasAny(['email']) ||
+         request.resource.data.email is string &&
+         request.resource.data.email.size() <= 254) &&
+        (!request.resource.data.keys().hasAny(['name']) ||
+         validProfileName(request.resource.data.name)) &&
+        (!request.resource.data.keys().hasAny(['displayName']) ||
+         validProfileName(request.resource.data.displayName)) &&
+        (!request.resource.data.keys().hasAny(['birthday']) ||
+         validProfileDate(request.resource.data.birthday)) &&
+        (!request.resource.data.keys().hasAny(['relationshipStartDate']) ||
+         validProfileDate(request.resource.data.relationshipStartDate)) &&
+        (!request.resource.data.keys().hasAny(['profileTheme']) ||
+         request.resource.data.profileTheme in ['rose', 'lavender', 'sunset']) &&
+        (!request.resource.data.keys().hasAny(['profileCompleted']) ||
+         request.resource.data.profileCompleted is bool) &&
+        (!request.resource.data.keys().hasAny(['photoStoragePath']) ||
+         request.resource.data.photoStoragePath ==
+           'profile_photos/' + userId + '.jpg') &&
+        (!request.resource.data.keys().hasAny(['createdAt']) ||
+         request.resource.data.createdAt == request.time) &&
+        (!request.resource.data.keys().hasAny(['updatedAt']) ||
+         request.resource.data.updatedAt == request.time) &&
         (!request.resource.data.keys().hasAny(['coupleCode']) ||
          request.resource.data.coupleCode == '') &&
         (!request.resource.data.keys().hasAny(['pendingCoupleCode']) ||
          request.resource.data.pendingCoupleCode == '');
+    }
+
+    function validProfileUpdate(userId) {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return changed.hasOnly([
+          'uid', 'name', 'displayName', 'birthday', 'relationshipStartDate',
+          'profileTheme', 'profileCompleted', 'photoStoragePath', 'updatedAt'
+        ]) &&
+        (!changed.hasAny(['uid']) ||
+         (!resource.data.keys().hasAny(['uid']) &&
+          request.resource.data.uid == userId)) &&
+        (!changed.hasAny(['name']) || validProfileName(request.resource.data.name)) &&
+        (!changed.hasAny(['displayName']) ||
+         validProfileName(request.resource.data.displayName)) &&
+        (!changed.hasAny(['birthday']) ||
+         validProfileDate(request.resource.data.birthday)) &&
+        (!changed.hasAny(['relationshipStartDate']) ||
+         validProfileDate(request.resource.data.relationshipStartDate)) &&
+        (!changed.hasAny(['profileTheme']) ||
+         request.resource.data.profileTheme in ['rose', 'lavender', 'sunset']) &&
+        (!changed.hasAny(['profileCompleted']) ||
+         request.resource.data.profileCompleted is bool) &&
+        (!changed.hasAny(['photoStoragePath']) ||
+         request.resource.data.photoStoragePath ==
+           'profile_photos/' + userId + '.jpg') &&
+        (!changed.hasAny(['updatedAt']) ||
+         request.resource.data.updatedAt == request.time);
+    }
+
+    match /users/{userId} {
+      allow create: if signedIn() && request.auth.uid == userId &&
+        validProfileCreate(userId);
       allow read: if signedIn() && request.auth.uid == userId;
       allow update: if signedIn() && request.auth.uid == userId &&
-        !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['coupleCode', 'pendingCoupleCode']) &&
-        (
-          !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['uid']) ||
-          (
-            !resource.data.keys().hasAny(['uid']) &&
-            request.resource.data.uid == userId
-          )
-        );
+        validProfileUpdate(userId);
 
       match /devices/{deviceId} {
         allow read, delete: if signedIn() && request.auth.uid == userId;

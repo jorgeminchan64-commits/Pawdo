@@ -6,6 +6,7 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { logger } = require('firebase-functions');
 const { initializeApp } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
 const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 const { getStorage } = require('firebase-admin/storage');
@@ -239,12 +240,73 @@ const LOCATION_SESSION_START_COOLDOWN_MS = 10 * 1000;
 // renews this safety window, without extending the duration chosen by the user.
 const LOCATION_STALE_TTL_MS = 20 * 60 * 1000;
 const LOCATION_POINT_TTL_MS = 24 * 60 * 60 * 1000;
+const RECENT_AUTH_MAX_AGE_SECONDS = 10 * 60;
+const ACCOUNT_EXPORT_DOCUMENT_LIMIT = 2000;
+const ACCOUNT_EXPORT_BYTE_LIMIT = 5 * 1024 * 1024;
 
 function requireAuth(request) {
   if (!request.auth?.uid) {
     throw new HttpsError('unauthenticated', 'Inicia sesión para continuar.');
   }
   return request.auth.uid;
+}
+
+function requireRecentAuth(request, nowMillis = Date.now()) {
+  const uid = requireAuth(request);
+  const authenticatedAt = Number(request.auth?.token?.auth_time);
+  const ageSeconds = Math.floor(nowMillis / 1000) - authenticatedAt;
+  if (!Number.isFinite(authenticatedAt) || ageSeconds < 0 ||
+      ageSeconds > RECENT_AUTH_MAX_AGE_SECONDS) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Vuelve a confirmar tu contrase\u00f1a antes de continuar.',
+    );
+  }
+  return uid;
+}
+
+function exportValue(value) {
+  if (value instanceof Timestamp) return value.toDate().toISOString();
+  if (Array.isArray(value)) return value.map(exportValue);
+  if (value && typeof value === 'object') {
+    if (typeof value.latitude === 'number' && typeof value.longitude === 'number') {
+      return { latitude: value.latitude, longitude: value.longitude };
+    }
+    if (Buffer.isBuffer(value)) return value.toString('base64');
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, exportValue(item)]),
+    );
+  }
+  return value;
+}
+
+async function collectDocumentTree(reference, state, limit) {
+  if (state.documents.length >= limit) {
+    throw new HttpsError(
+      'resource-exhausted',
+      'La exportaci\u00f3n es demasiado grande para descargarse desde la app.',
+    );
+  }
+  const snapshot = await reference.get();
+  if (snapshot.exists) {
+    const entry = { path: reference.path, data: exportValue(snapshot.data()) };
+    const entryBytes = Buffer.byteLength(JSON.stringify(entry), 'utf8');
+    if (state.bytes + entryBytes > ACCOUNT_EXPORT_BYTE_LIMIT) {
+      throw new HttpsError(
+        'resource-exhausted',
+        'La exportaci\u00f3n es demasiado grande para descargarse desde la app.',
+      );
+    }
+    state.documents.push(entry);
+    state.bytes += entryBytes;
+  }
+  const collections = await reference.listCollections();
+  for (const collection of collections) {
+    const children = await collection.get();
+    for (const child of children.docs) {
+      await collectDocumentTree(child.ref, state, limit);
+    }
+  }
 }
 
 function requireCoupleCode(data) {
@@ -2739,6 +2801,111 @@ async function playMiniGameHandler(request) {
   });
 }
 
+async function exportAccountDataHandler(request, services = {}) {
+  const uid = requireAuth(request);
+  const db = services.db || getFirestore();
+  const authAdmin = services.auth || getAuth();
+  const exportState = { documents: [], bytes: 0 };
+  const profileRef = db.doc(`users/${uid}`);
+  const profileSnapshot = await profileRef.get();
+  await collectDocumentTree(profileRef, exportState, ACCOUNT_EXPORT_DOCUMENT_LIMIT);
+  const currentCode = storedCoupleCode(profileSnapshot.data()?.coupleCode);
+  if (currentCode) {
+    const coupleRef = db.doc(`couples/${currentCode}`);
+    const coupleSnapshot = await coupleRef.get();
+    const couple = coupleSnapshot.data() || {};
+    if (coupleSnapshot.exists && isActiveCouple(couple) &&
+        (couple.user1 === uid || couple.user2 === uid)) {
+      await collectDocumentTree(coupleRef, exportState, ACCOUNT_EXPORT_DOCUMENT_LIMIT);
+    }
+  }
+
+  let account = { uid, email: request.auth?.token?.email || null };
+  try {
+    const record = await authAdmin.getUser(uid);
+    account = {
+      uid: record.uid,
+      email: record.email || null,
+      emailVerified: record.emailVerified === true,
+      disabled: record.disabled === true,
+      createdAt: record.metadata?.creationTime || null,
+      lastSignInAt: record.metadata?.lastSignInTime || null,
+      providers: (record.providerData || []).map((provider) => provider.providerId),
+    };
+  } catch (error) {
+    if (error?.code !== 'auth/user-not-found') throw error;
+  }
+  return {
+    schemaVersion: 1,
+    exportedAt: new Date().toISOString(),
+    account,
+    firestoreDocuments: exportState.documents,
+    mediaNotice: 'Los archivos multimedia no se incrustan; sus rutas aparecen en los documentos exportados.',
+  };
+}
+
+async function deleteAccountHandler(request, services = {}) {
+  const uid = requireRecentAuth(request, services.nowMillis || Date.now());
+  if (request.data?.confirmation !== 'ELIMINAR' || request.data?.confirm !== true) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Escribe ELIMINAR para confirmar el borrado permanente.',
+    );
+  }
+  const db = services.db || getFirestore();
+  const authAdmin = services.auth || getAuth();
+  const bucket = services.bucket || getStorage().bucket();
+  const profileRef = db.doc(`users/${uid}`);
+  const [profileSnapshot, firstSide, secondSide] = await Promise.all([
+    profileRef.get(),
+    db.collection('couples').where('user1', '==', uid).get(),
+    db.collection('couples').where('user2', '==', uid).get(),
+  ]);
+  const coupleRefs = new Map();
+  [...firstSide.docs, ...secondSide.docs].forEach((document) => {
+    coupleRefs.set(document.ref.path, document.ref);
+  });
+  const storedCode = storedCoupleCode(profileSnapshot.data()?.coupleCode);
+  if (storedCode) coupleRefs.set(`couples/${storedCode}`, db.doc(`couples/${storedCode}`));
+
+  for (const coupleRef of coupleRefs.values()) {
+    const coupleSnapshot = await coupleRef.get();
+    const couple = coupleSnapshot.data() || {};
+    if (coupleSnapshot.exists) {
+      const partnerUid = couple.user1 === uid ? couple.user2 : couple.user1;
+      if (typeof partnerUid === 'string' && partnerUid) {
+        const partnerRef = db.doc(`users/${partnerUid}`);
+        const partnerSnapshot = await partnerRef.get();
+        if (partnerSnapshot.exists &&
+            storedCoupleCode(partnerSnapshot.data()?.coupleCode) === coupleRef.id) {
+          await partnerRef.set({
+            coupleCode: FieldValue.delete(),
+            pendingCoupleCode: FieldValue.delete(),
+            updatedAt: FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+      }
+    }
+    for (const gameId of MINI_GAME_IDS) {
+      await db.doc(`privateGameState/${coupleRef.id}__${gameId}`).delete();
+    }
+    await bucket.deleteFiles({ prefix: `${coupleRef.path}/` });
+    await db.recursiveDelete(coupleRef);
+  }
+
+  await bucket.file(`profile_photos/${uid}.jpg`).delete({ ignoreNotFound: true });
+  await db.recursiveDelete(profileRef);
+  try {
+    await authAdmin.deleteUser(uid);
+  } catch (error) {
+    if (error?.code !== 'auth/user-not-found') throw error;
+  }
+  logger.info('Pawdo account deleted', {
+    sharedCouplesDeleted: coupleRefs.size,
+  });
+  return { deleted: true };
+}
+
 exports.notifyCoupleActivity = onDocumentCreated('couples/{coupleCode}/chat/{messageId}', notifyCoupleActivityHandler);
 exports.cleanupSharedPhoto = onDocumentDeleted('couples/{coupleCode}/chat/{messageId}', cleanupSharedPhotoHandler);
 exports.createCoupleCode = onCall(createCoupleCodeHandler);
@@ -2780,6 +2947,8 @@ exports.resetLudo = onCall(resetLudoHandler);
 exports.abandonLudo = onCall(abandonLudoHandler);
 exports.openMiniGame = onCall(openMiniGameHandler);
 exports.playMiniGame = onCall(playMiniGameHandler);
+exports.exportAccountData = onCall(exportAccountDataHandler);
+exports.deleteAccount = onCall(deleteAccountHandler);
 
 // Export handlers for emulator-backed unit tests without bypassing validation.
 exports._test = {
@@ -2818,4 +2987,6 @@ exports._test = {
   openMiniGameHandler,
   playMiniGameHandler,
   cleanupSharedPhotoHandler,
+  exportAccountDataHandler,
+  deleteAccountHandler,
 };
