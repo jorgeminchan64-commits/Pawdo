@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/providers/app_providers.dart';
+import '../../../core/services/network_recovery_service.dart';
 import '../../media/services/shared_media_service.dart';
 import '../../settings/screens/notification_preferences_screen.dart';
 import '../services/chat_service.dart';
@@ -68,6 +69,7 @@ class _PendingMessage {
   final String? quickId;
   _PendingState state;
   String? error;
+  bool retryable = false;
 }
 
 class _CoupleChatState extends ConsumerState<_CoupleChat> {
@@ -93,6 +95,7 @@ class _CoupleChatState extends ConsumerState<_CoupleChat> {
   bool _uploading = false;
   double _uploadProgress = 0;
   String? _lastReadMessageId;
+  VoidCallback? _unregisterRecovery;
 
   ChatService get _chat => ref.read(chatServiceProvider);
 
@@ -100,10 +103,15 @@ class _CoupleChatState extends ConsumerState<_CoupleChat> {
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
+    _unregisterRecovery = NetworkRecoveryService.instance.registerRecoveryTask(
+      'chat:${widget.coupleCode}:${widget.uid}',
+      _recoverChat,
+    );
   }
 
   @override
   void dispose() {
+    _unregisterRecovery?.call();
     _typingDebounce?.cancel();
     _typingStop?.cancel();
     if (_typingActive) {
@@ -132,6 +140,7 @@ class _CoupleChatState extends ConsumerState<_CoupleChat> {
       _older.addAll(page.messages.where((document) => known.add(document.id)));
       _hasMore = page.hasMore;
     } on ChatException catch (error) {
+      _reportIfRetryable(error);
       _show(error.message);
     } finally {
       if (mounted) setState(() => _loadingOlder = false);
@@ -192,10 +201,15 @@ class _CoupleChatState extends ConsumerState<_CoupleChat> {
     await _deliver(pending);
   }
 
-  Future<void> _deliver(_PendingMessage pending) async {
+  Future<bool> _deliver(
+    _PendingMessage pending, {
+    bool reportConnectivity = true,
+  }) async {
+    if (!mounted) return false;
     setState(() {
       pending.state = _PendingState.sending;
       pending.error = null;
+      pending.retryable = false;
     });
     try {
       if (pending.quickId == null) {
@@ -212,12 +226,55 @@ class _CoupleChatState extends ConsumerState<_CoupleChat> {
         );
       }
       if (mounted) setState(() => _pending.remove(pending));
+      return true;
     } on ChatException catch (error) {
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
         pending.state = _PendingState.failed;
         pending.error = error.message;
+        pending.retryable = error.retryable;
       });
+      if (reportConnectivity) _reportIfRetryable(error);
+      return false;
+    }
+  }
+
+  Future<void> _recoverChat() async {
+    var retryableFailure = false;
+    final failed = _pending
+        .where(
+          (pending) =>
+              pending.state == _PendingState.failed && pending.retryable,
+        )
+        .toList();
+    for (final pending in failed) {
+      final delivered = await _deliver(pending, reportConnectivity: false);
+      if (!delivered && pending.retryable) retryableFailure = true;
+    }
+
+    final messageId = _lastReadMessageId;
+    if (messageId != null) {
+      try {
+        await _chat.markRead(
+          coupleCode: widget.coupleCode,
+          messageId: messageId,
+        );
+      } on ChatException catch (error) {
+        if (error.retryable) retryableFailure = true;
+      }
+    }
+
+    if (retryableFailure) {
+      throw const ChatException(
+        'La sincronización del chat sigue pendiente.',
+        retryable: true,
+      );
+    }
+  }
+
+  void _reportIfRetryable(ChatException error) {
+    if (error.retryable) {
+      NetworkRecoveryService.instance.reportTransientFailure();
     }
   }
 
@@ -257,6 +314,9 @@ class _CoupleChatState extends ConsumerState<_CoupleChat> {
             },
           );
     } on SharedMediaException catch (error) {
+      if (error.error == SharedMediaError.connection) {
+        NetworkRecoveryService.instance.reportTransientFailure();
+      }
       _show(error.message);
     } finally {
       if (mounted) setState(() => _uploading = false);
@@ -290,6 +350,7 @@ class _CoupleChatState extends ConsumerState<_CoupleChat> {
         messageId: messageId,
       );
     } on ChatException catch (error) {
+      _reportIfRetryable(error);
       _show(error.message);
     }
   }
