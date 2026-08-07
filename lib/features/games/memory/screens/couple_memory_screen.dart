@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../game_snapshot.dart';
 import '../../widgets/mini_game_host.dart';
 
 class CoupleMemoryScreen extends StatelessWidget {
@@ -10,17 +11,9 @@ class CoupleMemoryScreen extends StatelessWidget {
     return MiniGameHost(
       gameId: 'couple_memory',
       builder: (context, data, uid, busy, play) {
-        final cards = List<dynamic>.from(
-          data['cards'] as List? ?? List.filled(16, ''),
-        );
-        final revealed = List<int>.from(
-          (data['revealed'] as List? ?? const []).map(
-            (e) => (e as num).toInt(),
-          ),
-        );
-        final matched = List<int>.from(
-          (data['matched'] as List? ?? const []).map((e) => (e as num).toInt()),
-        );
+        final cards = GameSnapshot.fixedStrings(data['cards'], length: 16);
+        final revealed = GameSnapshot.indices(data['revealed'], upperBound: 16);
+        final matched = GameSnapshot.indices(data['matched'], upperBound: 16);
         final turnUid = data['turnUid']?.toString() ?? '';
         final phase = data['phase']?.toString() ?? 'playing';
         final myTurn = turnUid == uid;

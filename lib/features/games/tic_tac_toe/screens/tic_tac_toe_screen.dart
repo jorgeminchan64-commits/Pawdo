@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../game_snapshot.dart';
 import '../../widgets/mini_game_host.dart';
 
 class TicTacToeScreen extends StatelessWidget {
@@ -10,8 +11,10 @@ class TicTacToeScreen extends StatelessWidget {
     return MiniGameHost(
       gameId: 'tic_tac_toe',
       builder: (context, data, uid, busy, play) {
-        final board = List<String>.from(
-          data['board'] as List? ?? List.filled(9, ''),
+        final board = GameSnapshot.fixedStrings(
+          data['board'],
+          length: 9,
+          allowed: const {'', 'X', 'O'},
         );
         final turnUid = data['turnUid']?.toString() ?? '';
         final winnerUid = data['winnerUid']?.toString() ?? '';

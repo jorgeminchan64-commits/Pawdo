@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../game_snapshot.dart';
 import '../../widgets/mini_game_host.dart';
 
 class RockPaperScissorsScreen extends StatelessWidget {
@@ -16,9 +17,7 @@ class RockPaperScissorsScreen extends StatelessWidget {
     return MiniGameHost(
       gameId: 'rock_paper_scissors',
       builder: (context, data, uid, busy, play) {
-        final submitted = List<String>.from(
-          data['submittedBy'] as List? ?? const [],
-        );
+        final submitted = GameSnapshot.strings(data['submittedBy']);
         final choices = Map<String, dynamic>.from(
           data['choices'] as Map? ?? const {},
         );

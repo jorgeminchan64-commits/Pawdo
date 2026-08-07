@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../game_snapshot.dart';
 import '../../widgets/mini_game_host.dart';
 
 class CoupleQuestionsScreen extends StatefulWidget {
@@ -25,9 +26,7 @@ class _CoupleQuestionsScreenState extends State<CoupleQuestionsScreen> {
       builder: (context, data, uid, busy, play) {
         final prompt = data['prompt']?.toString() ?? 'Preparando pregunta…';
         final phase = data['phase']?.toString() ?? 'answering';
-        final answeredBy = List<String>.from(
-          data['answeredBy'] as List? ?? const [],
-        );
+        final answeredBy = GameSnapshot.strings(data['answeredBy']);
         final answers = Map<String, dynamic>.from(
           data['answers'] as Map? ?? const {},
         );

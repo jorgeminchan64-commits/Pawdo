@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../game_snapshot.dart';
 import '../../widgets/mini_game_host.dart';
 
 class ChallengeRouletteScreen extends StatefulWidget {
@@ -22,9 +23,7 @@ class _ChallengeRouletteScreenState extends State<ChallengeRouletteScreen> {
       builder: (context, data, uid, busy, play) {
         final challenge =
             data['challenge']?.toString() ?? 'Gira para descubrir un reto';
-        final confirmations = List<String>.from(
-          data['confirmedBy'] as List? ?? const [],
-        );
+        final confirmations = GameSnapshot.strings(data['confirmedBy']);
         final completed = data['phase'] == 'complete';
         final confirmed = confirmations.contains(uid);
         return PawdoGameScaffold(
