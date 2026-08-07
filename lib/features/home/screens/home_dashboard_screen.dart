@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -6,17 +8,20 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/android_widget_service.dart';
 import '../../couple/services/couple_service.dart';
+import '../models/home_dashboard_summary.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({
     super.key,
-    required this.onOpenWorld,
+    required this.onOpenHouse,
+    required this.onOpenGarden,
     required this.onOpenGames,
     required this.onOpenMissions,
     required this.onNavigate,
   });
 
-  final VoidCallback onOpenWorld;
+  final VoidCallback onOpenHouse;
+  final VoidCallback onOpenGarden;
   final VoidCallback onOpenGames;
   final VoidCallback onOpenMissions;
   final ValueChanged<int> onNavigate;
@@ -68,7 +73,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ownProfile: profile,
               couple: couple,
               memberProfiles: memberProfiles,
-              onOpenWorld: widget.onOpenWorld,
+              onOpenHouse: widget.onOpenHouse,
+              onOpenGarden: widget.onOpenGarden,
               onOpenGames: widget.onOpenGames,
               onOpenMissions: widget.onOpenMissions,
               onNavigate: widget.onNavigate,
@@ -86,7 +92,8 @@ class _DashboardContent extends StatelessWidget {
     required this.ownProfile,
     required this.couple,
     required this.memberProfiles,
-    required this.onOpenWorld,
+    required this.onOpenHouse,
+    required this.onOpenGarden,
     required this.onOpenGames,
     required this.onOpenMissions,
     required this.onNavigate,
@@ -96,7 +103,8 @@ class _DashboardContent extends StatelessWidget {
   final Map<String, dynamic> ownProfile;
   final Map<String, dynamic> couple;
   final Map<String, dynamic> memberProfiles;
-  final VoidCallback onOpenWorld;
+  final VoidCallback onOpenHouse;
+  final VoidCallback onOpenGarden;
   final VoidCallback onOpenGames;
   final VoidCallback onOpenMissions;
   final ValueChanged<int> onNavigate;
@@ -112,9 +120,20 @@ class _DashboardContent extends StatelessWidget {
     final ownSummary = _map(memberProfiles[uid]);
     final partnerSummary = _map(memberProfiles[partnerUid]);
     final presence = _map(couple['memberPresence']);
-    final ownName = (ownSummary['name'] ?? ownProfile['name'] ?? 'Tú')
-        .toString();
-    final partnerName = (partnerSummary['name'] ?? 'Tu pareja').toString();
+    final ownName =
+        (ownSummary['displayName'] ??
+                ownSummary['name'] ??
+                ownProfile['displayName'] ??
+                ownProfile['name'] ??
+                'Tú')
+            .toString();
+    final partnerName =
+        (partnerSummary['displayName'] ?? partnerSummary['name'] ?? 'Tu pareja')
+            .toString();
+    final relationship = relationshipSummary(
+      _readDate(ownProfile['relationshipStartDate']),
+      DateTime.now(),
+    );
     final streak = (_map(couple['dailyChest'])['streak'] as num?)?.round() ?? 0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AndroidWidgetService.instance.updateDashboard(
@@ -124,132 +143,167 @@ class _DashboardContent extends StatelessWidget {
       );
     });
 
-    return SafeArea(
-      bottom: false,
-      child: CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            sliver: SliverList.list(
-              children: [
-                _TopBar(name: ownName),
-                const SizedBox(height: 14),
-                _CoupleCard(
-                  ownName: ownName,
-                  ownPhoto:
-                      (ownSummary['photoStoragePath'] ??
-                              ownProfile['photoStoragePath'])
-                          ?.toString(),
-                  ownOnline: _presenceIsFresh(
-                    _map(presence[uid]),
-                    fallbackOnline: ownProfile['online'] == true,
-                    fallbackLastSeen: ownProfile['lastSeenAt'],
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 350),
+      decoration: BoxDecoration(
+        gradient: _dashboardGradient(ownProfile['profileTheme']?.toString()),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              sliver: SliverList.list(
+                children: [
+                  _TopBar(name: ownName),
+                  const SizedBox(height: 14),
+                  _CoupleCard(
+                    ownName: ownName,
+                    ownPhoto:
+                        (ownSummary['photoStoragePath'] ??
+                                ownProfile['photoStoragePath'])
+                            ?.toString(),
+                    ownOnline: _presenceIsFresh(
+                      _map(presence[uid]),
+                      fallbackOnline: ownProfile['online'] == true,
+                      fallbackLastSeen: ownProfile['lastSeenAt'],
+                    ),
+                    partnerName: partnerName,
+                    partnerPhoto: partnerSummary['photoStoragePath']
+                        ?.toString(),
+                    partnerOnline: _presenceIsFresh(_map(presence[partnerUid])),
                   ),
-                  partnerName: partnerName,
-                  partnerPhoto: partnerSummary['photoStoragePath']?.toString(),
-                  partnerOnline: _presenceIsFresh(_map(presence[partnerUid])),
-                ),
-                const SizedBox(height: 14),
-                _PetCard(
-                  onTap: () => onNavigate(1),
-                  energy: _number('energy', 70),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _Metric(
-                        icon: Icons.favorite_rounded,
-                        label: 'Amor',
-                        value: '${_number('love', 80)}',
-                        color: const Color(0xFFE75A8C),
+                  const SizedBox(height: 14),
+                  _RelationshipCard(summary: relationship),
+                  const SizedBox(height: 14),
+                  _PetCard(
+                    onTap: () => onNavigate(1),
+                    energy: _number('energy', 70),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _Metric(
+                          icon: Icons.favorite_rounded,
+                          label: 'Amor',
+                          value: '${_number('love', 80)}',
+                          color: const Color(0xFFE75A8C),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _Metric(
-                        icon: Icons.bolt_rounded,
-                        label: 'Energía',
-                        value: '${_number('energy', 70)}',
-                        color: const Color(0xFFF0A83D),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _Metric(
+                          icon: Icons.bolt_rounded,
+                          label: 'Energía',
+                          value: '${_number('energy', 70)}',
+                          color: const Color(0xFFF0A83D),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _Metric(
-                        icon: Icons.monetization_on_rounded,
-                        label: 'Monedas',
-                        value: '${_number('coins', 0)}',
-                        color: const Color(0xFFD48A12),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _Metric(
+                          icon: Icons.monetization_on_rounded,
+                          label: 'Monedas',
+                          value: '${_number('coins', 0)}',
+                          color: const Color(0xFFD48A12),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _Metric(
-                        icon: Icons.local_fire_department_rounded,
-                        label: 'Racha',
-                        value: '$streak',
-                        color: const Color(0xFFE56A46),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _Metric(
+                          icon: Icons.local_fire_department_rounded,
+                          label: 'Racha',
+                          value: '$streak',
+                          color: const Color(0xFFE56A46),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                Text('Explorar', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 10),
-                GridView.count(
-                  crossAxisCount: MediaQuery.sizeOf(context).width < 370
-                      ? 3
-                      : 4,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: .92,
-                  children: [
-                    _Shortcut(Icons.home_rounded, 'Casa', onOpenWorld),
-                    _Shortcut(Icons.yard_rounded, 'Jardín', onOpenWorld),
-                    _Shortcut(
-                      Icons.chat_bubble_rounded,
-                      'Chat',
-                      () => onNavigate(2),
-                    ),
-                    _Shortcut(
-                      Icons.sports_esports_rounded,
-                      'Juegos',
-                      onOpenGames,
-                    ),
-                    _Shortcut(
-                      Icons.storefront_rounded,
-                      'Tienda',
-                      () => onNavigate(3),
-                    ),
-                    _Shortcut(
-                      Icons.card_giftcard_rounded,
-                      'Recompensas',
-                      onOpenMissions,
-                    ),
-                    _Shortcut(
-                      Icons.settings_rounded,
-                      'Ajustes',
-                      () => onNavigate(4),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                _ActivityCard(text: couple['lastAction']?.toString()),
-              ],
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'Explorar',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 10),
+                  GridView.count(
+                    crossAxisCount: MediaQuery.sizeOf(context).width < 370
+                        ? 3
+                        : 4,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: .92,
+                    children: [
+                      _Shortcut(Icons.home_rounded, 'Casa', onOpenHouse),
+                      _Shortcut(Icons.yard_rounded, 'Jardín', onOpenGarden),
+                      _Shortcut(
+                        Icons.chat_bubble_rounded,
+                        'Chat',
+                        () => onNavigate(2),
+                      ),
+                      _Shortcut(
+                        Icons.sports_esports_rounded,
+                        'Juegos',
+                        onOpenGames,
+                      ),
+                      _Shortcut(
+                        Icons.storefront_rounded,
+                        'Tienda',
+                        () => onNavigate(3),
+                      ),
+                      _Shortcut(
+                        Icons.card_giftcard_rounded,
+                        'Recompensas',
+                        onOpenMissions,
+                      ),
+                      _Shortcut(
+                        Icons.settings_rounded,
+                        'Ajustes',
+                        () => onNavigate(4),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  _ActivityCard(text: couple['lastAction']?.toString()),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _TopBar extends StatelessWidget {
+class _TopBar extends StatefulWidget {
   const _TopBar({required this.name});
+
   final String name;
+
+  @override
+  State<_TopBar> createState() => _TopBarState();
+}
+
+class _TopBarState extends State<_TopBar> {
+  DateTime _now = DateTime.now();
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) => Row(
@@ -268,12 +322,12 @@ class _TopBar extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Hola de nuevo',
-              style: TextStyle(color: Colors.black54),
+            Text(
+              greetingForHour(_now.hour),
+              style: const TextStyle(color: Colors.black54),
             ),
             Text(
-              name,
+              widget.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -284,7 +338,83 @@ class _TopBar extends StatelessWidget {
           ],
         ),
       ),
+      Semantics(
+        label: 'Hora actual ${formatDashboardClock(_now)}',
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .82),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            formatDashboardClock(_now),
+            style: const TextStyle(
+              color: AppTheme.plum,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
     ],
+  );
+}
+
+class _RelationshipCard extends StatelessWidget {
+  const _RelationshipCard({required this.summary});
+
+  final RelationshipSummary summary;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: AppTheme.plum,
+      borderRadius: BorderRadius.circular(24),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x24743B83),
+          blurRadius: 20,
+          offset: Offset(0, 8),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .14),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.favorite_rounded, color: Colors.white),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                summary.durationLabel,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                summary.nextMomentLabel,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: .78),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
   );
 }
 
@@ -617,4 +747,33 @@ bool _presenceIsFresh(
   final lastSeen = raw is Timestamp ? raw.toDate() : null;
   return lastSeen != null &&
       DateTime.now().difference(lastSeen) <= const Duration(minutes: 3);
+}
+
+DateTime? _readDate(dynamic value) {
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  return null;
+}
+
+LinearGradient _dashboardGradient(String? theme) {
+  switch (theme) {
+    case 'lavender':
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFF4ECFB), Color(0xFFFFF8FB)],
+      );
+    case 'sunset':
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFFFE9DF), Color(0xFFFFF8FB)],
+      );
+    default:
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFFFEAF2), Color(0xFFFFF8FB)],
+      );
+  }
 }
