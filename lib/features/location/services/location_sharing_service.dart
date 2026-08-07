@@ -137,6 +137,8 @@ class LocationSharingService with WidgetsBindingObserver {
     await _clearLocalSession();
   }
 
+  Future<void> recover() => _restoreActiveShare();
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {

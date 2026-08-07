@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/network_status_banner.dart';
 import '../../chat/screens/chat_screen.dart';
 import '../../games/screens/games_hub_screen.dart';
 import '../../missions/screens/daily_missions_screen.dart';
@@ -72,6 +73,7 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          const NetworkStatusBanner(),
           LocationSharingStatusBanner(
             onOpen: () => _open(const LocationSharingScreen()),
           ),

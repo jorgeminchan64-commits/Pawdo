@@ -42,6 +42,11 @@ class PresenceService with WidgetsBindingObserver {
     if (_auth.currentUser != null) _enqueue(false);
   }
 
+  Future<void> recover() async {
+    _sync(force: true);
+    await _serial;
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final resumed = state == AppLifecycleState.resumed;

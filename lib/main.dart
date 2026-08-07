@@ -11,6 +11,7 @@ import 'features/auth/screens/auth_gate.dart';
 import 'features/home/screens/main_screen.dart';
 import 'core/services/presence_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/network_recovery_service.dart';
 import 'features/couple/services/couple_service.dart';
 import 'features/location/services/location_sharing_service.dart';
 import 'core/theme/app_theme.dart';
@@ -49,6 +50,7 @@ void _recordUnhandledError(Object error, StackTrace stackTrace) {
 Future<void> _initializePawdoServices() async {
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  await NetworkRecoveryService.instance.start();
   LocationSharingService.instance.initialize();
   await NotificationService.instance.initialize(
     onForeground: (message) {
@@ -199,15 +201,25 @@ class PawdoApp extends StatefulWidget {
 
 class _PawdoAppState extends State<PawdoApp> {
   late final PresenceService _presence;
+  late final VoidCallback _unregisterRecovery;
 
   @override
   void initState() {
     super.initState();
     _presence = PresenceService(CoupleService())..start();
+    _unregisterRecovery = NetworkRecoveryService.instance.registerRecoveryTask(
+      'core-services',
+      () async {
+        await _presence.recover();
+        await NotificationService.instance.recover();
+        await LocationSharingService.instance.recover();
+      },
+    );
   }
 
   @override
   void dispose() {
+    _unregisterRecovery();
     _presence.dispose();
     unawaited(LocationSharingService.instance.shutdown());
     super.dispose();

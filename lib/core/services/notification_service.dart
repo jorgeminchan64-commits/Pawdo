@@ -82,6 +82,8 @@ class NotificationService {
     }
   }
 
+  Future<void> recover() => _registerWithoutPrompt();
+
   Future<void> unregisterBeforeLogout() async {
     final user = _auth.currentUser;
     final token = _registeredToken ?? await _messaging.getToken();
