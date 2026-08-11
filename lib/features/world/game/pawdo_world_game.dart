@@ -8,12 +8,18 @@ import 'package:flutter/material.dart';
 import '../components/actors/animated_actor_component.dart';
 import '../components/depth_priority.dart';
 import '../components/editable_garden_item.dart';
+import '../models/garden_interaction_policy.dart';
 
 class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
-  PawdoWorldGame({required this.onOpenInterior, required this.onWorldReward});
+  PawdoWorldGame({
+    required this.onOpenInterior,
+    required this.onWorldReward,
+    required this.onLayoutChanged,
+  });
 
   final VoidCallback onOpenInterior;
   final Future<void> Function(Map<String, dynamic> reward) onWorldReward;
+  final VoidCallback onLayoutChanged;
 
   static const double worldWidth = 1800;
   static const double worldHeight = 900;
@@ -640,6 +646,7 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
     _clearSelectedEditableItem();
     selectedEditableItem = item;
     item.isSelected = true;
+    onLayoutChanged();
     return true;
   }
 
@@ -656,6 +663,7 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
     item.removeFromParent();
     editableItems.remove(item);
     selectedEditableItem = null;
+    onLayoutChanged();
 
     return true;
   }
@@ -700,15 +708,15 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
     final tappedItem = _findEditableItemAt(worldTap);
 
     if (tappedItem != null) {
-      if (tappedItem.itemType == 'plant' ||
-          tappedItem.itemType == 'special_plant') {
-        _waterPlants(tappedItem.position);
-        return;
-      }
-
-      if (tappedItem.itemType == 'table') {
-        _sitTogether(tappedItem);
-        return;
+      switch (GardenInteractionPolicy.actionForType(tappedItem.itemType)) {
+        case GardenItemAction.water:
+          _waterPlant(tappedItem);
+          return;
+        case GardenItemAction.sit:
+          _sitTogether(tappedItem);
+          return;
+        case GardenItemAction.none:
+          break;
       }
     }
 
@@ -763,11 +771,14 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
 
     item.position = candidate;
     item.priority = item.position.y.toInt();
+    onLayoutChanged();
   }
 
-  Future<void> _waterPlants(Vector2 plant) async {
+  Future<void> _waterPlant(EditableGardenItem plantItem) async {
+    if (!GardenInteractionPolicy.isWaterable(plantItem.itemType)) return;
     _actionRunning = true;
     try {
+      final plant = plantItem.position;
       final boyTarget = Vector2(plant.x - 105, plant.y + 40);
       final girlTarget = Vector2(plant.x + 105, plant.y + 40);
       final dogTarget = Vector2(plant.x, plant.y + 75);

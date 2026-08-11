@@ -7,6 +7,7 @@ import '../../shop/data/garden_shop_items.dart';
 import '../../shop/screens/garden_shop_screen.dart';
 import '../../interior/screens/pawdo_interior_screen.dart';
 import '../game/pawdo_world_game.dart';
+import '../models/garden_interaction_policy.dart';
 import '../services/layout_service.dart';
 import '../../economy/services/economy_service.dart';
 
@@ -30,6 +31,8 @@ class _WorldScreenState extends State<WorldScreen> {
   bool isEditingGarden = false;
   bool _isSavingGarden = false;
   bool _isEquippingHouse = false;
+  bool _hasUnsavedChanges = false;
+  int _visiblePlantStage = 1;
   int _gardenRevision = 0;
 
   @override
@@ -41,6 +44,7 @@ class _WorldScreenState extends State<WorldScreen> {
     game = PawdoWorldGame(
       onOpenInterior: _openInterior,
       onWorldReward: _applyWorldReward,
+      onLayoutChanged: _markLayoutDirty,
     );
 
     _setLandscape();
@@ -91,6 +95,11 @@ class _WorldScreenState extends State<WorldScreen> {
       coupleCode: coupleCode,
       actionId: actionId,
     );
+    final returnedStage = serverResult['plantStage'];
+    if (actionId == 'world_water' && returnedStage is num) {
+      await game.changeGardenPlantStage(returnedStage.toInt());
+      _visiblePlantStage = returnedStage.toInt().clamp(1, 3);
+    }
     if (mounted && serverResult['alreadyClaimed'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -107,7 +116,7 @@ class _WorldScreenState extends State<WorldScreen> {
     final doc = await _db.collection('couples').doc(coupleCode).get();
     final data = doc.data() ?? {};
     final layout = data['gardenLayout'];
-    _gardenRevision = _toInt(data['gardenRevision'], 0);
+    final revision = _toInt(data['gardenRevision'], 0);
     final plantData = data['gardenPlant'];
     final plantStage = plantData is Map
         ? _toInt(plantData['stage'], 1).clamp(1, 3)
@@ -117,6 +126,13 @@ class _WorldScreenState extends State<WorldScreen> {
       if (game.editableItems.isNotEmpty) {
         if (layout is List) await game.loadGardenLayout(layout);
         await game.changeGardenPlantStage(plantStage);
+        if (mounted) {
+          setState(() {
+            _gardenRevision = revision;
+            _visiblePlantStage = plantStage;
+            _hasUnsavedChanges = false;
+          });
+        }
         return;
       }
 
@@ -173,6 +189,7 @@ class _WorldScreenState extends State<WorldScreen> {
         expectedRevision: _gardenRevision,
       );
       if (!mounted) return;
+      setState(() => _hasUnsavedChanges = false);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Jardín guardado ✅')));
@@ -223,9 +240,13 @@ class _WorldScreenState extends State<WorldScreen> {
       final doc = await _db.collection('couples').doc(coupleCode).get();
       final data = doc.data() ?? {};
       final layout = data['gardenLayout'];
-      _gardenRevision = _toInt(data['gardenRevision'], 0);
+      final revision = _toInt(data['gardenRevision'], 0);
       await game.loadGardenLayout(layout is List ? layout : const []);
       if (mounted) {
+        setState(() {
+          _gardenRevision = revision;
+          _hasUnsavedChanges = false;
+        });
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Jardín actualizado ✅')));
@@ -308,6 +329,11 @@ class _WorldScreenState extends State<WorldScreen> {
     game.setGardenEditMode(isEditingGarden);
   }
 
+  void _markLayoutDirty() {
+    if (!mounted || _hasUnsavedChanges) return;
+    setState(() => _hasUnsavedChanges = true);
+  }
+
   Future<void> _setLandscape() async {
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
@@ -318,6 +344,7 @@ class _WorldScreenState extends State<WorldScreen> {
   }
 
   Future<void> _goToTab(int index) async {
+    if (!await _confirmDiscardChanges()) return;
     if (isEditingGarden) {
       setState(() {
         isEditingGarden = false;
@@ -333,6 +360,37 @@ class _WorldScreenState extends State<WorldScreen> {
     if (!mounted) return;
 
     widget.onNavigate(index);
+  }
+
+  Future<bool> _confirmDiscardChanges() async {
+    if (!_hasUnsavedChanges) return true;
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('¿Salir sin guardar?'),
+        content: const Text(
+          'Los cambios de este jardín todavía no se guardaron para tu pareja.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Seguir editando'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Descartar cambios'),
+          ),
+        ],
+      ),
+    );
+    if (discard != true || !mounted) return false;
+    setState(() => _hasUnsavedChanges = false);
+    return true;
+  }
+
+  Future<void> _requestPop() async {
+    if (!await _confirmDiscardChanges() || !mounted) return;
+    Navigator.pop(context);
   }
 
   Future<void> _openInterior() async {
@@ -355,116 +413,126 @@ class _WorldScreenState extends State<WorldScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(child: GameWidget(game: game)),
+    return PopScope(
+      canPop: !_hasUnsavedChanges,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _requestPop();
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            Positioned.fill(child: GameWidget(game: game)),
 
-          Positioned(
-            top: 18,
-            left: 18,
-            child: SafeArea(
-              child: _glassButton(
-                text: isEditingGarden
-                    ? "Editando jardín ✏️"
-                    : "Jardín Pawdo 🌿",
-                onTap: () {},
-              ),
-            ),
-          ),
-
-          Positioned(
-            top: 18,
-            left: 190,
-            right: 130,
-            child: SafeArea(child: _buildHud()),
-          ),
-
-          Positioned(
-            left: 18,
-            bottom: 18,
-            child: SafeArea(
-              child: Row(
-                children: [
-                  _editGardenButton(
-                    text: isEditingGarden ? 'Salir edición' : 'Editar jardín',
-                    icon: isEditingGarden ? Icons.close : Icons.edit,
-                    onTap: _toggleGardenEditMode,
-                  ),
-                  if (isEditingGarden) ...[
-                    const SizedBox(width: 10),
-                    _editGardenButton(
-                      text: 'Agregar',
-                      icon: Icons.add_circle,
-                      onTap: _showGardenInventorySheet,
-                    ),
-                    const SizedBox(width: 10),
-                    _editGardenButton(
-                      text: 'Casa',
-                      icon: Icons.home,
-                      onTap: _showHouseSelectorSheet,
-                    ),
-                    const SizedBox(width: 10),
-                    _editGardenButton(
-                      text: _isSavingGarden ? 'Guardando…' : 'Guardar',
-                      icon: Icons.save,
-                      onTap: _saveGardenLayout,
-                    ),
-                    const SizedBox(width: 10),
-                    _editGardenButton(
-                      text: 'Eliminar',
-                      icon: Icons.delete,
-                      onTap: _deleteSelectedGardenItem,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-
-          if (!isEditingGarden)
             Positioned(
-              right: 18,
               top: 18,
+              left: 18,
+              child: SafeArea(
+                child: _glassButton(
+                  text: isEditingGarden
+                      ? "Editando jardín ✏️"
+                      : "Jardín Pawdo 🌿",
+                  onTap: () {},
+                ),
+              ),
+            ),
+
+            Positioned(
+              top: 18,
+              left: 190,
+              right: 130,
+              child: SafeArea(child: _buildHud()),
+            ),
+
+            Positioned(
+              left: 18,
               bottom: 18,
               child: SafeArea(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Row(
                   children: [
-                    _circleMenuButton(
-                      icon: Icons.pets,
-                      label: "Mascota",
-                      onTap: () => _goToTab(1),
+                    _editGardenButton(
+                      text: isEditingGarden ? 'Salir edición' : 'Editar jardín',
+                      icon: isEditingGarden ? Icons.close : Icons.edit,
+                      onTap: _toggleGardenEditMode,
                     ),
-                    const SizedBox(height: 12),
-                    _circleMenuButton(
-                      icon: Icons.chat,
-                      label: "Chat",
-                      onTap: () => _goToTab(2),
-                    ),
-                    const SizedBox(height: 12),
-                    _circleMenuButton(
-                      icon: Icons.store,
-                      label: "Tienda",
-                      onTap: () => _goToTab(3),
-                    ),
-                    const SizedBox(height: 12),
-                    _circleMenuButton(
-                      icon: Icons.flag,
-                      label: "Misiones",
-                      onTap: () => _goToTab(4),
-                    ),
-                    const SizedBox(height: 12),
-                    _circleMenuButton(
-                      icon: Icons.person,
-                      label: "Perfil",
-                      onTap: () => _goToTab(5),
-                    ),
+                    if (isEditingGarden) ...[
+                      const SizedBox(width: 10),
+                      _editGardenButton(
+                        text: 'Agregar',
+                        icon: Icons.add_circle,
+                        onTap: _showGardenInventorySheet,
+                      ),
+                      const SizedBox(width: 10),
+                      _editGardenButton(
+                        text: 'Casa',
+                        icon: Icons.home,
+                        onTap: _showHouseSelectorSheet,
+                      ),
+                      const SizedBox(width: 10),
+                      _editGardenButton(
+                        text: _isSavingGarden
+                            ? 'Guardando…'
+                            : _hasUnsavedChanges
+                            ? 'Guardar *'
+                            : 'Guardado',
+                        icon: Icons.save,
+                        onTap: _saveGardenLayout,
+                      ),
+                      const SizedBox(width: 10),
+                      _editGardenButton(
+                        text: 'Eliminar',
+                        icon: Icons.delete,
+                        onTap: _deleteSelectedGardenItem,
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
-        ],
+
+            if (!isEditingGarden)
+              Positioned(
+                right: 18,
+                top: 18,
+                bottom: 18,
+                child: SafeArea(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _circleMenuButton(
+                        icon: Icons.pets,
+                        label: "Mascota",
+                        onTap: () => _goToTab(1),
+                      ),
+                      const SizedBox(height: 12),
+                      _circleMenuButton(
+                        icon: Icons.chat,
+                        label: "Chat",
+                        onTap: () => _goToTab(2),
+                      ),
+                      const SizedBox(height: 12),
+                      _circleMenuButton(
+                        icon: Icons.store,
+                        label: "Tienda",
+                        onTap: () => _goToTab(3),
+                      ),
+                      const SizedBox(height: 12),
+                      _circleMenuButton(
+                        icon: Icons.flag,
+                        label: "Misiones",
+                        onTap: () => _goToTab(4),
+                      ),
+                      const SizedBox(height: 12),
+                      _circleMenuButton(
+                        icon: Icons.person,
+                        label: "Perfil",
+                        onTap: () => _goToTab(5),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -912,6 +980,7 @@ class _WorldScreenState extends State<WorldScreen> {
             final plantStage = plantData is Map
                 ? _toInt(plantData['stage'], 1).clamp(1, 3)
                 : 1;
+            _syncVisiblePlantStage(plantStage);
 
             return Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -922,13 +991,26 @@ class _WorldScreenState extends State<WorldScreen> {
                 const SizedBox(width: 8),
                 _hudBadge("⚡", "$energy%"),
                 const SizedBox(width: 8),
-                _hudBadge("🌱", "N$plantStage · $plants"),
+                _hudBadge(
+                  "🌱",
+                  "${GardenInteractionPolicy.plantStageLabel(plantStage)} · $plants",
+                ),
               ],
             );
           },
         );
       },
     );
+  }
+
+  void _syncVisiblePlantStage(int stage) {
+    final safeStage = stage.clamp(1, 3);
+    if (_visiblePlantStage == safeStage) return;
+    _visiblePlantStage = safeStage;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await game.loaded;
+      await game.changeGardenPlantStage(safeStage);
+    });
   }
 
   Widget _hudBadge(String icon, String value) {
