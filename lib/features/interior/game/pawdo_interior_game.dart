@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../../world/components/actors/animated_actor_component.dart';
 import '../../world/components/depth_priority.dart';
 import '../components/editable_interior_item.dart';
+import '../models/interior_layout_policy.dart';
 
 enum InteriorDeleteResult { deleted, noSelection, protected }
 
@@ -15,12 +16,12 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
   PawdoInteriorGame({
     required this.onInteriorReward,
     required this.onOpenCinema,
-    required this.onOpenGames,
+    required this.onLayoutChanged,
   });
 
   final Future<void> Function(Map<String, dynamic> reward) onInteriorReward;
   final VoidCallback onOpenCinema;
-  final VoidCallback onOpenGames;
+  final VoidCallback onLayoutChanged;
 
   static const double roomWidth = 1800;
   static const double roomHeight = 900;
@@ -54,7 +55,6 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
       .toSet();
 
   final Rect walkableArea = const Rect.fromLTWH(330, 470, 1140, 320);
-  final Rect gamesZone = const Rect.fromLTWH(1340, 140, 150, 100);
   @override
   Color backgroundColor() => const Color(0xFFFFEEF5);
 
@@ -70,23 +70,8 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
 
   Future<void> _loadInterior() async {
     await _addRoomBackground();
-    await _addFixedGamesPortal();
     await _addDefaultFurniture();
     await _addActors();
-  }
-
-  Future<void> _addFixedGamesPortal() async {
-    final image = await images.load('interior/games_portal.png');
-
-    world.add(
-      SpriteComponent(
-        sprite: Sprite(image),
-        position: Vector2(1415, 205),
-        size: Vector2(155, 95),
-        anchor: Anchor.center,
-        priority: 30,
-      ),
-    );
   }
 
   Future<void> _addRoomBackground() async {
@@ -375,26 +360,6 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
     }
   }
 
-  Future<void> addInteriorItem(String type) async {
-    final id = '${type}_${DateTime.now().millisecondsSinceEpoch}';
-    final size = _sizeForFurnitureType(type);
-    final position = _findAvailablePosition(type, size);
-
-    final item = await _addFurnitureItem(
-      id: id,
-      type: type,
-      label: _labelForFurnitureType(type),
-      assetPath: _assetForFurnitureType(type),
-      position: position,
-      size: size,
-      priority: type == 'rug' ? 505 : position.y.toInt(),
-    );
-
-    _clearSelectedInteriorItem();
-    selectedInteriorItem = item;
-    item.isSelected = true;
-  }
-
   Future<bool> addInteriorItemFromShop({
     required String catalogItemId,
     required String type,
@@ -423,6 +388,7 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
     _clearSelectedInteriorItem();
     selectedInteriorItem = item;
     item.isSelected = true;
+    onLayoutChanged();
     return true;
   }
 
@@ -437,6 +403,7 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
     item.removeFromParent();
     furnitureItems.remove(item);
     selectedInteriorItem = null;
+    onLayoutChanged();
 
     return InteriorDeleteResult.deleted;
   }
@@ -581,10 +548,6 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
     EditableInteriorItem? ignoredItem,
   }) {
     final candidate = _placementFootprint(type, itemSize, position);
-    if (type != 'rug' && candidate.overlaps(gamesZone.inflate(18))) {
-      return false;
-    }
-
     if (type == 'rug') return true;
 
     for (final other in furnitureItems) {
@@ -600,10 +563,11 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
   }
 
   Vector2 _findAvailablePosition(String type, Vector2 itemSize) {
+    final preferred = InteriorLayoutPolicy.preferredBounds(type);
     for (int attempt = 0; attempt < 32; attempt++) {
       final requested = Vector2(
-        650 + _random.nextDouble() * 500,
-        590 + _random.nextDouble() * 210,
+        preferred.left + _random.nextDouble() * preferred.width,
+        preferred.top + _random.nextDouble() * preferred.height,
       );
       final candidate = _clampItemPosition(requested, itemSize);
       if (_canPlaceItem(type, itemSize, candidate)) return candidate;
@@ -642,11 +606,6 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
       _selectInteriorItem(worldTap);
       return;
     }
-    if (_isInside(worldTap, gamesZone)) {
-      onOpenGames();
-      return;
-    }
-
     final tappedItem = _findFurnitureAt(worldTap);
 
     if (tappedItem != null) {
@@ -731,6 +690,7 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
     item.position = candidate;
 
     item.priority = item.itemType == 'rug' ? 505 : candidate.y.toInt();
+    onLayoutChanged();
   }
 
   EditableInteriorItem? _findFurnitureAt(Vector2 point) {
@@ -998,13 +958,6 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
         point.x <= right &&
         point.y >= top &&
         point.y <= bottom;
-  }
-
-  bool _isInside(Vector2 point, Rect rect) {
-    return point.x >= rect.left &&
-        point.x <= rect.right &&
-        point.y >= rect.top &&
-        point.y <= rect.bottom;
   }
 
   void _addTapMarker(Vector2 position) {

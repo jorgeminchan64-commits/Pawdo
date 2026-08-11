@@ -8,7 +8,7 @@ import '../../shop/screens/interior_shop_screen.dart';
 import '../../economy/services/economy_service.dart';
 import '../../cinema/screens/pawdo_cinema_screen.dart';
 import '../game/pawdo_interior_game.dart';
-import '../../games/screens/games_hub_screen.dart';
+import '../models/interior_layout_policy.dart';
 import '../../world/services/layout_service.dart';
 
 class PawdoInteriorScreen extends StatefulWidget {
@@ -28,6 +28,7 @@ class _PawdoInteriorScreenState extends State<PawdoInteriorScreen> {
 
   bool isEditingInterior = false;
   bool _isSavingLayout = false;
+  bool _hasUnsavedChanges = false;
   int _interiorRevision = 0;
 
   @override
@@ -39,7 +40,7 @@ class _PawdoInteriorScreenState extends State<PawdoInteriorScreen> {
     game = PawdoInteriorGame(
       onInteriorReward: _applyInteriorReward,
       onOpenCinema: _openCinema,
-      onOpenGames: _openGamesHub,
+      onLayoutChanged: _markLayoutDirty,
     );
 
     _setLandscape();
@@ -125,7 +126,11 @@ class _PawdoInteriorScreenState extends State<PawdoInteriorScreen> {
 
       await game.loaded;
       await game.loadInteriorLayout(layout is List ? layout : const []);
-      _interiorRevision = revision is num ? revision.toInt() : 0;
+      if (!mounted) return;
+      setState(() {
+        _interiorRevision = revision is num ? revision.toInt() : 0;
+        _hasUnsavedChanges = false;
+      });
 
       if (notify && mounted) {
         ScaffoldMessenger.of(
@@ -155,6 +160,7 @@ class _PawdoInteriorScreenState extends State<PawdoInteriorScreen> {
         expectedRevision: _interiorRevision,
       );
       if (!mounted) return;
+      setState(() => _hasUnsavedChanges = false);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Interior guardado ✅')));
@@ -204,6 +210,11 @@ class _PawdoInteriorScreenState extends State<PawdoInteriorScreen> {
     game.setInteriorEditMode(isEditingInterior);
   }
 
+  void _markLayoutDirty() {
+    if (!mounted || _hasUnsavedChanges) return;
+    setState(() => _hasUnsavedChanges = true);
+  }
+
   Future<void> _addInteriorShopItem(InteriorShopItem item) async {
     final added = await game.addInteriorItemFromShop(
       catalogItemId: item.id,
@@ -215,6 +226,15 @@ class _PawdoInteriorScreenState extends State<PawdoInteriorScreen> {
     if (!added && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ese mueble ya está colocado')),
+      );
+      return;
+    }
+    if (mounted) {
+      final zone = InteriorLayoutPolicy.zoneLabel(item.type);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${item.name} listo en $zone. Guarda el cambio.'),
+        ),
       );
     }
   }
@@ -406,126 +426,158 @@ class _PawdoInteriorScreenState extends State<PawdoInteriorScreen> {
     );
   }
 
-  Future<void> _openGamesHub() async {
-    if (isEditingInterior) return;
-
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const GamesHubScreen()),
+  Future<void> _requestExit() async {
+    if (!_hasUnsavedChanges) {
+      Navigator.pop(context);
+      return;
+    }
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('¿Salir sin guardar?'),
+        content: const Text(
+          'Los cambios de decoración de esta sesión todavía no se guardaron.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Seguir editando'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Descartar y salir'),
+          ),
+        ],
+      ),
     );
+    if (discard != true || !mounted) return;
+    setState(() => _hasUnsavedChanges = false);
+    Navigator.pop(context);
   }
 
   @override
   void dispose() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String?>(
-      future: _coupleCodeFuture,
-      builder: (context, codeSnapshot) {
-        final coupleCode = codeSnapshot.data;
+    return PopScope(
+      canPop: !_hasUnsavedChanges,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _requestExit();
+      },
+      child: FutureBuilder<String?>(
+        future: _coupleCodeFuture,
+        builder: (context, codeSnapshot) {
+          final coupleCode = codeSnapshot.data;
 
-        return Scaffold(
-          body: Stack(
-            children: [
-              Positioned.fill(child: GameWidget(game: game)),
+          return Scaffold(
+            body: Stack(
+              children: [
+                Positioned.fill(child: GameWidget(game: game)),
 
-              Positioned(
-                top: 18,
-                left: 18,
-                child: SafeArea(
-                  child: _topButton(
-                    text: 'Volver',
-                    icon: Icons.arrow_back,
-                    onTap: () => Navigator.pop(context),
-                  ),
-                ),
-              ),
-
-              Positioned(
-                top: 18,
-                left: 126,
-                child: SafeArea(
-                  child: _topButton(
-                    text: isEditingInterior ? 'Salir edición' : 'Editar',
-                    icon: isEditingInterior ? Icons.close : Icons.edit,
-                    onTap: _toggleInteriorEditMode,
-                  ),
-                ),
-              ),
-
-              if (isEditingInterior)
                 Positioned(
                   top: 18,
-                  left: 240,
+                  left: 18,
                   child: SafeArea(
-                    child: Row(
-                      children: [
-                        _topButton(
-                          text: 'Agregar',
-                          icon: Icons.add_circle,
-                          onTap: _showInteriorInventorySheet,
-                        ),
-                        const SizedBox(width: 10),
-                        _topButton(
-                          text: 'Tienda',
-                          icon: Icons.store,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const InteriorShopScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 10),
-                        _topButton(
-                          text: _isSavingLayout ? 'Guardando...' : 'Guardar',
-                          icon: Icons.save,
-                          onTap: _saveInteriorLayout,
-                        ),
-                        const SizedBox(width: 10),
-                        _topButton(
-                          text: 'Eliminar',
-                          icon: Icons.delete,
-                          onTap: _deleteSelectedInteriorItem,
-                        ),
-                      ],
+                    child: _topButton(
+                      text: 'Volver',
+                      icon: Icons.arrow_back,
+                      onTap: _requestExit,
                     ),
                   ),
                 ),
 
-              Positioned(
-                top: 18,
-                right: 18,
-                child: SafeArea(
-                  child: coupleCode == null || coupleCode.isEmpty
-                      ? const SizedBox.shrink()
-                      : _buildHud(coupleCode),
+                Positioned(
+                  top: 18,
+                  left: 126,
+                  child: SafeArea(
+                    child: _topButton(
+                      text: isEditingInterior ? 'Salir edición' : 'Editar',
+                      icon: isEditingInterior ? Icons.close : Icons.edit,
+                      onTap: _toggleInteriorEditMode,
+                    ),
+                  ),
                 ),
-              ),
 
-              Positioned(
-                left: 18,
-                bottom: 18,
-                child: SafeArea(
-                  child: isEditingInterior ? _editHintBox() : _hintBox(),
+                if (isEditingInterior)
+                  Positioned(
+                    top: 18,
+                    left: 240,
+                    child: SafeArea(
+                      child: Row(
+                        children: [
+                          _topButton(
+                            text: 'Agregar',
+                            icon: Icons.add_circle,
+                            onTap: _showInteriorInventorySheet,
+                          ),
+                          const SizedBox(width: 10),
+                          _topButton(
+                            text: 'Tienda',
+                            icon: Icons.store,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const InteriorShopScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 10),
+                          _topButton(
+                            text: _isSavingLayout
+                                ? 'Guardando...'
+                                : _hasUnsavedChanges
+                                ? 'Guardar *'
+                                : 'Guardado',
+                            icon: Icons.save,
+                            onTap: _saveInteriorLayout,
+                          ),
+                          const SizedBox(width: 10),
+                          _topButton(
+                            text: 'Eliminar',
+                            icon: Icons.delete,
+                            onTap: _deleteSelectedInteriorItem,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                Positioned(
+                  top: 18,
+                  right: 18,
+                  child: SafeArea(
+                    child: coupleCode == null || coupleCode.isEmpty
+                        ? const SizedBox.shrink()
+                        : _buildHud(coupleCode),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
+
+                Positioned(
+                  left: 18,
+                  bottom: 18,
+                  child: SafeArea(
+                    child: isEditingInterior ? _editHintBox() : _hintBox(),
+                  ),
+                ),
+                if (isEditingInterior)
+                  Positioned(
+                    right: 18,
+                    bottom: 18,
+                    child: SafeArea(child: _zoneLegend()),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -690,6 +742,25 @@ class _PawdoInteriorScreenState extends State<PawdoInteriorScreen> {
             color: Colors.purple,
             fontWeight: FontWeight.bold,
             fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _zoneLegend() {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.88),
+      borderRadius: BorderRadius.circular(22),
+      elevation: 4,
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Text(
+          'Zonas sugeridas: Descanso · Sala · Mesa · Pawdo',
+          style: TextStyle(
+            color: Colors.purple,
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
           ),
         ),
       ),
