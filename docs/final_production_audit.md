@@ -1,11 +1,11 @@
 # Pawdo — auditoría inicial de producción
 
-Fecha de actualización: 2026-08-07
-Alcance actualizado hasta el cierre de FASE 7. Este documento no declara la aplicación lista para producción.
+Fecha de actualización: 2026-08-11
+Alcance actualizado hasta el cierre de FASE 8. Este documento no declara la aplicación lista para producción.
 
 ## Resumen ejecutivo
 
-Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, paginación de chat y 116 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
+Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, paginación de chat y 119 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
 
 Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, dominio propio/Data Safety y prueba staging pendientes, ausencia de App Check/Crashlytics, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK de 105.98 MiB. No deben añadirse módulos grandes fuera del orden de fases.
 
@@ -73,7 +73,7 @@ Pendiente de validar:
 - Inventario Data Safety real y verificación operativa de los correos publicados.
 - Reglas amplias de `state` y cinema.
 
-## Estado de FASE 0–7
+## Estado de FASE 0–8
 
 - Auditoría estática y documental: completada.
 - Git y respaldo: completados.
@@ -92,5 +92,7 @@ Pendiente de validar:
 - FASE 6 cerrada con identidad personal, correos diferenciados y sitio legal público enlazado dentro de Pawdo. La prueba destructiva de staging permanece como gate de lanzamiento.
 - FASE 7: Inicio contextual con hora, nombre visible, relación, próximo aniversario, tema visual y accesos rápidos; Casa y Jardín ya no comparten el mismo destino.
 - Puerta final de FASE 7: analyze limpio; 37 tests Flutter aprobados; APK de 111,124,317 bytes recompilado y verificado como no firmado. Backend y reglas no cambiaron, por lo que conservan sus puertas aprobadas de FASE 6.
+- FASE 8: Casa activa sin portal duplicado, muebles nuevos guiados por zonas, cambios no guardados protegidos y orientación vertical restaurada al salir; diseños existentes permanecen compatibles.
+- Puerta final de FASE 8: analyze limpio; 40 tests Flutter aprobados; APK de 111,124,317 bytes recompilado y verificado como no firmado. Backend y reglas no cambiaron.
 - Pruebas físicas y profiling: no ejecutados en esta fase.
-- Siguiente paso autorizado por el roadmap: FASE 8, Casa.
+- Siguiente paso autorizado por el roadmap: FASE 9, Jardín.

@@ -17,6 +17,21 @@ Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agru
 | Fecha ausente o futura | Muestra una invitación segura para corregirla en Perfil |
 | Pantalla pequeña y texto ampliado | No hay overflow en cabecera, tarjeta de relación, métricas ni accesos |
 
+## Casa — FASE 8
+
+| Caso | Resultado esperado |
+|---|---|
+| Entrar desde Inicio | Abre la Casa directamente en horizontal y sin portal duplicado a Juegos/Álbum |
+| Tocar cama, sofá, mesa, TV, planta, Pawdo o personajes | Ejecuta únicamente la acción coherente del objeto tocado |
+| Agregar un mueble comprado | Se coloca en su zona sugerida y queda seleccionado para ajuste |
+| Arrastrar muebles | Respeta límites y colisiones; aparece `Guardar *` al primer cambio |
+| Intentar eliminar un mueble inicial | Informa que es esencial y conserva el objeto |
+| Volver con cambios pendientes | Exige seguir editando o confirmar el descarte |
+| Guardar desde dos teléfonos | La revisión evita sobrescribir silenciosamente el diseño más reciente |
+| Salir de Casa | Restaura orientación vertical y mantiene Inicio disponible |
+| Entrar sin pareja o sin inventario | No rompe el juego; explica el requisito en el inventario |
+| Segundo plano y reanudación | No duplica recompensas ni deja controles bloqueados |
+
 ## Dos teléfonos reales
 
 | Caso | Teléfono A | Teléfono B | Resultado esperado |

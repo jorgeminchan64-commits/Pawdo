@@ -1,6 +1,6 @@
 # Pawdo — progreso hacia producción
 
-Última actualización: 2026-08-07
+Última actualización: 2026-08-11
 
 ## Estado por fase
 
@@ -14,7 +14,8 @@
 | 5. Perfil | Completada | 29 tests Flutter; 43 Functions; 32 reglas; APK recompilado | Fecha compartida canónica en FASE 15 | Iniciar FASE 6 |
 | 6. Cuenta, privacidad y seguridad | Completada | Centro de cuenta; sitio legal público; 32 tests Flutter; 46 Functions; 33 reglas; APK recompilado | Data Safety, staging y despliegue quedan como gates de lanzamiento | Iniciar FASE 7 |
 | 7. Navegación e Inicio | Completada | Rutas directas; saludo, reloj y relación; 37 tests Flutter; APK recompilado | Validación visual pendiente en dos teléfonos; fecha canónica compartida queda en FASE 15 | Iniciar FASE 8 |
-| 8–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 8. Casa | Completada | Zonas coherentes, cambios protegidos, 40 tests Flutter; APK recompilado | Validación táctil/FPS pendiente en dos teléfonos | Iniciar FASE 9 |
+| 9–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
 | 25. Play Store | Bloqueada | APK unsigned de 105.98 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
@@ -23,7 +24,7 @@
 - Refuerzo de `.gitignore` contra dependencias, artefactos y credenciales privadas.
 - Punto de retorno del proyecto original.
 - Formato automático aislado en commit propio.
-- 37 tests Flutter, 46 de Functions, 19 de Firestore Rules y 14 de Storage Rules aprobados.
+- 40 tests Flutter, 46 de Functions, 19 de Firestore Rules y 14 de Storage Rules aprobados.
 - APK release compilado y verificado como no firmado.
 - Inventario inicial de assets y checklist Play Store.
 - 78 hallazgos estáticos corregidos; `flutter analyze` queda limpio.
@@ -59,10 +60,16 @@
 - Navegación redundante eliminada: Casa abre directamente el interior, Jardín abre el mundo exterior y Mascota conserva su pestaña dedicada.
 - Cinco pruebas nuevas cubren saludo, reloj, duración de relación, aniversario y ausencia de fecha; suite Flutter aumentada de 32 a 37 tests.
 - APK release de FASE 7: 111,124,317 bytes (105.98 MiB), todavía sin firma.
+- Casa conserva sus interacciones reales de cama, sofá, mesa, TV/cine, planta, Pawdo y personajes, sin añadir objetos decorativos falsos.
+- El portal duplicado de Juegos fue retirado del flujo activo; Juegos permanece accesible desde Inicio y el asset no se elimina hasta la auditoría de FASE 20.
+- Los muebles nuevos se colocan primero en zonas sugeridas de descanso, sala, mesa, Pawdo o decoración, conservando compatibilidad con diseños guardados.
+- Arrastrar, agregar o eliminar marca el diseño como pendiente; volver exige guardar o confirmar el descarte y al salir se restaura la orientación vertical.
+- Tres pruebas nuevas cubren asignación de zonas, límites del cuarto y etiquetas; suite Flutter aumentada de 37 a 40 tests.
+- APK release de FASE 8: 111,124,317 bytes (105.98 MiB), todavía sin firma.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 8: Casa.
+1. Iniciar FASE 9: Jardín.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.
@@ -94,6 +101,8 @@
 - Modelo de presentación, reloj y resumen temporal bajo `lib/features/home/models/`.
 - `home_dashboard_screen.dart`, `main_screen.dart` y `world_screen.dart` para Inicio y destinos directos.
 - `test/home_dashboard_summary_test.dart` con cinco pruebas de presentación temporal.
+- Política de zonas bajo `lib/features/interior/models/`, juego y pantalla activa de Casa.
+- `test/interior_layout_policy_test.dart` con tres pruebas de distribución coherente.
 
 ## Riesgos de seguimiento
 
@@ -110,3 +119,4 @@
 - Identidad personal, URLs legales públicas y correos de soporte/borrado quedaron configurados y enlazados en la aplicación.
 - El resumen de relación de Inicio utiliza la fecha personal compatible existente; la fuente compartida canónica y el contador completo se resolverán en FASE 15.
 - `pawdo.site` está vinculado en Sites pero pendiente de compra y DNS. No se debe sustituir la URL operativa hasta validar HTTPS.
+- El asset `interior/games_portal.png` quedó sin consumidor activo; se conserva como candidato hasta la auditoría integral de assets en FASE 20.
