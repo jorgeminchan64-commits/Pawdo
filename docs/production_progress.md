@@ -15,7 +15,8 @@
 | 6. Cuenta, privacidad y seguridad | Completada | Centro de cuenta; sitio legal público; 32 tests Flutter; 46 Functions; 33 reglas; APK recompilado | Data Safety, staging y despliegue quedan como gates de lanzamiento | Iniciar FASE 7 |
 | 7. Navegación e Inicio | Completada | Rutas directas; saludo, reloj y relación; 37 tests Flutter; APK recompilado | Validación visual pendiente en dos teléfonos; fecha canónica compartida queda en FASE 15 | Iniciar FASE 8 |
 | 8. Casa | Completada | Zonas coherentes, cambios protegidos, 40 tests Flutter; APK recompilado | Validación táctil/FPS pendiente en dos teléfonos | Iniciar FASE 9 |
-| 9–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 9. Jardín | Completada | Riego por objetivo real, crecimiento sincronizado, 42 tests Flutter; APK recompilado | Validación táctil/FPS pendiente en dos teléfonos | Iniciar FASE 10 |
+| 10–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
 | 25. Play Store | Bloqueada | APK unsigned de 105.98 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
@@ -24,7 +25,7 @@
 - Refuerzo de `.gitignore` contra dependencias, artefactos y credenciales privadas.
 - Punto de retorno del proyecto original.
 - Formato automático aislado en commit propio.
-- 40 tests Flutter, 46 de Functions, 19 de Firestore Rules y 14 de Storage Rules aprobados.
+- 42 tests Flutter, 46 de Functions, 19 de Firestore Rules y 14 de Storage Rules aprobados.
 - APK release compilado y verificado como no firmado.
 - Inventario inicial de assets y checklist Play Store.
 - 78 hallazgos estáticos corregidos; `flutter analyze` queda limpio.
@@ -66,10 +67,16 @@
 - Arrastrar, agregar o eliminar marca el diseño como pendiente; volver exige guardar o confirmar el descarte y al salir se restaura la orientación vertical.
 - Tres pruebas nuevas cubren asignación de zonas, límites del cuarto y etiquetas; suite Flutter aumentada de 37 a 40 tests.
 - APK release de FASE 8: 111,124,317 bytes (105.98 MiB), todavía sin firma.
+- Jardín clasifica explícitamente cada objeto: solo vegetación real activa riego, la mesa activa la escena de pareja y el suelo/objetos desconocidos únicamente permiten caminar.
+- El personaje se acerca a la planta, árbol, flor, arbusto o maceta tocada; ya no existe una posición de riego implícita sobre espacios vacíos.
+- Los estados persistidos de la planta principal se presentan como Brote, Creciendo y Floreció, y su sprite se sincroniza al cambiar desde cualquier teléfono.
+- Edición del Jardín marca agregar, arrastrar o eliminar como pendiente; cambiar de pestaña o volver exige confirmar el descarte si no se guardó.
+- Dos pruebas nuevas cubren objetivos válidos/inválidos y estados de crecimiento; suite Flutter aumentada de 40 a 42 tests.
+- APK release de FASE 9: 111,140,701 bytes (105.99 MiB), todavía sin firma.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 9: Jardín.
+1. Iniciar FASE 10: Personajes.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.
@@ -103,6 +110,8 @@
 - `test/home_dashboard_summary_test.dart` con cinco pruebas de presentación temporal.
 - Política de zonas bajo `lib/features/interior/models/`, juego y pantalla activa de Casa.
 - `test/interior_layout_policy_test.dart` con tres pruebas de distribución coherente.
+- Política de interacción bajo `lib/features/world/models/`, juego y pantalla activa de Jardín.
+- `test/garden_interaction_policy_test.dart` con dos pruebas de riego y crecimiento.
 
 ## Riesgos de seguimiento
 

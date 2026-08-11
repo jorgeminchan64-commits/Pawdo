@@ -32,6 +32,21 @@ Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agru
 | Entrar sin pareja o sin inventario | No rompe el juego; explica el requisito en el inventario |
 | Segundo plano y reanudación | No duplica recompensas ni deja controles bloqueados |
 
+## Jardín — FASE 9
+
+| Caso | Resultado esperado |
+|---|---|
+| Tocar suelo o camino vacío | Los personajes caminan; ninguno reproduce la animación de riego |
+| Tocar planta, flor, maceta, arbusto o árbol | Se acercan al objeto real y riegan exactamente en esa posición |
+| Tocar mesa | Ejecuta la escena de sentarse; no riega ni abre otro módulo |
+| Regar por primera vez en el día | El servidor concede una sola recompensa y actualiza el conteo |
+| Regar nuevamente el mismo día | Mantiene la animación local e informa que la recompensa ya fue reclamada |
+| Alcanzar 3 y 6 riegos | HUD y sprite cambian a Creciendo y Floreció sin reabrir Jardín |
+| Agregar, mover o eliminar decoración | Aparece `Guardar *` y se respetan casa, límites y colisiones |
+| Cambiar de pestaña con cambios pendientes | Exige conservar la edición o confirmar el descarte |
+| Conflicto entre dos teléfonos | No sobrescribe: solicita recargar la revisión más reciente |
+| Salir de Jardín | Restaura orientación vertical y conserva Inicio |
+
 ## Dos teléfonos reales
 
 | Caso | Teléfono A | Teléfono B | Resultado esperado |
