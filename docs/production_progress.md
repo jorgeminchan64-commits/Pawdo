@@ -18,8 +18,9 @@
 | 9. Jardín | Completada | Riego por objetivo real, crecimiento sincronizado, 42 tests Flutter; APK recompilado | Validación táctil/FPS pendiente en dos teléfonos | Iniciar FASE 10 |
 | 10. Personajes | Completada | Editor extensible, perfil compartido seguro, 45 tests Flutter y APK recompilado | Nuevos sprites por capas requieren catálogo visual futuro; validación física pendiente | Iniciar FASE 11 |
 | 11. Mascota | Completada | Cuidado server-side, 7 emociones, 49 Flutter/48 Functions/35 reglas; APK recompilado | Validación táctil en dos teléfonos; voz/sonido descartados por permisos y consumo | Iniciar FASE 12 |
-| 12–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
-| 25. Play Store | Bloqueada | APK unsigned de 106.15 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
+| 12. Chat y audio | Completada | Audio privado AAC, 52 Flutter/49 Functions/38 reglas; APK recompilado | Grabación/reproducción física pendiente en dos teléfonos | Iniciar FASE 13 |
+| 13–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 25. Play Store | Bloqueada | APK unsigned de 106.28 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
 
@@ -27,7 +28,7 @@
 - Refuerzo de `.gitignore` contra dependencias, artefactos y credenciales privadas.
 - Punto de retorno del proyecto original.
 - Formato automático aislado en commit propio.
-- 49 tests Flutter, 48 de Functions, 21 de Firestore Rules y 14 de Storage Rules aprobados.
+- 52 tests Flutter, 49 de Functions, 21 de Firestore Rules y 17 de Storage Rules aprobados.
 - APK release compilado y verificado como no firmado.
 - Inventario inicial de assets y checklist Play Store.
 - 78 hallazgos estáticos corregidos; `flutter analyze` queda limpio.
@@ -86,10 +87,17 @@
 - Las escrituras cliente en `couples/{code}/state` quedaron cerradas; ambos integrantes solo observan y las acciones validadas pasan por el servidor.
 - Cuatro pruebas Flutter, dos de Functions y una de Firestore nuevas elevan la suite a 132 pruebas automatizadas.
 - APK release de FASE 11: 111,305,117 bytes (106.15 MiB), todavía sin firma.
+- Chat conserva texto, accesos rápidos, fotos, paginación, leído, presencia, borrado de 10 minutos y reintento idempotente; no se reescribieron contratos ya seguros.
+- Mensajes de voz AAC-LC mono de hasta 60 segundos/2 MB, con permiso solicitado únicamente al tocar micrófono, grabación visible, cancelar/enviar y reproducción autenticada.
+- Storage limita ruta, membresía, formato, propietario, pareja, tamaño y metadatos; Functions verifica nuevamente el objeto antes de crear el mensaje.
+- Audios nunca guardan URLs con token; se descargan a caché temporal y el trigger de borrado limpia foto o audio al eliminar el mensaje.
+- `record 6.0.0` quedó fijado por compatibilidad con Dart 3.11 y la familia Firebase actual; 6.2.x genera conflicto web y 7.x exige Dart 3.12.
+- Tres pruebas Flutter, una de Functions y tres de Storage elevan la suite a 139 pruebas automatizadas.
+- APK release de FASE 12: 111,444,371 bytes (106.28 MiB), todavía sin firma.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 12: Chat y mensajes de audio.
+1. Iniciar FASE 13: Álbum.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.

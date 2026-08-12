@@ -1,13 +1,13 @@
 # Pawdo — auditoría inicial de producción
 
 Fecha de actualización: 2026-08-11
-Alcance actualizado hasta el cierre de FASE 11. Este documento no declara la aplicación lista para producción.
+Alcance actualizado hasta el cierre de FASE 12. Este documento no declara la aplicación lista para producción.
 
 ## Resumen ejecutivo
 
-Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, paginación de chat y 132 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
+Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, chat paginado con fotos/audio privados y 139 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
 
-Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, dominio propio/Data Safety y prueba staging pendientes, ausencia de App Check/Crashlytics, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK de 106.15 MiB. No deben añadirse módulos grandes fuera del orden de fases.
+Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, dominio propio/Data Safety y prueba staging pendientes, ausencia de App Check/Crashlytics, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK de 106.28 MiB. No deben añadirse módulos grandes fuera del orden de fases.
 
 ## Arquitectura observada
 
@@ -35,7 +35,7 @@ Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, do
 | Inicialización crítica sin fallback | Alta | `lib/main.dart` | `Firebase.initializeApp()` bloqueaba antes de `runApp` y no tenía UI de recuperación | Fallo de configuración/red nativa podía impedir arrancar | Bootstrap observable con pantalla de error/reintento y reporte no sensible | Resuelto FASE 2 (`dd4c12a`) |
 | Rutas Firestore con escritura amplia | Alta | `firestore.rules:205-214` | `state`, `cinemaReactions` y `cinemaMessages` permiten escritura de miembros sin esquema/campos/límites | Riesgo de datos inválidos, abuso y crecimiento | Inventariar consumidores y restringir esquemas, tamaños y frecuencia | Pendiente FASE 23 |
 | Permisos sensibles declarados | Alta | `AndroidManifest.xml` | Cámara, audio y ubicación están en el manifiesto; llamadas reales están aplazadas | Mayor fricción y superficie de privacidad/políticas | Vincular cada permiso a función visible, solicitud contextual y retirar lo no necesario | Pendiente FASE 6/25 |
-| APK grande | Alta | assets/build | 50.50 MB de assets PNG y dependencias nativas; APK universal de 106.15 MiB | Descarga, almacenamiento y retención peores | Medir AAB por ABI, optimizar assets con validación visual y eliminar solo referencias confirmadas | Pendiente FASE 20 |
+| APK grande | Alta | assets/build | 50.50 MB de assets PNG y dependencias nativas; APK universal de 106.28 MiB | Descarga, almacenamiento y retención peores | Medir AAB por ABI, optimizar assets con validación visual y eliminar solo referencias confirmadas | Pendiente FASE 20 |
 | Lifecycle y snapshots de juegos frágiles | Alta | Ludo, Atrapa a Pawdo, Memoria y host online | Temporizadores continuaban en background; Ludo mantenía efectos; algunas listas remotas se indexaban sin validar longitud/tipo | Trabajo innecesario, sala que parecía congelada o cierre por `RangeError` ante estado parcial | Pausar recursos, recuperar salas idempotentemente y normalizar snapshots antes de renderizar | Mitigado FASE 4 (`fe6e841`, `09f80ed`); profiling físico pendiente FASE 20/24 |
 | Perfil final no editable | Alta | `profile_screen.dart`, ProfileService, Storage | La pantalla ignoraba los datos guardados y mostraba “Pronto podrás editarlo”; una tarjeta de Casa no ejecutaba ninguna acción | Perfil incompleto, poco comercial y datos desactualizados para la pareja | Formulario compatible, foto privada, temas, fechas, resumen seguro y accesos reales | Resuelto FASE 5 (`ec4d809`, `f91efad`) |
 | Dependencias atrasadas | Media | `pubspec.yaml`, `pubspec.lock` | 63 paquetes fuera de las restricciones; familia Firebase dos generaciones mayores disponible | Mantenimiento, API obsoleta y compatibilidad futura | Actualización escalonada con matriz de compatibilidad y tests | Pendiente FASE 20 |
@@ -64,7 +64,7 @@ Fortalezas confirmadas:
 - Firestore y Storage terminan en reglas deny-by-default.
 - Escrituras sensibles de chat, economía, pareja, juegos y bienestar pasan por Functions.
 - Shared photos limitadas a imágenes válidas de hasta 1 MB y miembros activos.
-- 48 tests de Functions, 21 de Firestore Rules y 14 de Storage Rules pasan en emuladores.
+- 49 tests de Functions, 21 de Firestore Rules y 17 de Storage Rules pasan en emuladores.
 
 Pendiente de validar:
 
@@ -73,7 +73,7 @@ Pendiente de validar:
 - Inventario Data Safety real y verificación operativa de los correos publicados.
 - Reglas amplias de `state` y cinema.
 
-## Estado de FASE 0–11
+## Estado de FASE 0–12
 
 - Auditoría estática y documental: completada.
 - Git y respaldo: completados.
@@ -100,5 +100,7 @@ Pendiente de validar:
 - Puerta final de FASE 10: analyze limpio; 45 tests Flutter, 46 Functions, 20 Firestore Rules y 14 Storage Rules aprobados; APK de 111,304,657 bytes recompilado y verificado como no firmado.
 - FASE 11: Mascota compartida con siete cuidados, cinco necesidades, siete emociones, reacciones y movimiento 2D ligero; desgaste temporal y precondiciones se calculan en el servidor.
 - Puerta final de FASE 11: analyze limpio; 49 tests Flutter, 48 Functions, 21 Firestore Rules y 14 Storage Rules aprobados; APK de 111,305,117 bytes recompilado y verificado como no firmado.
+- FASE 12: chat existente preservado y ampliado con grabación contextual, subida privada, validación server-side, reproducción autenticada y limpieza de notas de voz AAC de hasta 60 segundos.
+- Puerta final de FASE 12: analyze limpio; 52 tests Flutter, 49 Functions, 21 Firestore Rules y 17 Storage Rules aprobados; APK de 111,444,371 bytes recompilado y verificado como no firmado.
 - Pruebas físicas y profiling: no ejecutados en esta fase.
-- Siguiente paso autorizado por el roadmap: FASE 12, Chat y mensajes de audio.
+- Siguiente paso autorizado por el roadmap: FASE 13, Álbum.

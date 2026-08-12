@@ -81,6 +81,25 @@ Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agru
 | Pantalla pequeña y texto ampliado | Todo el contenido desplaza; emociones, barras y acciones siguen accesibles |
 | Dos teléfonos ejecutan acciones | La transacción conserva un único estado compartido sin perder actualizaciones |
 
+## Chat y mensajes de audio — FASE 12
+
+| Caso | Resultado esperado |
+|---|---|
+| Pulsar micrófono por primera vez | Android/iOS pide permiso en contexto; no graba antes de la decisión |
+| Rechazar permiso | No crea archivo ni mensaje y explica cómo habilitar el micrófono |
+| Grabar entre 1 y 60 segundos | Muestra contador y permite cancelar o enviar |
+| Alcanzar 60 segundos | Detiene y envía una sola vez; nunca graba en segundo plano indefinidamente |
+| Cancelar grabación | Elimina el temporal y no crea objeto en Storage ni burbuja |
+| Enviar audio válido | Sube AAC mono, valida servidor y aparece para ambos integrantes |
+| Reproducir/pausar | Descarga con autenticación, usa caché temporal y muestra duración |
+| Intentar MP3, ruta ajena, metadata falsa o más de 2 MB | Storage/Functions rechazan el archivo |
+| Eliminar audio propio antes de 10 minutos | Desaparece para ambos y el servidor limpia el archivo |
+| Abrir audio después de desvincular | Storage revoca acceso aunque el archivo estuviera en la ruta anterior |
+| Perder red durante subida | No crea metadata huérfana; informa fallo y limpia el objeto si llegó a subirse |
+| Texto, rápidos y fotos existentes | Conservan envío, reintento, paginación, leído y borrado sin regresiones |
+| App en segundo plano durante grabación/reproducción | No mantiene una grabación oculta; al volver permite una acción controlada |
+| Dos teléfonos físicos | Audio grabado en A se reproduce claramente en B y viceversa |
+
 ## Dos teléfonos reales
 
 | Caso | Teléfono A | Teléfono B | Resultado esperado |
