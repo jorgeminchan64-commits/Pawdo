@@ -21,7 +21,8 @@
 | 12. Chat y audio | Completada | Audio privado AAC, 52 Flutter/49 Functions/38 reglas; APK recompilado | Grabación/reproducción física pendiente en dos teléfonos | Iniciar FASE 13 |
 | 13. Álbum | Completada | Cuadrícula/línea de tiempo, detalle, originales+miniaturas; 55 Flutter/50 Functions/41 reglas | Flujo visual y cámara física pendientes en dos teléfonos | Iniciar FASE 14 |
 | 14. Calendario | Completada | Mes/próximos/recuerdos, eventos, foto y avisos; 58 Flutter/53 Functions/44 reglas | Aviso push y zona horaria requieren prueba en dos teléfonos | Iniciar FASE 15 |
-| 15–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 15. Contador de relación | Completada | Fecha canónica, duración, días y aniversario; 58 Flutter/55 Functions/44 reglas | Sincronización visual requiere prueba en dos teléfonos | Iniciar FASE 16 |
+| 16–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
 | 25. Play Store | Bloqueada | APK unsigned de 107.31 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
@@ -30,7 +31,7 @@
 - Refuerzo de `.gitignore` contra dependencias, artefactos y credenciales privadas.
 - Punto de retorno del proyecto original.
 - Formato automático aislado en commit propio.
-- 58 tests Flutter, 53 de Functions, 23 de Firestore Rules y 21 de Storage Rules aprobados.
+- 58 tests Flutter, 55 de Functions, 23 de Firestore Rules y 21 de Storage Rules aprobados.
 - APK release compilado y verificado como no firmado.
 - Inventario inicial de assets y checklist Play Store.
 - 78 hallazgos estáticos corregidos; `flutter analyze` queda limpio.
@@ -108,10 +109,15 @@
 - Documentos de calendario server-only y fotos privadas con ruta, membresía, propietario, tipo, metadatos y tamaño validados por Storage y Functions.
 - Tres pruebas Flutter, tres de Functions, una de Firestore y dos de Storage elevan la suite a 155 pruebas automatizadas.
 - APK release de FASE 14: 112,526,631 bytes (107.31 MiB), todavía sin firma de publicación.
+- La fecha de relación tiene ahora una fuente canónica en el documento de pareja; Inicio deja de depender de dos valores personales potencialmente distintos.
+- La tarjeta de Inicio abre “Nuestra historia”, con duración calendario, días totales, fecha inicial y próximo aniversario, incluida la normalización de años bisiestos.
+- Cualquiera de los dos integrantes puede corregir la fecha con confirmación; Functions valida membresía, día UTC normalizado, límite 1900 y rechazo del futuro.
+- Dos pruebas de Functions amplían permisos y fechas manipuladas; la suite total queda en 157 pruebas automatizadas.
+- APK release de FASE 15: 112,527,019 bytes (107.31 MiB), todavía sin firma de publicación.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 15: Contador de relación.
+1. Iniciar FASE 16: Bienestar.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.

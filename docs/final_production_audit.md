@@ -105,5 +105,7 @@ Pendiente de validar:
 - FASE 13: Álbum compartido con cuadrícula, línea de tiempo, detalle, categorías, fecha, lugar, etiquetas y favoritos individuales; originales/miniaturas optimizados y privados.
 - FASE 14: Calendario compartido con mes, próximos, recuerdos, nueve categorías, fotos privadas y recordatorios periódicos idempotentes para ambos integrantes.
 - Puerta final de FASE 14: analyze limpio; 58 tests Flutter, 53 Functions, 23 Firestore Rules y 21 Storage Rules aprobados; APK de 112,526,631 bytes recompilado y verificado como no firmado de publicación.
+- FASE 15: Contador basado en una fecha canónica de pareja, con duración calendario, días totales, próximo aniversario y edición confirmada por cualquier integrante activo.
+- Puerta final de FASE 15: analyze limpio; 58 tests Flutter, 55 Functions, 23 Firestore Rules y 21 Storage Rules aprobados; APK de 112,527,019 bytes recompilado y verificado como no firmado de publicación.
 - Pruebas físicas y profiling: no ejecutados en esta fase.
 - Siguiente paso autorizado por el roadmap: FASE 14, Calendario.

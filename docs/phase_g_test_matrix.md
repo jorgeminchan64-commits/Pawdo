@@ -136,6 +136,20 @@ Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agru
 | Eliminar como pareja no creadora | El servidor rechaza el intento y conserva evento/foto |
 | Desvincular pareja | Eventos y fotos dejan de ser legibles desde los perfiles anteriores |
 
+## Contador de relación — FASE 15
+
+| Caso | Resultado esperado |
+|---|---|
+| Tocar la tarjeta de relación en Inicio | Abre Nuestra historia con la misma fecha que observa la pareja |
+| Configurar fecha desde una cuenta | La otra cuenta recibe el cambio por stream y muestra el mismo contador |
+| Corregir desde la segunda cuenta | Solicita confirmación y actualiza una única fuente compartida |
+| Fecha 29 de febrero | En años no bisiestos, el aniversario se normaliza al 28 de febrero |
+| Fecha de hoy | Muestra 0 días y anuncia el aniversario del día |
+| Fecha antigua | Calcula años, meses, días calendario y total de días sin negativos |
+| Fecha futura, con hora o anterior a 1900 | Functions rechaza el cambio |
+| Usuario externo o pareja desvinculada | Functions rechaza el cambio por membresía |
+| Cuenta antigua sin fecha común | Inicio usa temporalmente su dato personal hasta guardar la fuente canónica |
+
 ## Dos teléfonos reales
 
 | Caso | Teléfono A | Teléfono B | Resultado esperado |
