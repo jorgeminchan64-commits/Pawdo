@@ -5,9 +5,9 @@ Alcance actualizado hasta la puerta técnica de FASE 24. Este documento no decla
 
 ## Resumen ejecutivo
 
-Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, chat privado, álbum compartido optimizado y 146 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
+Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, chat privado, álbum compartido optimizado y 182 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera APK y AAB release técnicos con API 36.
 
-Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, dominio propio/Data Safety y prueba staging pendientes, enforcement/validación operativa de App Check y Crashlytics pendientes, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK superior a 100 MiB. No deben añadirse módulos grandes fuera del orden de fases.
+Los bloqueos de producción son concretos: release sin firma, dominio propio/Data Safety/Play Console y prueba staging pendientes, enforcement/validación operativa de App Check y Crashlytics pendientes, matriz en dos teléfonos sin ejecutar y recuperación entre procesos todavía limitada para operaciones no persistentes. No deben añadirse módulos grandes antes de cerrar esos gates.
 
 ## Arquitectura observada
 
@@ -24,8 +24,8 @@ Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, do
 | Problema | Gravedad | Archivo/área | Causa | Impacto | Solución propuesta | Estado |
 |---|---|---|---|---|---|---|
 | Git inválido | Crítica | `.git`, `.gitignore` | Carpeta `.git` vacía; exclusiones incompletas para Node/credenciales | Sin rollback seguro | Inicializar, excluir artefactos y crear baseline | Resuelto en FASE 1 (`6591847`) |
-| Release Android sin firma | Crítica | `android/app/build.gradle.kts` | No existe signing config de release | APK/AAB no publicable | Crear upload keystore seguro fuera del repo y configurar firma mediante propiedades locales/CI | Pendiente FASE 25 |
-| Target SDK insuficiente | Crítica | `android/app/build.gradle.kts:16` | `targetSdk = 34` | Rechazo o limitación en Google Play | Migrar y probar `targetSdk = 36` | Pendiente FASE 25 |
+| Release Android sin firma | Crítica | `android/app/build.gradle.kts` | Configuración segura preparada, pero no existe la upload key privada del propietario | APK/AAB no publicable | Crear/custodiar la upload key fuera del repo y verificar el AAB firmado | Gate externo tras FASE 25 |
+| Target SDK insuficiente | Crítica | `android/app/build.gradle.kts` | Baseline usaba 34 | Rechazo o limitación en Google Play | Migrar a API 36 y validar cambios | Resuelto técnicamente FASE 25 |
 | Eliminación de cuenta ausente | Crítica | Perfil, Functions, Firestore, Storage | No existía flujo in-app ni limpieza integral | Incumplimiento Play y retención de datos personales | Borrado server-side, reautenticación, confirmación escrita y limpieza integral | Resuelto en código FASE 6; despliegue/staging pendiente |
 | Privacidad/Términos/soporte sin URLs reales | Alta | Cuenta y Play Console | Faltaban identidad, correos y recursos públicos | Riesgo legal y de revisión | Sitio público con tres rutas, identidad personal y contactos separados | Resuelto FASE 6 |
 | Reconexión incompleta | Alta | Services, Functions, Storage, widget | Firestore persiste offline, pero callables y Storage no; además, una selección de foto no puede reconstruirse después de cerrar el proceso | Acciones no persistentes pueden requerir reintento explícito tras cierre forzado | Estado central por eventos, lifecycle, backoff acotado e idempotencia; cola durable sólo para operaciones serializables que lo justifiquen | Mitigado FASE 3 (`0224ea5`, `577bfda`); persistencia entre procesos y widget siguen en sus fases |
@@ -45,8 +45,8 @@ Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, do
 | Código legacy/duplicado | Media | `login_screen_new.dart`, `uth_gate.dart`, `features/home/screens/chat_screen.dart`, `pet_screen.dart` | Implementaciones antiguas no importadas por flujo activo | Confusión, tamaño fuente y riesgo de editar archivo equivocado | Confirmar rutas y eliminar en commit separado con tests | Pendiente gradual |
 | Functions monolítica | Media | `functions/index.js` (~115 KB) | Múltiples dominios y exports en un solo archivo | Revisión, ownership y pruebas selectivas difíciles | Modularizar sin cambiar contratos/export names | Pendiente gradual |
 | Presencia periódica | Baja | `presence_service.dart` | Latido cada 120 s, dentro de una frescura visual de 3 min | Coste Firestore/batería en sesiones largas | Sincronización inmediata en eventos y medición física | Mitigado FASE 20; 37.5% menos escrituras periódicas |
-| Cobertura UI y lifecycle insuficiente | Alta | `test`, `docs/phase_g_test_matrix.md` | 75 pruebas Flutter pasan, pero cubren 10.7% de líneas y la matriz manual no se ejecutó en dispositivos | Navegación, permisos y recorridos físicos siguen sin garantía total | Ejecutar la matriz completa en dos teléfonos y añadir integración donde aparezcan brechas | Puerta automatizada FASE 24 aprobada; gate físico pendiente |
-| Compatibilidad 16 KB no demostrada | Alta | dependencias Android/artefacto | El APK pasa `zipalign -P 16`, pero no fue instalado en un entorno de páginas de 16 KB | Posible incumplimiento/crash en dispositivos modernos | Inspeccionar AAB/librerías nativas y probar arranque real en 16 KB | Parcial FASE 24; pendiente FASE 25 |
+| Cobertura UI y lifecycle insuficiente | Alta | `test`, `docs/phase_g_test_matrix.md` | 78 pruebas Flutter pasan, pero la cobertura medida en FASE 24 fue 10.7% y la matriz manual no se ejecutó en dispositivos | Navegación, permisos y recorridos físicos siguen sin garantía total | Ejecutar la matriz completa en dos teléfonos y añadir integración donde aparezcan brechas | Puerta automatizada FASE 25 aprobada; gate físico pendiente |
+| Compatibilidad 16 KB no demostrada físicamente | Alta | dependencias Android/artefacto | El APK pasa `zipalign -P 16` y las 12 ELF del AAB tienen alineación mínima de 16 KB; falta instalarlo en ese entorno | Un fallo específico del dispositivo todavía podría aparecer | Probar instalación, arranque y recorrido crítico en un equipo/emulador con páginas de 16 KB | Inspección técnica resuelta FASE 25; gate físico pendiente |
 
 ## Recursos y rendimiento
 
@@ -126,4 +126,6 @@ Pendiente de validar:
 - FASE 24: permisos y manifiesto fusionado auditados; Analytics sin uso retirado; cámara/micrófono opcionales; Lint Android sin errores y alineación ZIP 16 KB aprobada.
 - Puerta automatizada de FASE 24: analyze limpio; 75 Flutter, 57 Functions, 26 Firestore y 21 Storage aprobadas (179 total); cobertura 10.7%; APK de 112,069,422 bytes todavía sin firma.
 - Pruebas físicas, profiling, App Check enforced y primer evento Crashlytics: pendientes en dos teléfonos/build interna.
-- Siguiente paso autorizado por el roadmap: FASE 25, preparación de Play Store sin desplegar producción.
+- FASE 25: target 36, versión unificada, firma segura preparada, iconos y recursos Play renovados, borradores de ficha/Data Safety y AAB final inspeccionado.
+- Puerta técnica de FASE 25: 78 Flutter y 182 pruebas totales; Lint 0 errores/5 avisos; AAB 100,674,591 bytes con 12 ELF compatibles 16 KB; APK 111,757,970 bytes; ambos sin firma.
+- Roadmap técnico FASE 0–25 completado. Siguiente paso: gates externos de firma, dispositivos, staging, dominio y Play Console.

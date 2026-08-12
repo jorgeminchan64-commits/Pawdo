@@ -31,7 +31,7 @@
 | 22. Crashlytics | Completada técnica | Captura global redactada, plugin Android, 73 Flutter y APK | Primer evento requiere build interna y Firebase Console | Iniciar FASE 23 |
 | 23. Seguridad final | Completada técnica | Esquemas cerrados, Functions estable y 177 pruebas | Audit transitivo y gates externos requieren seguimiento | Iniciar FASE 24 |
 | 24. Pruebas completas | Completada técnica | 179 pruebas; analyze limpio; Lint 0 errores; permisos y APK inspeccionados | Cobertura 10.7% y matriz en dos teléfonos pendientes | Iniciar FASE 25 sin publicar |
-| 25. Play Store | En preparación | APK sin firma de 112,069,422 bytes; alineación ZIP 16 KB aprobada | Firma, target vigente, dominio propio, AAB, Data Safety y dispositivos | Resolver gate de publicación |
+| 25. Play Store | Completada técnica | API 36; 182 pruebas; AAB 100,674,591 bytes; ELF 16 KB; recursos/ficha/Data Safety preparados | Firma, consola, dominio, staging y dos teléfonos | Completar gates externos sin publicar prematuramente |
 
 ## Completado
 
@@ -167,14 +167,19 @@
 - La cobertura Flutter medida es 10.7% (1,125 de 10,517 líneas); no reemplaza la matriz física.
 - Android Lint release queda en 0 errores y 13 advertencias; el APK de 112,069,422 bytes pasa la alineación ZIP de 16 KB, pero continúa sin firma.
 - Se retiró Firebase Analytics sin uso; el APK dejó de declarar `AD_ID`, AdServices e Install Referrer. Cámara y micrófono quedaron como hardware opcional y no existe ubicación en segundo plano.
+- FASE 25 eleva `targetSdk` a 36, unifica la versión con `pubspec.yaml` y prepara firma release mediante secretos locales ignorados.
+- La suite Flutter sube a 78 y la compuerta total a 182 pruebas. Android Lint termina con 0 errores y 5 avisos no bloqueantes.
+- AAB técnico final: 100,674,591 bytes, sin firma; sus 12 ELF cumplen alineación mínima de 16 KB. APK técnico: 111,757,970 bytes, alineado y sin firma.
+- Icono adaptable/monocromático, icono de notificación, app icon 512 × 512 y feature graphic 1024 × 500 quedan preparados.
+- Ficha, Data Safety, firma y reporte final quedan documentados. La política legal local incorpora Crashlytics/App Check y supera 4 pruebas; no fue desplegada sin autorización.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 25: requisitos vigentes de Google Play, versionado, target, AAB y firma segura.
-2. Ejecutar la matriz de FASE 24 en dos teléfonos antes de promover el release.
-3. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
-4. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
-5. Completar Data Safety y comprobar ambos correos antes de Play Store.
+1. Crear/custodiar la upload key y generar el AAB firmado.
+2. Ejecutar la matriz de FASE 24 en dos teléfonos y un entorno de páginas de 16 KB.
+3. Completar staging, borrado destructivo, App Check/Crashlytics y después autorizar despliegues.
+4. Registrar `pawdo.site`, completar DNS/HTTPS y publicar la política legal actualizada.
+5. Completar Play Console, Data Safety, clasificación, capturas y 12 testers/14 días si aplica.
 
 ## Archivos modificados en FASE 0–7
 
@@ -217,7 +222,7 @@
 - Firebase CLI tuvo un cierre transitorio de hub después de que las aserciones pasaran; una repetición aislada cerró con código 0.
 - `connectivity_plus` sólo representa disponibilidad de transporte; no se interpreta por sí solo como garantía de acceso a Internet.
 - Firestore mantiene su persistencia offline nativa; los callables y cargas de Storage requieren la recuperación explícita implementada o una nueva acción del usuario.
-- El APK universal sigue excediendo 100 MiB y no está firmado; el AAB técnico mide 72,544,764 bytes y la validación de Play Console permanece para FASE 25.
+- El APK universal final excede 100 MiB y no está firmado; el AAB técnico final mide 100,674,591 bytes y la validación en Play Console es un gate externo posterior a FASE 25.
 - No se ejecutó profiling de FPS/RAM/GPU en dispositivo; queda como gate físico de FASE 24.
 - PIN/biometría no se añadió: la reautenticación de Firebase protege las acciones sensibles sin guardar otro secreto local. Puede evaluarse más adelante como bloqueo opcional de interfaz.
 - Identidad personal, URLs legales públicas y correos de soporte/borrado quedaron configurados y enlazados en la aplicación.
