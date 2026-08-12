@@ -11,6 +11,7 @@ import 'features/auth/screens/auth_gate.dart';
 import 'features/home/screens/main_screen.dart';
 import 'core/services/presence_service.dart';
 import 'core/services/app_check_service.dart';
+import 'core/services/crash_reporting_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/network_recovery_service.dart';
 import 'features/couple/services/couple_service.dart';
@@ -37,20 +38,21 @@ void _recordFlutterError(FlutterErrorDetails details) {
     FlutterError.presentError(details);
     return;
   }
-  debugPrint('Unhandled Flutter error: ${details.exception.runtimeType}');
+  CrashReportingService.instance.record(
+    details.exception,
+    details.stack ?? StackTrace.current,
+    fatal: true,
+  );
 }
 
 void _recordUnhandledError(Object error, StackTrace stackTrace) {
-  if (kDebugMode) {
-    debugPrint('Unhandled async error: $error\n$stackTrace');
-    return;
-  }
-  debugPrint('Unhandled async error: ${error.runtimeType}');
+  CrashReportingService.instance.record(error, stackTrace, fatal: true);
 }
 
 Future<void> _initializePawdoServices() async {
   await Firebase.initializeApp();
   await AppCheckService().activate();
+  await CrashReportingService.instance.initialize();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await NetworkRecoveryService.instance.start();
   LocationSharingService.instance.initialize();
