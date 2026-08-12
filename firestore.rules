@@ -218,21 +218,55 @@ service cloud.firestore {
          (!resource.data.keys().hasAny(['status']) ||
           resource.data.status == 'pending'));
 
-      // Economy, identities and winner/reward fields are server-only.
+      // The only direct writes left on the couple document belong to Cinema.
+      // Every other domain mutates through validated Cloud Functions.
       allow update: if member(code) &&
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'coins', 'love', 'energy', 'plantsWatered', 'ownedGardenItems',
-          'ownedInteriorItems', 'dailyChest', 'dailyMissions', 'user1',
-          'user2', 'winner', 'winnerSide', 'rewardClaimed',
-          'rewardClaimedAt', 'rewardClaimedBy', 'rewardGranted',
-          'rewardedAt', 'rewardedTo', 'balances', 'code', 'createdBy',
-          'status', 'inviteExpiresAt', 'consumedAt', 'consumedBy',
-          'memberProfiles', 'memberPresence', 'memberProfilesUpdatedAt',
-          'chatReadState', 'lastShopPurchase', 'gardenLayout',
-          'gardenUpdatedAt', 'gardenRevision', 'selectedHouseId',
-          'houseUpdatedAt', 'interiorLayout', 'interiorUpdatedAt',
-          'interiorRevision', 'furniturePositions', 'gardenPlant'
-        ]);
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'cinema', 'cinemaPlayback', 'lastAction', 'updatedAt'
+        ]) &&
+        request.resource.data.updatedAt == request.time &&
+        request.resource.data.lastAction is string &&
+        request.resource.data.lastAction.size() >= 1 &&
+        request.resource.data.lastAction.size() <= 160 &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['cinema']) ||
+          (request.resource.data.cinema is map &&
+           request.resource.data.cinema.keys().hasOnly([
+             'platform', 'originalUrl', 'embedUrl', 'videoId', 'title',
+             'updatedBy', 'updatedAt'
+           ]) &&
+           request.resource.data.cinema.platform is string &&
+           request.resource.data.cinema.platform in ['youtube', 'ok', 'drive', 'web'] &&
+           request.resource.data.cinema.originalUrl is string &&
+           request.resource.data.cinema.originalUrl.size() <= 2048 &&
+           request.resource.data.cinema.embedUrl is string &&
+           request.resource.data.cinema.embedUrl.size() <= 2048 &&
+           request.resource.data.cinema.title is string &&
+           request.resource.data.cinema.title.size() <= 100 &&
+           request.resource.data.cinema.updatedBy == request.auth.uid &&
+           request.resource.data.cinema.updatedAt == request.time)) &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['cinemaPlayback']) ||
+          (request.resource.data.cinemaPlayback is map &&
+           request.resource.data.cinemaPlayback.keys().hasOnly([
+             'sourceKey', 'platform', 'videoId', 'isPlaying',
+             'positionSeconds', 'updatedBy', 'updatedByName', 'updatedAt',
+             'actionId'
+           ]) &&
+           request.resource.data.cinemaPlayback.sourceKey is string &&
+           request.resource.data.cinemaPlayback.sourceKey.size() <= 2200 &&
+           request.resource.data.cinemaPlayback.platform == 'youtube' &&
+           request.resource.data.cinemaPlayback.videoId is string &&
+           request.resource.data.cinemaPlayback.videoId.size() <= 32 &&
+           request.resource.data.cinemaPlayback.isPlaying is bool &&
+           request.resource.data.cinemaPlayback.positionSeconds is number &&
+           request.resource.data.cinemaPlayback.positionSeconds >= 0 &&
+           request.resource.data.cinemaPlayback.positionSeconds <= 86400 &&
+           request.resource.data.cinemaPlayback.updatedBy == request.auth.uid &&
+           request.resource.data.cinemaPlayback.updatedByName is string &&
+           request.resource.data.cinemaPlayback.updatedByName.size() >= 1 &&
+           request.resource.data.cinemaPlayback.updatedByName.size() <= 80 &&
+           request.resource.data.cinemaPlayback.updatedAt == request.time &&
+           request.resource.data.cinemaPlayback.actionId is string &&
+           request.resource.data.cinemaPlayback.actionId.size() <= 40));
 
       match /chat/{messageId} {
         allow read: if member(code);
@@ -310,12 +344,36 @@ service cloud.firestore {
         allow write: if false;
       }
 
-      match /cinemaReactions/{document=**} {
-        allow read, write: if member(code);
+      match /cinemaReactions/{reactionId} {
+        allow read: if member(code);
+        allow create: if member(code) &&
+          request.resource.data.keys().hasOnly([
+            'emoji', 'senderId', 'senderName', 'createdAt'
+          ]) &&
+          request.resource.data.senderId == request.auth.uid &&
+          request.resource.data.senderName is string &&
+          request.resource.data.senderName.size() >= 1 &&
+          request.resource.data.senderName.size() <= 80 &&
+          request.resource.data.emoji in ['❤️', '😂', '🐶', '🍿', '😍', '😭'] &&
+          request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
       }
 
-      match /cinemaMessages/{document=**} {
-        allow read, write: if member(code);
+      match /cinemaMessages/{messageId} {
+        allow read: if member(code);
+        allow create: if member(code) &&
+          request.resource.data.keys().hasOnly([
+            'text', 'senderId', 'senderName', 'createdAt'
+          ]) &&
+          request.resource.data.senderId == request.auth.uid &&
+          request.resource.data.senderName is string &&
+          request.resource.data.senderName.size() >= 1 &&
+          request.resource.data.senderName.size() <= 80 &&
+          request.resource.data.text is string &&
+          request.resource.data.text.size() >= 1 &&
+          request.resource.data.text.size() <= 500 &&
+          request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
       }
 
       match /{unknownPath=**} {

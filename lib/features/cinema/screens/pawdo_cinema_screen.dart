@@ -459,6 +459,14 @@ class _PawdoCinemaScreenState extends State<PawdoCinemaScreen> {
     final text = forcedText ?? _chatController.text.trim();
 
     if (text.isEmpty) return;
+    if (text.length > 500) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El mensaje puede tener hasta 500 caracteres.'),
+        ),
+      );
+      return;
+    }
 
     setState(() => _isSendingMessage = true);
 

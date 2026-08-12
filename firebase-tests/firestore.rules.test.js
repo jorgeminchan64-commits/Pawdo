@@ -408,6 +408,53 @@ describe('Pawdo Firestore Rules', () => {
     ));
   });
 
+  it('validates cinema reactions and messages with closed schemas', async () => {
+    const reaction = doc(db(user1), 'couples', code, 'cinemaReactions', 'reaction1');
+    await assertSucceeds(setDoc(reaction, {
+      emoji: '🍿', senderId: user1, senderName: 'Jorge', createdAt: serverTimestamp(),
+    }));
+    await assertFails(setDoc(doc(db(user1), 'couples', code, 'cinemaReactions', 'forged'), {
+      emoji: '💰', senderId: user2, senderName: 'Otro', createdAt: serverTimestamp(), extra: true,
+    }));
+    await assertFails(updateDoc(reaction, { emoji: '😂' }));
+
+    const message = doc(db(user2), 'couples', code, 'cinemaMessages', 'message1');
+    await assertSucceeds(setDoc(message, {
+      text: 'Estoy viendo contigo', senderId: user2, senderName: 'Pareja',
+      createdAt: serverTimestamp(),
+    }));
+    await assertFails(setDoc(doc(db(user2), 'couples', code, 'cinemaMessages', 'oversized'), {
+      text: 'x'.repeat(501), senderId: user2, senderName: 'Pareja',
+      createdAt: serverTimestamp(),
+    }));
+    await assertFails(setDoc(doc(db(outsider), 'couples', code, 'cinemaMessages', 'outside'), {
+      text: 'fuera', senderId: outsider, senderName: 'Fuera', createdAt: serverTimestamp(),
+    }));
+  });
+
+  it('allows only bounded Cinema fields on the couple document', async () => {
+    const couple = doc(db(user1), 'couples', code);
+    await assertSucceeds(updateDoc(couple, {
+      cinemaPlayback: {
+        sourceKey: 'youtube_video123', platform: 'youtube', videoId: 'video123',
+        isPlaying: true, positionSeconds: 42, updatedBy: user1,
+        updatedByName: 'Jorge', updatedAt: serverTimestamp(), actionId: '123456',
+      },
+      lastAction: 'Dieron play juntos', updatedAt: serverTimestamp(),
+    }));
+    await assertFails(updateDoc(couple, {
+      arbitraryAdminField: true, updatedAt: serverTimestamp(),
+    }));
+    await assertFails(updateDoc(couple, {
+      cinemaPlayback: {
+        sourceKey: 'youtube_video123', platform: 'youtube', videoId: 'video123',
+        isPlaying: true, positionSeconds: -1, updatedBy: user2,
+        updatedByName: 'Pareja', updatedAt: serverTimestamp(), actionId: 'bad',
+      },
+      lastAction: 'Forjado', updatedAt: serverTimestamp(),
+    }));
+  });
+
   it('denies forged uploadedBy and outsider messages', async () => {
     const message = {
       type: 'image', storagePath: `couples/${code}/photos/file.jpg`,
