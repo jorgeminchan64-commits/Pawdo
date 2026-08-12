@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../catch_pawdo/screens/catch_pawdo_screen.dart';
 import '../ludo/screens/ludo_screen.dart';
+import '../lightweight/models/couple_card_deck.dart';
+import '../lightweight/screens/couple_card_game_screen.dart';
 import '../memory/screens/couple_memory_screen.dart';
 import '../movie_guess/screens/movie_guess_screen.dart';
 import '../offline/screens/offline_memory_screen.dart';
@@ -99,6 +101,51 @@ class GamesHubScreen extends StatelessWidget {
             badge: 'Disponible',
             available: true,
             onTap: () => _open(context, const TicTacToeScreen()),
+          ),
+          const SizedBox(height: 24),
+          const _SectionTitle(
+            icon: Icons.style_rounded,
+            title: 'Conversar y descubrir',
+            subtitle: 'Tarjetas ligeras · un teléfono · sin recompensas',
+          ),
+          const SizedBox(height: 12),
+          _gameCard(
+            context: context,
+            emoji: '🏆',
+            title: '¿Quién conoce mejor?',
+            subtitle: 'Trivia sobre gustos, recuerdos y sueños de ambos.',
+            badge: 'Nuevo',
+            available: true,
+            onTap: () => _open(
+              context,
+              const CoupleCardGameScreen(mode: CoupleCardMode.trivia),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _gameCard(
+            context: context,
+            emoji: '✅',
+            title: 'Verdadero o falso',
+            subtitle: 'Descubran preferencias sin respuestas correctas.',
+            badge: 'Nuevo',
+            available: true,
+            onTap: () => _open(
+              context,
+              const CoupleCardGameScreen(mode: CoupleCardMode.trueOrFalse),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _gameCard(
+            context: context,
+            emoji: '↔️',
+            title: 'Elige uno',
+            subtitle: 'Dos planes; una elección y una buena conversación.',
+            badge: 'Nuevo',
+            available: true,
+            onTap: () => _open(
+              context,
+              const CoupleCardGameScreen(mode: CoupleCardMode.chooseOne),
+            ),
           ),
 
           const SizedBox(height: 12),
