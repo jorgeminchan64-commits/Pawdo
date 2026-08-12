@@ -62,6 +62,25 @@ Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agru
 | Texto ampliado y pantalla pequeña | El editor permite desplazarse y todos los controles siguen accesibles |
 | Perder red al guardar | Muestra el fallo sin cerrar el editor ni fingir que la apariencia se sincronizó |
 
+## Mascota — FASE 11
+
+| Caso | Resultado esperado |
+|---|---|
+| Tocar la imagen o Acariciar | Pawdo reacciona visualmente y ambos teléfonos reciben la felicidad actualizada |
+| Alimentar | Sube hambre satisfecha, cambia la reacción y aumenta gradualmente la necesidad de baño |
+| Jugar con energía suficiente | Sube felicidad y reduce energía, hambre e higiene dentro de 0–100 |
+| Jugar con hambre o energía crítica | El servidor rechaza la acción y explica que debe comer o descansar |
+| Dormir y luego intentar alimentar/jugar/bañar | Pawdo permanece dormido y pide despertarlo primero |
+| Despertar | Cambia a despierto y habilita nuevamente los cuidados activos |
+| Bañar | Sube higiene y presenta la reacción de burbujas |
+| Ir al baño | Reduce la necesidad acumulada y mejora ligeramente la higiene |
+| Dejar pasar varias horas | La siguiente acción aplica desgaste acotado sin valores fuera de 0–100 |
+| Pulsar acciones rápidamente | Evita duplicados y el servidor aplica un enfriamiento corto |
+| Escribir directamente `state/pet` desde cliente | Firestore deniega la manipulación aunque sea integrante de la pareja |
+| Cuenta con documento legacy o sin documento | Usa valores seguros y crea el estado completo al primer cuidado |
+| Pantalla pequeña y texto ampliado | Todo el contenido desplaza; emociones, barras y acciones siguen accesibles |
+| Dos teléfonos ejecutan acciones | La transacción conserva un único estado compartido sin perder actualizaciones |
+
 ## Dos teléfonos reales
 
 | Caso | Teléfono A | Teléfono B | Resultado esperado |

@@ -17,7 +17,8 @@
 | 8. Casa | Completada | Zonas coherentes, cambios protegidos, 40 tests Flutter; APK recompilado | Validación táctil/FPS pendiente en dos teléfonos | Iniciar FASE 9 |
 | 9. Jardín | Completada | Riego por objetivo real, crecimiento sincronizado, 42 tests Flutter; APK recompilado | Validación táctil/FPS pendiente en dos teléfonos | Iniciar FASE 10 |
 | 10. Personajes | Completada | Editor extensible, perfil compartido seguro, 45 tests Flutter y APK recompilado | Nuevos sprites por capas requieren catálogo visual futuro; validación física pendiente | Iniciar FASE 11 |
-| 11–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 11. Mascota | Completada | Cuidado server-side, 7 emociones, 49 Flutter/48 Functions/35 reglas; APK recompilado | Validación táctil en dos teléfonos; voz/sonido descartados por permisos y consumo | Iniciar FASE 12 |
+| 12–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
 | 25. Play Store | Bloqueada | APK unsigned de 106.15 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
@@ -26,7 +27,7 @@
 - Refuerzo de `.gitignore` contra dependencias, artefactos y credenciales privadas.
 - Punto de retorno del proyecto original.
 - Formato automático aislado en commit propio.
-- 45 tests Flutter, 46 de Functions, 20 de Firestore Rules y 14 de Storage Rules aprobados.
+- 49 tests Flutter, 48 de Functions, 21 de Firestore Rules y 14 de Storage Rules aprobados.
 - APK release compilado y verificado como no firmado.
 - Inventario inicial de assets y checklist Play Store.
 - 78 hallazgos estáticos corregidos; `flutter analyze` queda limpio.
@@ -79,10 +80,16 @@
 - Firestore exige un esquema completo y cerrado; Functions descarta apariencias parciales o manipuladas antes de compartirlas.
 - Tres pruebas nuevas cubren serialización, compatibilidad defensiva y edición/guardado; suite Flutter aumentada de 42 a 45 tests.
 - APK release de FASE 10: 111,304,657 bytes (106.15 MiB), todavía sin firma.
+- Mascota ahora permite tocar/acariciar, alimentar, jugar, dormir, despertar, bañar e ir al baño desde una pantalla desplazable y accesible.
+- Pawdo expresa estados feliz, triste, cansado, hambriento, emocionado, dormido o con necesidad de aseo, con reacciones y animaciones 2D ligeras.
+- Hambre, felicidad, energía, higiene y necesidad de baño se degradan de forma acotada según tiempo transcurrido y se actualizan autoritativamente en Functions.
+- Las escrituras cliente en `couples/{code}/state` quedaron cerradas; ambos integrantes solo observan y las acciones validadas pasan por el servidor.
+- Cuatro pruebas Flutter, dos de Functions y una de Firestore nuevas elevan la suite a 132 pruebas automatizadas.
+- APK release de FASE 11: 111,305,117 bytes (106.15 MiB), todavía sin firma.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 11 según el roadmap maestro.
+1. Iniciar FASE 12: Chat y mensajes de audio.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.
