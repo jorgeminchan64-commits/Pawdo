@@ -7,7 +7,7 @@ Alcance actualizado hasta el cierre de FASE 13. Este documento no declara la apl
 
 Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, chat privado, álbum compartido optimizado y 146 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
 
-Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, dominio propio/Data Safety y prueba staging pendientes, ausencia de App Check/Crashlytics, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK de 106.50 MiB. No deben añadirse módulos grandes fuera del orden de fases.
+Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, dominio propio/Data Safety y prueba staging pendientes, enforcement/validación operativa de App Check y Crashlytics pendientes, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK superior a 100 MiB. No deben añadirse módulos grandes fuera del orden de fases.
 
 ## Arquitectura observada
 
@@ -31,7 +31,7 @@ Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, do
 | Reconexión incompleta | Alta | Services, Functions, Storage, widget | Firestore persiste offline, pero callables y Storage no; además, una selección de foto no puede reconstruirse después de cerrar el proceso | Acciones no persistentes pueden requerir reintento explícito tras cierre forzado | Estado central por eventos, lifecycle, backoff acotado e idempotencia; cola durable sólo para operaciones serializables que lo justifiquen | Mitigado FASE 3 (`0224ea5`, `577bfda`); persistencia entre procesos y widget siguen en sus fases |
 | Widget sin recuperación programada | Alta | `android_widget_service.dart`, `PawdoWidgetProvider.kt` | Actualización depende del canal/app y preferencias locales; no hay trabajo diferido/backoff | Datos congelados después de desconexión o cierre | Caché versionada y WorkManager solo cuando aporte valor, con restricciones de red | Pendiente FASE 17 |
 | App Check sin enforcement | Media | Firebase cliente/Console | Debug y Play Integrity integrados; consola aún no fuerza tokens | Clientes no verificados todavía no se bloquean | Registrar certificados, validar dos teléfonos y activar por servicio | Integración resuelta FASE 21; gate remoto pendiente |
-| Crashlytics ausente | Alta | `main.dart`, dependencias | FASE 2 añadió captura global segura, pero todavía no existe telemetría Crashlytics | Crashes y fallos async no llegan a un panel de producción | Integrar Crashlytics con redacción estricta de PII | Pendiente FASE 22 |
+| Crashlytics sin primer evento | Media | `main.dart`, Android, Firebase Console | Captura release y plugin integrados con excepción original redactada | No se ha demostrado todavía recepción en el panel | Provocar crash solo en build interna y revisar contenido | Integración resuelta FASE 22; gate operativo pendiente |
 | Inicialización crítica sin fallback | Alta | `lib/main.dart` | `Firebase.initializeApp()` bloqueaba antes de `runApp` y no tenía UI de recuperación | Fallo de configuración/red nativa podía impedir arrancar | Bootstrap observable con pantalla de error/reintento y reporte no sensible | Resuelto FASE 2 (`dd4c12a`) |
 | Rutas Firestore con escritura amplia | Alta | `firestore.rules:205-214` | `state`, `cinemaReactions` y `cinemaMessages` permiten escritura de miembros sin esquema/campos/límites | Riesgo de datos inválidos, abuso y crecimiento | Inventariar consumidores y restringir esquemas, tamaños y frecuencia | Pendiente FASE 23 |
 | Permisos sensibles declarados | Alta | `AndroidManifest.xml` | Cámara, audio y ubicación están en el manifiesto; llamadas reales están aplazadas | Mayor fricción y superficie de privacidad/políticas | Vincular cada permiso a función visible, solicitud contextual y retirar lo no necesario | Pendiente FASE 6/25 |
@@ -119,5 +119,7 @@ Pendiente de validar:
 - Puerta técnica de FASE 20: analyze limpio; 69 tests Flutter aprobados; APK universal de 112,339,592 bytes y AAB arm64 de 72,544,764 bytes. Backend/reglas no cambiaron desde la compuerta completa de FASE 19.
 - FASE 21: Firebase App Check integrado antes de los servicios Firebase, con Debug en desarrollo, Play Integrity en Android release y renovación automática; enforcement remoto deliberadamente pendiente.
 - Puerta técnica de FASE 21: analyze limpio; 72 tests Flutter aprobados y APK de 112,356,448 bytes recompilado.
+- FASE 22: Crashlytics release recibe fallos globales con el mensaje original eliminado; debug permanece local y el plugin Android prepara reportes legibles.
+- Puerta técnica de FASE 22: analyze limpio; 73 tests Flutter aprobados y APK de 112,505,685 bytes recompilado. Primer evento en consola pendiente de build interna.
 - Pruebas físicas y profiling: no ejecutados en esta fase.
-- Siguiente paso autorizado por el roadmap: FASE 22, Crashlytics.
+- Siguiente paso autorizado por el roadmap: FASE 23, seguridad final.

@@ -28,7 +28,8 @@
 | 19. Tienda y personalización | Completada | 10 categorías y estados explícitos; 67 Flutter/57 Functions/45 reglas | Revisión visual pendiente; dinero real permanece desactivado | Iniciar FASE 20 |
 | 20. Optimización global | Completada técnica | Carga diferida, -37.5% latidos, assets limpiados, 69 Flutter y APK/AAB medidos | FPS/RAM/visual requieren dos teléfonos | Iniciar FASE 21 |
 | 21. App Check | Completada técnica | Debug/Play Integrity, renovación automática, 72 Flutter y APK | Enforcement exige consola, certificados y dos teléfonos | Iniciar FASE 22 |
-| 22–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 22. Crashlytics | Completada técnica | Captura global redactada, plugin Android, 73 Flutter y APK | Primer evento requiere build interna y Firebase Console | Iniciar FASE 23 |
+| 23–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
 | 25. Play Store | Bloqueada | APK unsigned de 107.31 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
@@ -152,10 +153,14 @@
 - Plataformas no preparadas no fingen attestation; Auth, reglas y validaciones server-side permanecen obligatorias.
 - Tres pruebas Flutter elevan la suite a 174 pruebas automatizadas; analyze quedó limpio y el APK release con App Check compiló en 112,356,448 bytes.
 - Enforcement remoto no fue activado: requiere registrar certificados, probar dos teléfonos y observar métricas antes de habilitarlo gradualmente.
+- Crashlytics se activa solo en release y recibe fallos globales Flutter, async y Zone; debug conserva diagnóstico local sin enviar telemetría.
+- La excepción original se reemplaza por su tipo técnico antes de reportar, evitando adjuntar correos, mensajes, URLs, rutas u otros datos personales.
+- El complemento Android 3.0.7 quedó integrado; una prueba nueva eleva la suite a 175 automatizadas y el APK release compila en 112,505,685 bytes.
+- El primer evento visible y la revisión de su contenido requieren una build interna controlada; no se añadió ningún botón de crash al producto.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 22: Crashlytics.
+1. Iniciar FASE 23: seguridad final.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.
