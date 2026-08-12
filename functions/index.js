@@ -2583,9 +2583,11 @@ async function saveWellnessSettingsHandler(request) {
   const uid = requireAuth(request);
   const cycleLength = request.data?.cycleLength;
   const periodLength = request.data?.periodLength;
+  const regularCycle = request.data?.regularCycle;
   const remindersEnabled = request.data?.remindersEnabled === true;
   const sharingEnabled = request.data?.sharingEnabled === true;
-  if (!Number.isInteger(cycleLength) || cycleLength < 21 || cycleLength > 45 ||
+  if (typeof regularCycle !== 'boolean' ||
+      !Number.isInteger(cycleLength) || cycleLength < 21 || cycleLength > 45 ||
       !Number.isInteger(periodLength) || periodLength < 2 || periodLength > 10) {
     throw new HttpsError('invalid-argument', 'La duración del ciclo o periodo no es válida.');
   }
@@ -2625,6 +2627,7 @@ async function saveWellnessSettingsHandler(request) {
       enabled: true,
       cycleLength,
       periodLength,
+      regularCycle,
       remindersEnabled,
       sharingEnabled,
       sharedFields: sharingEnabled ? sharedFields : [],
@@ -2632,7 +2635,9 @@ async function saveWellnessSettingsHandler(request) {
       consentUpdatedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
-    if (coupleRef && !sharingEnabled) {
+    // Consent changes must take effect immediately. Removing even one field
+    // clears the previous summary so stale sensitive data cannot remain visible.
+    if (coupleRef) {
       tx.delete(coupleRef.collection('wellnessShared').doc(uid));
     }
     return { saved: true, sharingEnabled, sharedFields };

@@ -5,6 +5,7 @@ class WellnessSettings {
     required this.enabled,
     required this.cycleLength,
     required this.periodLength,
+    required this.regularCycle,
     required this.remindersEnabled,
     required this.sharingEnabled,
     required this.sharedFields,
@@ -16,6 +17,7 @@ class WellnessSettings {
       enabled: map['enabled'] == true,
       cycleLength: (map['cycleLength'] as num?)?.toInt() ?? 28,
       periodLength: (map['periodLength'] as num?)?.toInt() ?? 5,
+      regularCycle: map['regularCycle'] != false,
       remindersEnabled: map['remindersEnabled'] == true,
       sharingEnabled: map['sharingEnabled'] == true,
       sharedFields: Set<String>.from(map['sharedFields'] as List? ?? const []),
@@ -25,6 +27,7 @@ class WellnessSettings {
   final bool enabled;
   final int cycleLength;
   final int periodLength;
+  final bool regularCycle;
   final bool remindersEnabled;
   final bool sharingEnabled;
   final Set<String> sharedFields;
@@ -73,6 +76,8 @@ class CycleInsights {
     required this.phaseLabel,
     required this.cycleDay,
     required this.nextPeriodEstimate,
+    required this.estimateRangeStart,
+    required this.estimateRangeEnd,
     required this.estimatedCycleLength,
     required this.recordedCycles,
   });
@@ -80,14 +85,19 @@ class CycleInsights {
   factory CycleInsights.fromEntries(
     List<WellnessEntry> entries,
     WellnessSettings settings,
-  ) {
+  ) => CycleInsights.fromStarts(
+    entries.where((entry) => entry.periodStarted).map((entry) => entry.date),
+    settings,
+  );
+
+  factory CycleInsights.fromStarts(
+    Iterable<DateTime> periodStarts,
+    WellnessSettings settings, {
+    DateTime? now,
+  }) {
     final starts =
-        entries
-            .where((entry) => entry.periodStarted)
-            .map(
-              (entry) =>
-                  DateTime(entry.date.year, entry.date.month, entry.date.day),
-            )
+        periodStarts
+            .map((entry) => DateTime(entry.year, entry.month, entry.day))
             .toList()
           ..sort();
     if (starts.isEmpty) {
@@ -96,6 +106,8 @@ class CycleInsights {
         phaseLabel: 'Registra el inicio de tu periodo',
         cycleDay: 0,
         nextPeriodEstimate: null,
+        estimateRangeStart: null,
+        estimateRangeEnd: null,
         estimatedCycleLength: settings.cycleLength,
         recordedCycles: 0,
       );
@@ -108,7 +120,8 @@ class CycleInsights {
     final estimatedLength = intervals.isEmpty
         ? settings.cycleLength
         : (intervals.reduce((a, b) => a + b) / intervals.length).round();
-    final today = DateTime.now();
+    final current = now ?? DateTime.now();
+    final today = DateTime(current.year, current.month, current.day);
     final day = today.difference(starts.last).inDays + 1;
     final phase = day <= 0
         ? 'Próximo ciclo estimado'
@@ -119,11 +132,23 @@ class CycleInsights {
         : day <= estimatedLength
         ? 'Segunda mitad del ciclo'
         : 'El ciclo puede estar variando';
+    final shortest = intervals.isEmpty
+        ? (settings.cycleLength - 3).clamp(21, 45)
+        : intervals.reduce((a, b) => a < b ? a : b);
+    final longest = intervals.isEmpty
+        ? (settings.cycleLength + 3).clamp(21, 45)
+        : intervals.reduce((a, b) => a > b ? a : b);
     return CycleInsights(
       hasData: true,
       phaseLabel: phase,
       cycleDay: day.clamp(1, 99).toInt(),
       nextPeriodEstimate: starts.last.add(Duration(days: estimatedLength)),
+      estimateRangeStart: settings.regularCycle
+          ? null
+          : starts.last.add(Duration(days: shortest)),
+      estimateRangeEnd: settings.regularCycle
+          ? null
+          : starts.last.add(Duration(days: longest)),
       estimatedCycleLength: estimatedLength,
       recordedCycles: starts.length,
     );
@@ -133,6 +158,8 @@ class CycleInsights {
   final String phaseLabel;
   final int cycleDay;
   final DateTime? nextPeriodEstimate;
+  final DateTime? estimateRangeStart;
+  final DateTime? estimateRangeEnd;
   final int estimatedCycleLength;
   final int recordedCycles;
 }

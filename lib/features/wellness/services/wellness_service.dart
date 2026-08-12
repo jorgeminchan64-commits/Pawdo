@@ -54,12 +54,14 @@ class WellnessService {
   Future<void> saveSettings({
     required int cycleLength,
     required int periodLength,
+    required bool regularCycle,
     required bool remindersEnabled,
     required bool sharingEnabled,
     required Set<String> sharedFields,
   }) => _call('saveWellnessSettings', {
     'cycleLength': cycleLength,
     'periodLength': periodLength,
+    'regularCycle': regularCycle,
     'remindersEnabled': remindersEnabled,
     'sharingEnabled': sharingEnabled,
     'sharedFields': sharedFields.toList()..sort(),

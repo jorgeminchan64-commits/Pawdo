@@ -15,6 +15,7 @@ class _WellnessPrivacyScreenState extends State<WellnessPrivacyScreen> {
   final WellnessService _service = WellnessService();
   late int _cycleLength;
   late int _periodLength;
+  late bool _regularCycle;
   late bool _reminders;
   late bool _sharing;
   late Set<String> _fields;
@@ -25,6 +26,7 @@ class _WellnessPrivacyScreenState extends State<WellnessPrivacyScreen> {
     super.initState();
     _cycleLength = widget.settings.cycleLength;
     _periodLength = widget.settings.periodLength;
+    _regularCycle = widget.settings.regularCycle;
     _reminders = widget.settings.remindersEnabled;
     _sharing = widget.settings.sharingEnabled;
     _fields = {...widget.settings.sharedFields};
@@ -36,6 +38,7 @@ class _WellnessPrivacyScreenState extends State<WellnessPrivacyScreen> {
       await _service.saveSettings(
         cycleLength: _cycleLength,
         periodLength: _periodLength,
+        regularCycle: _regularCycle,
         remindersEnabled: _reminders,
         sharingEnabled: _sharing,
         sharedFields: _sharing ? _fields : const {},
@@ -156,6 +159,22 @@ class _WellnessPrivacyScreenState extends State<WellnessPrivacyScreen> {
                 ],
               ),
             ),
+          ),
+          const SizedBox(height: 12),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(value: true, label: Text('Regular')),
+              ButtonSegment(value: false, label: Text('Irregular')),
+            ],
+            selected: {_regularCycle},
+            onSelectionChanged: (value) =>
+                setState(() => _regularCycle = value.first),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _regularCycle
+                ? 'Pawdo mostrará una fecha orientativa.'
+                : 'Pawdo mostrará un rango aproximado, nunca un diagnóstico.',
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<int>(

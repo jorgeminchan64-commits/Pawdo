@@ -594,6 +594,55 @@ describe('Pawdo callable security', () => {
     assert.ok(stored.reminderProcessedAt);
   });
 
+  it('keeps wellness private until explicit field consent and revokes stale sharing', async () => {
+    await db.doc(`users/${user1}`).set({ uid: user1, coupleCode: code });
+    await handlers.saveWellnessSettingsHandler(request(user1, {
+      cycleLength: 28, periodLength: 5, regularCycle: false,
+      remindersEnabled: false, sharingEnabled: false, sharedFields: [],
+    }));
+    await handlers.saveWellnessEntryHandler(request(user1, {
+      dateKey: '2026-08-11', mood: 'calm', flow: 'light', symptoms: ['cramps'],
+      notes: 'Esta nota es privada', periodStarted: true, periodEnded: false,
+    }));
+    assert.equal((await db.doc(`couples/${code}/wellnessShared/${user1}`).get()).exists, false);
+    await handlers.saveWellnessSettingsHandler(request(user1, {
+      cycleLength: 28, periodLength: 5, regularCycle: false,
+      remindersEnabled: false, sharingEnabled: true, sharedFields: ['mood'],
+    }));
+    await handlers.saveWellnessEntryHandler(request(user1, {
+      dateKey: '2026-08-11', mood: 'calm', flow: 'light', symptoms: ['cramps'],
+      notes: 'Esta nota es privada', periodStarted: true, periodEnded: false,
+    }));
+    const shared = (await db.doc(`couples/${code}/wellnessShared/${user1}`).get()).data();
+    assert.equal(shared.mood, 'calm');
+    assert.equal(shared.notes, undefined);
+    assert.equal(shared.intensity, undefined);
+    assert.equal(shared.sourceDateKey, '2026-08-11');
+    await handlers.saveWellnessSettingsHandler(request(user1, {
+      cycleLength: 28, periodLength: 5, regularCycle: false,
+      remindersEnabled: false, sharingEnabled: true, sharedFields: ['symptoms'],
+    }));
+    assert.equal((await db.doc(`couples/${code}/wellnessShared/${user1}`).get()).exists, false);
+  });
+
+  it('validates wellness cycle type and requires consent before sharing fields', async () => {
+    await db.doc(`users/${user1}`).set({ uid: user1, coupleCode: code });
+    const base = {
+      cycleLength: 28, periodLength: 5, remindersEnabled: false,
+      sharingEnabled: false, sharedFields: [],
+    };
+    await rejectsCode(
+      () => handlers.saveWellnessSettingsHandler(request(user1, { ...base })),
+      'invalid-argument',
+    );
+    await rejectsCode(
+      () => handlers.saveWellnessSettingsHandler(request(user1, {
+        ...base, regularCycle: true, sharedFields: ['mood'],
+      })),
+      'invalid-argument',
+    );
+  });
+
   it('rate limits bursts and quick-message spam', async () => {
     await handlers.sendChatMessageHandler(request(user1, {
       coupleCode: code, messageId: 'quick-message-001', quickId: 'miss_you',

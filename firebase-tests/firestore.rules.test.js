@@ -383,6 +383,31 @@ describe('Pawdo Firestore Rules', () => {
     await assertFails(updateDoc(event, { title: 'Manipulado' }));
   });
 
+  it('keeps wellness history owner-only and exposes only server summaries', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, 'users', user1, 'wellness', 'settings'), {
+        enabled: true, sharingEnabled: true, sharedFields: ['mood'],
+      });
+      await setDoc(doc(adminDb, 'users', user1, 'wellnessEntries', '2026-08-11'), {
+        mood: 'calm', notes: 'privada', ownerUid: user1,
+      });
+      await setDoc(doc(adminDb, 'couples', code, 'wellnessShared', user1), {
+        ownerUid: user1, mood: 'calm', fields: ['mood'],
+      });
+    });
+    const settings = doc(db(user1), 'users', user1, 'wellness', 'settings');
+    const entry = doc(db(user1), 'users', user1, 'wellnessEntries', '2026-08-11');
+    await assertSucceeds(getDoc(settings));
+    await assertSucceeds(getDoc(entry));
+    await assertFails(getDoc(doc(db(user2), 'users', user1, 'wellnessEntries', '2026-08-11')));
+    await assertFails(updateDoc(entry, { notes: 'leída' }));
+    await assertSucceeds(getDoc(doc(db(user2), 'couples', code, 'wellnessShared', user1)));
+    await assertFails(updateDoc(
+      doc(db(user1), 'couples', code, 'wellnessShared', user1), { notes: 'forjada' },
+    ));
+  });
+
   it('denies forged uploadedBy and outsider messages', async () => {
     const message = {
       type: 'image', storagePath: `couples/${code}/photos/file.jpg`,

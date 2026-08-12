@@ -25,6 +25,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
       await _service.saveSettings(
         cycleLength: 28,
         periodLength: 5,
+        regularCycle: true,
         remindersEnabled: false,
         sharingEnabled: false,
         sharedFields: const {},
@@ -77,6 +78,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
               enabled: false,
               cycleLength: 28,
               periodLength: 5,
+              regularCycle: true,
               remindersEnabled: false,
               sharingEnabled: false,
               sharedFields: {},
@@ -272,7 +274,9 @@ class _InsightCard extends StatelessWidget {
             Text('Día orientativo ${insights.cycleDay} del ciclo'),
             if (estimate != null)
               Text(
-                'Próximo periodo estimado: ${_friendlyDate(estimate)}',
+                settings.regularCycle
+                    ? 'Próximo periodo estimado: ${_friendlyDate(estimate)}'
+                    : 'Rango aproximado: ${_friendlyDate(insights.estimateRangeStart!)} al ${_friendlyDate(insights.estimateRangeEnd!)}',
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             const SizedBox(height: 8),
@@ -388,7 +392,7 @@ class _PartnerSupport extends StatelessWidget {
                   if (detail.isNotEmpty) Text(detail.join(' · ')),
                   const SizedBox(height: 6),
                   const Text(
-                    'Pregunta cómo se siente y ofrece descanso o compañía.',
+                    'Tu pareja podría encontrarse en una etapa de su ciclo en la que algunas personas experimentan cambios físicos o emocionales. Pregúntale cómo se siente.',
                   ),
                 ],
               ),
