@@ -47,6 +47,21 @@ Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agru
 | Conflicto entre dos teléfonos | No sobrescribe: solicita recargar la revisión más reciente |
 | Salir de Jardín | Restaura orientación vertical y conserva Inicio |
 
+## Personajes — FASE 10
+
+| Caso | Resultado esperado |
+|---|---|
+| Abrir Personalizar personaje desde Perfil | Muestra la apariencia guardada y una vista previa completa |
+| Cambiar cabello, piel, ropa, calzado y accesorio | Cada propiedad cambia de forma independiente sin reiniciar las demás |
+| Cambiar expresión y pose | La vista previa se actualiza inmediatamente |
+| Guardar y reabrir el editor | Todas las selecciones reaparecen sin pérdida de datos |
+| Abrir Casa y Jardín después de guardar | El estilo base y la pose elegidos se aplican al personaje animado |
+| Personalizar ambos integrantes desde sus teléfonos | Casa y Jardín muestran los dos perfiles compartidos en el orden de la pareja |
+| Cuenta creada antes de FASE 10 | Mantiene los estilos clásicos sin error ni migración manual |
+| Intentar guardar un valor fuera del catálogo | Firestore rechaza el documento y no comparte datos manipulados |
+| Texto ampliado y pantalla pequeña | El editor permite desplazarse y todos los controles siguen accesibles |
+| Perder red al guardar | Muestra el fallo sin cerrar el editor ni fingir que la apariencia se sincronizó |
+
 ## Dos teléfonos reales
 
 | Caso | Teléfono A | Teléfono B | Resultado esperado |

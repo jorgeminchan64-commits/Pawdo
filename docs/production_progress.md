@@ -16,8 +16,9 @@
 | 7. Navegación e Inicio | Completada | Rutas directas; saludo, reloj y relación; 37 tests Flutter; APK recompilado | Validación visual pendiente en dos teléfonos; fecha canónica compartida queda en FASE 15 | Iniciar FASE 8 |
 | 8. Casa | Completada | Zonas coherentes, cambios protegidos, 40 tests Flutter; APK recompilado | Validación táctil/FPS pendiente en dos teléfonos | Iniciar FASE 9 |
 | 9. Jardín | Completada | Riego por objetivo real, crecimiento sincronizado, 42 tests Flutter; APK recompilado | Validación táctil/FPS pendiente en dos teléfonos | Iniciar FASE 10 |
-| 10–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
-| 25. Play Store | Bloqueada | APK unsigned de 105.98 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
+| 10. Personajes | Completada | Editor extensible, perfil compartido seguro, 45 tests Flutter y APK recompilado | Nuevos sprites por capas requieren catálogo visual futuro; validación física pendiente | Iniciar FASE 11 |
+| 11–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 25. Play Store | Bloqueada | APK unsigned de 106.15 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
 
@@ -25,7 +26,7 @@
 - Refuerzo de `.gitignore` contra dependencias, artefactos y credenciales privadas.
 - Punto de retorno del proyecto original.
 - Formato automático aislado en commit propio.
-- 42 tests Flutter, 46 de Functions, 19 de Firestore Rules y 14 de Storage Rules aprobados.
+- 45 tests Flutter, 46 de Functions, 20 de Firestore Rules y 14 de Storage Rules aprobados.
 - APK release compilado y verificado como no firmado.
 - Inventario inicial de assets y checklist Play Store.
 - 78 hallazgos estáticos corregidos; `flutter analyze` queda limpio.
@@ -73,10 +74,15 @@
 - Edición del Jardín marca agregar, arrastrar o eliminar como pendiente; cambiar de pestaña o volver exige confirmar el descarte si no se guardó.
 - Dos pruebas nuevas cubren objetivos válidos/inválidos y estados de crecimiento; suite Flutter aumentada de 40 a 42 tests.
 - APK release de FASE 9: 111,140,701 bytes (105.99 MiB), todavía sin firma.
+- Personajes incorpora un editor vectorial real con estilo base, cabello, color, piel, ropa, calzado, accesorios, expresión y pose como propiedades independientes.
+- La apariencia se guarda en el perfil personal, se replica a la pareja mediante un resumen validado y refleja estilo animado/pose en Casa y Jardín sin romper cuentas antiguas.
+- Firestore exige un esquema completo y cerrado; Functions descarta apariencias parciales o manipuladas antes de compartirlas.
+- Tres pruebas nuevas cubren serialización, compatibilidad defensiva y edición/guardado; suite Flutter aumentada de 42 a 45 tests.
+- APK release de FASE 10: 111,304,657 bytes (106.15 MiB), todavía sin firma.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 10: Personajes.
+1. Iniciar FASE 11 según el roadmap maestro.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.

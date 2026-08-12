@@ -1,13 +1,13 @@
 # Pawdo — auditoría inicial de producción
 
 Fecha de actualización: 2026-08-11
-Alcance actualizado hasta el cierre de FASE 9. Este documento no declara la aplicación lista para producción.
+Alcance actualizado hasta el cierre de FASE 10. Este documento no declara la aplicación lista para producción.
 
 ## Resumen ejecutivo
 
-Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, paginación de chat y 121 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
+Pawdo tiene una base funcional considerable: separación por features, Riverpod parcial, Firebase Auth/Firestore/Storage/Functions, reglas con denegación general, paginación de chat y 125 pruebas automatizadas aprobadas entre Flutter, Functions y reglas. Android genera un APK release.
 
-Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, dominio propio/Data Safety y prueba staging pendientes, ausencia de App Check/Crashlytics, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK de 105.99 MiB. No deben añadirse módulos grandes fuera del orden de fases.
+Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, dominio propio/Data Safety y prueba staging pendientes, ausencia de App Check/Crashlytics, recuperación entre procesos todavía limitada para operaciones no persistentes y un APK de 106.15 MiB. No deben añadirse módulos grandes fuera del orden de fases.
 
 ## Arquitectura observada
 
@@ -64,7 +64,7 @@ Fortalezas confirmadas:
 - Firestore y Storage terminan en reglas deny-by-default.
 - Escrituras sensibles de chat, economía, pareja, juegos y bienestar pasan por Functions.
 - Shared photos limitadas a imágenes válidas de hasta 1 MB y miembros activos.
-- 46 tests de Functions, 19 de Firestore Rules y 14 de Storage Rules pasan en emuladores.
+- 46 tests de Functions, 20 de Firestore Rules y 14 de Storage Rules pasan en emuladores.
 
 Pendiente de validar:
 
@@ -73,7 +73,7 @@ Pendiente de validar:
 - Inventario Data Safety real y verificación operativa de los correos publicados.
 - Reglas amplias de `state` y cinema.
 
-## Estado de FASE 0–9
+## Estado de FASE 0–10
 
 - Auditoría estática y documental: completada.
 - Git y respaldo: completados.
@@ -96,5 +96,7 @@ Pendiente de validar:
 - Puerta final de FASE 8: analyze limpio; 40 tests Flutter aprobados; APK de 111,124,317 bytes recompilado y verificado como no firmado. Backend y reglas no cambiaron.
 - FASE 9: Jardín con riego ligado exclusivamente a vegetación tocada, etapas comprensibles y sincronización visual; edición protegida contra salida sin guardar.
 - Puerta final de FASE 9: analyze limpio; 42 tests Flutter aprobados; APK de 111,140,701 bytes recompilado y verificado como no firmado. Backend y reglas no cambiaron.
+- FASE 10: editor de personaje extensible con propiedades independientes, resumen compartido validado y estilo/pose animados en Casa y Jardín; cuentas legacy conservan los estilos clásicos.
+- Puerta final de FASE 10: analyze limpio; 45 tests Flutter, 46 Functions, 20 Firestore Rules y 14 Storage Rules aprobados; APK de 111,304,657 bytes recompilado y verificado como no firmado.
 - Pruebas físicas y profiling: no ejecutados en esta fase.
-- Siguiente paso autorizado por el roadmap: FASE 10, Personajes.
+- Siguiente paso autorizado por el roadmap: FASE 11.
