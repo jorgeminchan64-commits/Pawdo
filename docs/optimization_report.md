@@ -1,7 +1,7 @@
 # Pawdo — reporte de optimización
 
 Fecha de inventario inicial: 2026-08-06  
-Estado: baseline; no se eliminaron ni convirtieron assets en FASE 0/1.
+Estado: FASE 20 técnica completada; profiling físico pendiente.
 
 ## Tamaños iniciales
 
@@ -41,17 +41,37 @@ Estado: baseline; no se eliminaron ni convirtieron assets en FASE 0/1.
 - Flutter aplicó tree-shaking a Material Icons: 1,645,184 → 17,464 bytes en el APK.
 - No se convirtió PNG a WebP y no se degradó ningún asset.
 
-## Plan controlado para FASE 20
+### FASE 20
 
-1. Generar AAB firmado de prueba y medir descarga por ABI/dispositivo.
-2. Capturar dimensiones, alpha y memoria decodificada de cada PNG.
-3. Confirmar referencias estáticas, dinámicas y remotas.
-4. Comparar PNG/WebP visualmente en assets no sensibles a atlas/sprites.
-5. Mantener rutas compatibles o migración gradual para catálogos persistidos.
-6. Perfilar RAM, GPU y jank en mundo, interior, Ludo y cambio de pestañas.
-7. Registrar cada conversión/eliminación con tamaño inicial/final y rollback.
+- Las cinco pestañas principales se construyen al abrirse por primera vez y luego conservan su estado. Inicio ya no crea de inmediato Chat, Mascota, Tienda y Perfil ni sus streams asociados.
+- El latido de presencia pasó de 75 a 120 segundos: reduce 37.5% las escrituras periódicas y permanece dentro de la ventana de frescura visible de tres minutos. Inicio, reanudación, reconexión, cambio de sesión y salida siguen sincronizando inmediatamente.
+- Se retiró `assets/images/interior/games_portal.png` (220,777 bytes), confirmado sin consumidores desde que el portal duplicado salió del flujo en FASE 8.
+- Se retiraron una pantalla de login duplicada y tres archivos legacy vacíos, todos sin importaciones ni rutas activas.
+- No se convirtieron spritesheets, fondos ni catálogos a WebP: requieren comparación visual y prueba física para evitar romper atlas, rutas dinámicas o documentos persistidos.
+
+## Medición FASE 20
+
+| Elemento | Resultado |
+|---|---:|
+| Assets finales | 50,351,206 bytes en 67 archivos |
+| APK universal antes | 112,560,583 bytes |
+| APK universal después | 112,339,592 bytes |
+| Reducción APK universal | 220,991 bytes |
+| AAB arm64 analizado | 72,544,764 bytes (69.2 MB reportados por Flutter) |
+| Assets comprimidos dentro del AAB | 48 MB |
+| APK armeabi-v7a | 71,481,306 bytes |
+| APK arm64-v8a | 73,768,958 bytes |
+| APK x86_64 | 75,261,986 bytes |
+
+El análisis AAB confirma que los assets dominan el tamaño; el código Dart propio representa aproximadamente 895 KB AOT. El AAB generado es técnico y no está firmado para publicación.
+
+## Seguimiento físico controlado
+
+1. Medir RAM, GPU y jank en mundo, interior, Ludo y cambio de pestañas en dos teléfonos.
+2. Capturar dimensiones, alpha y memoria decodificada antes de proponer conversiones adicionales.
+3. Comparar PNG/WebP visualmente en recursos no sensibles a atlas o rutas persistidas.
+4. Medir la descarga que Play Console calcula por dispositivo cuando exista firma de publicación.
 
 ## Tamaño final
 
-Sin cambio intencional en FASE 0/1. El tamaño final de producción queda pendiente; no debe declararse optimizado hasta completar medición AAB, QA visual y pruebas físicas.
-
+La optimización técnica medible está completada. El tamaño definitivo de producción sigue pendiente de firma, Play Console, QA visual y profiling físico; no se debe confundir el AAB técnico con un artefacto publicable.

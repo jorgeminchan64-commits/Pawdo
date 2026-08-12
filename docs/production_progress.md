@@ -26,7 +26,8 @@
 | 17. Widgets | Completada | Adaptable, caché privada, relación/evento y Te extraño; 63 Flutter/57 Functions/45 reglas | Foto, redimensionado y acción requieren prueba física | Iniciar FASE 18 |
 | 18. Nuevos juegos | Completada | 3 juegos locales ligeros; 65 Flutter/57 Functions/45 reglas | Conversación/maquetación requieren prueba física | Iniciar FASE 19 |
 | 19. Tienda y personalización | Completada | 10 categorías y estados explícitos; 67 Flutter/57 Functions/45 reglas | Revisión visual pendiente; dinero real permanece desactivado | Iniciar FASE 20 |
-| 20–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 20. Optimización global | Completada técnica | Carga diferida, -37.5% latidos, assets limpiados, 69 Flutter y APK/AAB medidos | FPS/RAM/visual requieren dos teléfonos | Iniciar FASE 21 |
+| 21–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
 | 25. Play Store | Bloqueada | APK unsigned de 107.31 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
@@ -141,10 +142,15 @@
 - No se activó dinero real. El contenido premium permanece bloqueado hasta una futura integración y validación de Google Play Billing.
 - Dos pruebas Flutter elevan la suite a 169 pruebas automatizadas; las 57 de Functions, 24 de Firestore y 21 de Storage también fueron repetidas y aprobadas.
 - APK release de FASE 19: 112,560,583 bytes (107.35 MiB), todavía sin firma de publicación.
+- Las pestañas secundarias ahora se construyen únicamente al primer uso y conservan su estado; se evitan streams, pantallas y trabajo de arranque innecesarios.
+- La presencia mantiene sincronización inmediata en eventos importantes y amplía su latido de 75 a 120 segundos, reduciendo 37.5% las escrituras periódicas.
+- Un PNG huérfano de 220,777 bytes, una pantalla de acceso duplicada y tres archivos vacíos fueron eliminados tras confirmar que no tenían consumidores.
+- Assets: 50,351,206 bytes. APK universal: 112,339,592 bytes, 220,991 menos que FASE 19. AAB técnico arm64: 72,544,764 bytes; APK por ABI entre 71,481,306 y 75,261,986 bytes.
+- Dos pruebas Flutter elevan la suite a 171 pruebas automatizadas; analyze quedó limpio. Backend y reglas no cambiaron y conservan la compuerta completa repetida en FASE 19.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 20: optimización integral, assets y tamaño.
+1. Iniciar FASE 21: Firebase App Check.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.
@@ -190,10 +196,10 @@
 - Firebase CLI tuvo un cierre transitorio de hub después de que las aserciones pasaran; una repetición aislada cerró con código 0.
 - `connectivity_plus` sólo representa disponibilidad de transporte; no se interpreta por sí solo como garantía de acceso a Internet.
 - Firestore mantiene su persistencia offline nativa; los callables y cargas de Storage requieren la recuperación explícita implementada o una nueva acción del usuario.
-- El APK universal sigue excediendo 100 MiB y no está firmado; ambos puntos permanecen reservados para FASE 20/25.
-- No se ejecutó profiling de FPS/RAM/GPU en dispositivo durante FASE 4; queda como gate físico de FASE 20/24.
+- El APK universal sigue excediendo 100 MiB y no está firmado; el AAB técnico mide 72,544,764 bytes y la validación de Play Console permanece para FASE 25.
+- No se ejecutó profiling de FPS/RAM/GPU en dispositivo; queda como gate físico de FASE 24.
 - PIN/biometría no se añadió: la reautenticación de Firebase protege las acciones sensibles sin guardar otro secreto local. Puede evaluarse más adelante como bloqueo opcional de interfaz.
 - Identidad personal, URLs legales públicas y correos de soporte/borrado quedaron configurados y enlazados en la aplicación.
 - El resumen de relación de Inicio utiliza la fecha personal compatible existente; la fuente compartida canónica y el contador completo se resolverán en FASE 15.
 - `pawdo.site` está vinculado en Sites pero pendiente de compra y DNS. No se debe sustituir la URL operativa hasta validar HTTPS.
-- El asset `interior/games_portal.png` quedó sin consumidor activo; se conserva como candidato hasta la auditoría integral de assets en FASE 20.
+- El asset `interior/games_portal.png` fue eliminado en FASE 20 tras confirmar que no tenía consumidores.
