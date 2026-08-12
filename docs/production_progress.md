@@ -23,7 +23,8 @@
 | 14. Calendario | Completada | Mes/próximos/recuerdos, eventos, foto y avisos; 58 Flutter/53 Functions/44 reglas | Aviso push y zona horaria requieren prueba en dos teléfonos | Iniciar FASE 15 |
 | 15. Contador de relación | Completada | Fecha canónica, duración, días y aniversario; 58 Flutter/55 Functions/44 reglas | Sincronización visual requiere prueba en dos teléfonos | Iniciar FASE 16 |
 | 16. Bienestar | Completada | Regular/irregular, historial privado y consentimiento; 61 Flutter/57 Functions/45 reglas | Recordatorios son internos; experiencia requiere prueba física | Iniciar FASE 17 |
-| 17–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 17. Widgets | Completada | Adaptable, caché privada, relación/evento y Te extraño; 63 Flutter/57 Functions/45 reglas | Foto, redimensionado y acción requieren prueba física | Iniciar FASE 18 |
+| 18–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
 | 25. Play Store | Bloqueada | APK unsigned de 107.31 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
@@ -32,7 +33,7 @@
 - Refuerzo de `.gitignore` contra dependencias, artefactos y credenciales privadas.
 - Punto de retorno del proyecto original.
 - Formato automático aislado en commit propio.
-- 61 tests Flutter, 57 de Functions, 24 de Firestore Rules y 21 de Storage Rules aprobados.
+- 63 tests Flutter, 57 de Functions, 24 de Firestore Rules y 21 de Storage Rules aprobados.
 - APK release compilado y verificado como no firmado.
 - Inventario inicial de assets y checklist Play Store.
 - 78 hallazgos estáticos corregidos; `flutter analyze` queda limpio.
@@ -121,10 +122,16 @@
 - Cambiar o retirar campos compartidos elimina inmediatamente el resumen anterior; las notas y fechas exactas nunca entran al documento compartido.
 - Tres pruebas Flutter, dos de Functions y una de Firestore elevan la suite a 163 pruebas automatizadas.
 - APK release de FASE 16: 112,527,019 bytes (107.31 MiB), todavía sin firma de publicación.
+- Widget Android adaptable: pequeño muestra foto/días; mediano añade tiempo, próximo evento y botón “Te extraño ❤️”.
+- La foto se descarga autenticada y se guarda únicamente en archivos privados de la app; contenido detallado permanece oculto de forma predeterminada.
+- “Te extraño” abre Pawdo y usa el callable autenticado/idempotente del chat; si falla conserva la acción para reintentar, sin credenciales dentro del receptor Android.
+- Sin polling, servicio permanente ni WorkManager: actualiza por snapshots reales, conserva el último estado válido sin red y limpia foto/datos al cerrar sesión o desvincular.
+- Dos pruebas Flutter elevan la suite a 165 pruebas automatizadas; la integración Kotlin/XML quedó comprobada por la compilación release.
+- APK release de FASE 17: 112,543,651 bytes (107.33 MiB), todavía sin firma de publicación.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 17: Widgets.
+1. Iniciar FASE 18: Nuevos juegos.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.

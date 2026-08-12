@@ -167,6 +167,22 @@ Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agru
 | Intentar lectura como pareja o escritura directa | Firestore Rules rechaza historial y mutaciones cliente |
 | Revisar textos médicos | No diagnostican fertilidad, embarazo, ovulación ni atribuyen emociones al ciclo |
 
+## Widget Android — FASE 17
+
+| Caso | Resultado esperado |
+|---|---|
+| Añadir en tamaño pequeño | Muestra foto cacheada y días juntos; oculta detalles si no hay consentimiento local |
+| Ampliar a tamaño mediano | Añade duración, próximo evento y botón Te extraño sin recortar texto principal |
+| Reducir nuevamente | Oculta detalles/botón que no caben y conserva la información principal |
+| Pulsar el cuerpo | Abre Pawdo normalmente |
+| Pulsar Te extraño | Abre Pawdo, autentica y envía una sola señal mediante el chat seguro |
+| Pulsar sin red | Conserva la acción pendiente y la reintenta al abrir Pawdo con conectividad |
+| Recibir un nuevo evento | Actualiza caché al siguiente snapshot sin polling continuo |
+| Cerrar la app | Mantiene el último estado válido sin ejecutar un servicio permanente |
+| Ocultar contenido | Reemplaza foto/datos por texto genérico de privacidad |
+| Cerrar sesión o desvincular | Elimina foto cacheada, acción pendiente y todo contenido personal |
+| Reiniciar teléfono | Android reconstruye el widget desde caché privada y abre Pawdo correctamente |
+
 ## Dos teléfonos reales
 
 | Caso | Teléfono A | Teléfono B | Resultado esperado |
