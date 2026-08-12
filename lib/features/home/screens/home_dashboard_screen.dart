@@ -17,6 +17,7 @@ class HomeDashboardScreen extends StatefulWidget {
     required this.onOpenGarden,
     required this.onOpenGames,
     required this.onOpenMissions,
+    required this.onOpenAlbum,
     required this.onNavigate,
   });
 
@@ -24,6 +25,7 @@ class HomeDashboardScreen extends StatefulWidget {
   final VoidCallback onOpenGarden;
   final VoidCallback onOpenGames;
   final VoidCallback onOpenMissions;
+  final VoidCallback onOpenAlbum;
   final ValueChanged<int> onNavigate;
 
   @override
@@ -77,6 +79,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               onOpenGarden: widget.onOpenGarden,
               onOpenGames: widget.onOpenGames,
               onOpenMissions: widget.onOpenMissions,
+              onOpenAlbum: widget.onOpenAlbum,
               onNavigate: widget.onNavigate,
             );
           },
@@ -96,6 +99,7 @@ class _DashboardContent extends StatelessWidget {
     required this.onOpenGarden,
     required this.onOpenGames,
     required this.onOpenMissions,
+    required this.onOpenAlbum,
     required this.onNavigate,
   });
 
@@ -107,6 +111,7 @@ class _DashboardContent extends StatelessWidget {
   final VoidCallback onOpenGarden;
   final VoidCallback onOpenGames;
   final VoidCallback onOpenMissions;
+  final VoidCallback onOpenAlbum;
   final ValueChanged<int> onNavigate;
 
   int _number(String key, int fallback) =>
@@ -258,6 +263,11 @@ class _DashboardContent extends StatelessWidget {
                         Icons.card_giftcard_rounded,
                         'Recompensas',
                         onOpenMissions,
+                      ),
+                      _Shortcut(
+                        Icons.photo_album_rounded,
+                        'Álbum',
+                        onOpenAlbum,
                       ),
                       _Shortcut(
                         Icons.settings_rounded,

@@ -80,6 +80,24 @@ service firebase.storage {
       allow update, delete: if false;
     }
 
+    match /couples/{coupleId}/memories/{memoryId}/{fileName} {
+      allow read: if isCoupleMember(coupleId);
+      allow create: if resource == null && isCoupleMember(coupleId) &&
+        request.resource != null && request.resource.size > 0 &&
+        request.resource.contentType == 'image/jpeg' &&
+        memoryId.matches('[A-Za-z0-9_-]{10,80}') &&
+        fileName in ['original.jpg', 'thumb.jpg'] &&
+        (fileName == 'original.jpg'
+          ? request.resource.size <= 1 * 1024 * 1024 &&
+            request.resource.metadata.variant == 'original'
+          : request.resource.size <= 250 * 1024 &&
+            request.resource.metadata.variant == 'thumbnail') &&
+        request.resource.metadata.uploadedBy == request.auth.uid &&
+        request.resource.metadata.coupleCode == coupleId &&
+        request.resource.metadata.memoryId == memoryId;
+      allow update, delete: if false;
+    }
+
     // Existing profile-photo feature, kept private to authenticated Pawdo users.
     match /profile_photos/{fileName} {
       allow read: if canReadProfilePhoto(fileName);

@@ -7,6 +7,7 @@ import '../../interior/screens/pawdo_interior_screen.dart';
 import '../../missions/screens/daily_missions_screen.dart';
 import '../../location/screens/location_sharing_screen.dart';
 import '../../location/widgets/location_sharing_status_banner.dart';
+import '../../memories/screens/memory_album_screen.dart';
 import '../../pet/screens/pet_screen.dart';
 import '../../world/screens/world_screen.dart';
 import 'home_dashboard_screen.dart';
@@ -64,6 +65,7 @@ class _MainScreenState extends State<MainScreen> {
         onOpenGarden: _openGarden,
         onOpenGames: () => _open(const GamesHubScreen()),
         onOpenMissions: () => _open(const DailyMissionsScreen()),
+        onOpenAlbum: () => _open(const MemoryAlbumScreen()),
         onNavigate: changeTab,
       ),
       const PetScreen(),

@@ -42,6 +42,19 @@ function audioMetadata(uid, durationMs = '1500', code = coupleCode) {
   };
 }
 
+function memoryRef(uid, memoryId, fileName, code = coupleCode) {
+  return ref(storage(uid), `couples/${code}/memories/${memoryId}/${fileName}`);
+}
+
+function memoryMetadata(uid, memoryId, variant, code = coupleCode) {
+  return {
+    contentType: 'image/jpeg',
+    customMetadata: {
+      uploadedBy: uid, coupleCode: code, memoryId, variant,
+    },
+  };
+}
+
 describe('Pawdo Storage Rules', () => {
   before(async () => {
     testEnv = await initializeTestEnvironment({
@@ -176,6 +189,40 @@ describe('Pawdo Storage Rules', () => {
     });
     await assertFails(getBytes(audioRef(user1, '1234567890_private.m4a')));
     await assertFails(getBytes(audioRef(user2, '1234567890_private.m4a')));
+  });
+
+  it('allows optimized album originals and thumbnails for both members', async () => {
+    const memoryId = 'memory123456';
+    await assertSucceeds(uploadBytes(
+      memoryRef(user1, memoryId, 'original.jpg'), smallJpeg,
+      memoryMetadata(user1, memoryId, 'original'),
+    ));
+    await assertSucceeds(uploadBytes(
+      memoryRef(user1, memoryId, 'thumb.jpg'), smallJpeg,
+      memoryMetadata(user1, memoryId, 'thumbnail'),
+    ));
+    await assertSucceeds(getBytes(memoryRef(user2, memoryId, 'original.jpg')));
+    await assertSucceeds(getBytes(memoryRef(user2, memoryId, 'thumb.jpg')));
+  });
+
+  it('rejects forged album paths, variants and oversized thumbnails', async () => {
+    const memoryId = 'memory123456';
+    await assertFails(uploadBytes(
+      memoryRef(outsider, memoryId, 'original.jpg'), smallJpeg,
+      memoryMetadata(outsider, memoryId, 'original'),
+    ));
+    await assertFails(uploadBytes(
+      memoryRef(user1, memoryId, 'thumb.jpg'), smallJpeg,
+      memoryMetadata(user1, memoryId, 'original'),
+    ));
+    await assertFails(uploadBytes(
+      memoryRef(user1, memoryId, 'other.jpg'), smallJpeg,
+      memoryMetadata(user1, memoryId, 'original'),
+    ));
+    await assertFails(uploadBytes(
+      memoryRef(user1, memoryId, 'thumb.jpg'), new Uint8Array(250 * 1024 + 1),
+      memoryMetadata(user1, memoryId, 'thumbnail'),
+    ));
   });
 
   it('allows a profile photo only to its owner and active partner', async () => {

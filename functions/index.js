@@ -181,6 +181,10 @@ const QUICK_MESSAGES = Object.freeze({
   thinking_of_you: 'Estoy pensando en ti',
 });
 
+const MEMORY_CATEGORIES = new Set([
+  'travel', 'date', 'anniversary', 'special', 'other',
+]);
+
 const COUPLE_QUESTIONS = Object.freeze([
   '¿Cuál es tu recuerdo favorito de nosotros?',
   '¿Qué pequeño detalle mío te hace sonreír?',
@@ -439,6 +443,15 @@ function requireMessageId(data) {
     throw new HttpsError('invalid-argument', 'Identificador de mensaje inválido.');
   }
   return messageId;
+}
+
+function requireMemoryId(data) {
+  const memoryId = data?.memoryId;
+  if (typeof memoryId !== 'string' ||
+      !/^[A-Za-z0-9_-]{10,80}$/.test(memoryId)) {
+    throw new HttpsError('invalid-argument', 'Identificador de recuerdo inválido.');
+  }
+  return memoryId;
 }
 
 function chatRateUpdate(rate, nowMillis, isQuick) {
@@ -1048,6 +1061,169 @@ async function discardAudioUploadHandler(request) {
     if (error?.code === 404) return { deleted: false };
     throw error;
   }
+}
+
+async function finalizeMemoryHandler(request) {
+  const uid = requireAuth(request);
+  const coupleCode = requireCoupleCode(request.data);
+  const memoryId = requireMemoryId(request.data);
+  const description = typeof request.data?.description === 'string'
+    ? request.data.description.trim()
+    : '';
+  const place = typeof request.data?.place === 'string' ? request.data.place.trim() : '';
+  const category = request.data?.category;
+  const tags = Array.isArray(request.data?.tags)
+    ? [...new Set(request.data.tags.map((value) =>
+      typeof value === 'string' ? value.trim().toLowerCase() : ''))]
+      .filter(Boolean)
+    : [];
+  const date = new Date(request.data?.date);
+  const originalPath = `couples/${coupleCode}/memories/${memoryId}/original.jpg`;
+  const thumbnailPath = `couples/${coupleCode}/memories/${memoryId}/thumb.jpg`;
+  if (description.length > 500 || place.length > 120 ||
+      !MEMORY_CATEGORIES.has(category) || tags.length > 10 ||
+      tags.some((tag) => tag.length > 30) || !Number.isFinite(date.getTime()) ||
+      date < new Date('1900-01-01T00:00:00Z') || date.getTime() > Date.now() ||
+      request.data?.originalPath !== originalPath ||
+      request.data?.thumbnailPath !== thumbnailPath) {
+    throw new HttpsError('invalid-argument', 'Datos del recuerdo inválidos.');
+  }
+
+  let originalMetadata;
+  let thumbnailMetadata;
+  try {
+    [[originalMetadata], [thumbnailMetadata]] = await Promise.all([
+      getStorage().bucket().file(originalPath).getMetadata(),
+      getStorage().bucket().file(thumbnailPath).getMetadata(),
+    ]);
+  } catch (error) {
+    if (error?.code === 404) throw new HttpsError('not-found', 'Falta una imagen del recuerdo.');
+    throw error;
+  }
+  const validFile = (metadata, variant, maxBytes) => {
+    const size = Number(metadata.size);
+    const custom = metadata.metadata || {};
+    return Number.isFinite(size) && size > 0 && size <= maxBytes &&
+      metadata.contentType === 'image/jpeg' && custom.uploadedBy === uid &&
+      custom.coupleCode === coupleCode && custom.memoryId === memoryId &&
+      custom.variant === variant;
+  };
+  if (!validFile(originalMetadata, 'original', 1024 * 1024) ||
+      !validFile(thumbnailMetadata, 'thumbnail', 250 * 1024)) {
+    throw new HttpsError('failed-precondition', 'Las imágenes no pasaron la validación.');
+  }
+
+  const db = getFirestore();
+  const coupleRef = db.doc(`couples/${coupleCode}`);
+  const memoryRef = coupleRef.collection('memories').doc(memoryId);
+  return db.runTransaction(async (tx) => {
+    const [coupleSnapshot, memorySnapshot] = await Promise.all([
+      tx.get(coupleRef), tx.get(memoryRef),
+    ]);
+    assertActiveMember(coupleSnapshot.data() || {}, uid);
+    if (memorySnapshot.exists) {
+      const existing = memorySnapshot.data() || {};
+      if (existing.createdBy === uid && existing.originalPath === originalPath) {
+        return { created: true, alreadyCreated: true, memoryId };
+      }
+      throw new HttpsError('already-exists', 'Ese recuerdo ya existe.');
+    }
+    tx.create(memoryRef, {
+      schemaVersion: 1,
+      description,
+      date: Timestamp.fromDate(date),
+      place,
+      tags,
+      category,
+      createdBy: uid,
+      favoriteBy: [],
+      originalPath,
+      thumbnailPath,
+      originalSizeBytes: Number(originalMetadata.size),
+      thumbnailSizeBytes: Number(thumbnailMetadata.size),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return { created: true, alreadyCreated: false, memoryId };
+  });
+}
+
+async function discardMemoryUploadHandler(request) {
+  const uid = requireAuth(request);
+  const coupleCode = requireCoupleCode(request.data);
+  const memoryId = requireMemoryId(request.data);
+  const paths = [
+    `couples/${coupleCode}/memories/${memoryId}/original.jpg`,
+    `couples/${coupleCode}/memories/${memoryId}/thumb.jpg`,
+  ];
+  for (const path of paths) {
+    const file = getStorage().bucket().file(path);
+    try {
+      const [metadata] = await file.getMetadata();
+      if (metadata.metadata?.uploadedBy === uid &&
+          metadata.metadata?.coupleCode === coupleCode) {
+        await file.delete({ ignoreNotFound: true });
+      }
+    } catch (error) {
+      if (error?.code !== 404) throw error;
+    }
+  }
+  return { deleted: true };
+}
+
+async function toggleMemoryFavoriteHandler(request) {
+  const uid = requireAuth(request);
+  const coupleCode = requireCoupleCode(request.data);
+  const memoryId = requireMemoryId(request.data);
+  const db = getFirestore();
+  const coupleRef = db.doc(`couples/${coupleCode}`);
+  const memoryRef = coupleRef.collection('memories').doc(memoryId);
+  return db.runTransaction(async (tx) => {
+    const [coupleSnapshot, memorySnapshot] = await Promise.all([
+      tx.get(coupleRef), tx.get(memoryRef),
+    ]);
+    assertActiveMember(coupleSnapshot.data() || {}, uid);
+    if (!memorySnapshot.exists) throw new HttpsError('not-found', 'Recuerdo no encontrado.');
+    const current = memorySnapshot.data()?.favoriteBy;
+    const favorites = Array.isArray(current) ? current.filter((value) => typeof value === 'string') : [];
+    const favorite = !favorites.includes(uid);
+    tx.update(memoryRef, {
+      favoriteBy: favorite
+        ? [...new Set([...favorites, uid])]
+        : favorites.filter((value) => value !== uid),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return { favorite };
+  });
+}
+
+async function deleteMemoryHandler(request) {
+  const uid = requireAuth(request);
+  const coupleCode = requireCoupleCode(request.data);
+  const memoryId = requireMemoryId(request.data);
+  const db = getFirestore();
+  const coupleRef = db.doc(`couples/${coupleCode}`);
+  const memoryRef = coupleRef.collection('memories').doc(memoryId);
+  return db.runTransaction(async (tx) => {
+    const [coupleSnapshot, memorySnapshot] = await Promise.all([
+      tx.get(coupleRef), tx.get(memoryRef),
+    ]);
+    assertActiveMember(coupleSnapshot.data() || {}, uid);
+    if (!memorySnapshot.exists) return { deleted: false };
+    if (memorySnapshot.data()?.createdBy !== uid) {
+      throw new HttpsError('permission-denied', 'Solo quien creó el recuerdo puede eliminarlo.');
+    }
+    tx.delete(memoryRef);
+    return { deleted: true };
+  });
+}
+
+async function cleanupMemoryFilesHandler(event) {
+  const prefix = `couples/${event.params.coupleCode}/memories/${event.params.memoryId}`;
+  await Promise.all([
+    getStorage().bucket().file(`${prefix}/original.jpg`).delete({ ignoreNotFound: true }),
+    getStorage().bucket().file(`${prefix}/thumb.jpg`).delete({ ignoreNotFound: true }),
+  ]);
 }
 
 async function deleteChatMessageHandler(request) {
@@ -3126,6 +3302,10 @@ async function deleteAccountHandler(request, services = {}) {
 
 exports.notifyCoupleActivity = onDocumentCreated('couples/{coupleCode}/chat/{messageId}', notifyCoupleActivityHandler);
 exports.cleanupSharedPhoto = onDocumentDeleted('couples/{coupleCode}/chat/{messageId}', cleanupSharedPhotoHandler);
+exports.cleanupMemoryFiles = onDocumentDeleted(
+  'couples/{coupleCode}/memories/{memoryId}',
+  cleanupMemoryFilesHandler,
+);
 exports.createCoupleCode = onCall(createCoupleCodeHandler);
 exports.cancelCoupleInvitation = onCall(cancelCoupleInvitationHandler);
 exports.joinCouple = onCall(joinCoupleHandler);
@@ -3138,6 +3318,10 @@ exports.finalizePhotoMessage = onCall(finalizePhotoMessageHandler);
 exports.discardPhotoUpload = onCall(discardPhotoUploadHandler);
 exports.finalizeAudioMessage = onCall(finalizeAudioMessageHandler);
 exports.discardAudioUpload = onCall(discardAudioUploadHandler);
+exports.finalizeMemory = onCall(finalizeMemoryHandler);
+exports.discardMemoryUpload = onCall(discardMemoryUploadHandler);
+exports.toggleMemoryFavorite = onCall(toggleMemoryFavoriteHandler);
+exports.deleteMemory = onCall(deleteMemoryHandler);
 exports.deleteChatMessage = onCall(deleteChatMessageHandler);
 exports.markChatRead = onCall(markChatReadHandler);
 exports.cleanupExpiredCoupleInvitations = onSchedule(
@@ -3199,6 +3383,11 @@ exports._test = {
   discardPhotoUploadHandler,
   finalizeAudioMessageHandler,
   discardAudioUploadHandler,
+  finalizeMemoryHandler,
+  discardMemoryUploadHandler,
+  toggleMemoryFavoriteHandler,
+  deleteMemoryHandler,
+  cleanupMemoryFilesHandler,
   deleteChatMessageHandler,
   markChatReadHandler,
   notifyCoupleActivityHandler,

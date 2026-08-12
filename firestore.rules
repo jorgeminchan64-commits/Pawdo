@@ -274,6 +274,11 @@ service cloud.firestore {
         allow create, update, delete: if false;
       }
 
+      match /memories/{memoryId} {
+        allow read: if member(code);
+        allow create, update, delete: if false;
+      }
+
       // This collection contains only the small set of fields the owner
       // explicitly consented to share. Private notes never enter this path.
       match /wellnessShared/{ownerUid} {

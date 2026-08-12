@@ -451,6 +451,49 @@ describe('Pawdo callable security', () => {
     assert.equal(message.contentType, 'audio/mp4');
   });
 
+  it('creates, favorites and protects a shared album memory', async () => {
+    const memoryId = 'memory123456';
+    const base = `couples/${code}/memories/${memoryId}`;
+    for (const [fileName, variant] of [['original.jpg', 'original'], ['thumb.jpg', 'thumbnail']]) {
+      await getStorage().bucket().file(`${base}/${fileName}`).save(Buffer.from([0xff, 0xd8, 0xff]), {
+        metadata: {
+          contentType: 'image/jpeg',
+          metadata: { uploadedBy: user1, coupleCode: code, memoryId, variant },
+        },
+      });
+    }
+    const created = await handlers.finalizeMemoryHandler(request(user1, {
+      coupleCode: code,
+      memoryId,
+      description: 'Nuestra primera cita',
+      date: '2026-08-01T12:00:00.000Z',
+      place: 'Lima',
+      tags: ['amor', 'cita'],
+      category: 'date',
+      originalPath: `${base}/original.jpg`,
+      thumbnailPath: `${base}/thumb.jpg`,
+    }));
+    assert.equal(created.created, true);
+    const firstFavorite = await handlers.toggleMemoryFavoriteHandler(request(user1, {
+      coupleCode: code, memoryId,
+    }));
+    const secondFavorite = await handlers.toggleMemoryFavoriteHandler(request(user2, {
+      coupleCode: code, memoryId,
+    }));
+    assert.equal(firstFavorite.favorite, true);
+    assert.equal(secondFavorite.favorite, true);
+    const memory = (await db.doc(`couples/${code}/memories/${memoryId}`).get()).data();
+    assert.deepEqual(new Set(memory.favoriteBy), new Set([user1, user2]));
+    await rejectsCode(
+      () => handlers.deleteMemoryHandler(request(user2, { coupleCode: code, memoryId })),
+      'permission-denied',
+    );
+    const deleted = await handlers.deleteMemoryHandler(request(user1, {
+      coupleCode: code, memoryId,
+    }));
+    assert.equal(deleted.deleted, true);
+  });
+
   it('rate limits bursts and quick-message spam', async () => {
     await handlers.sendChatMessageHandler(request(user1, {
       coupleCode: code, messageId: 'quick-message-001', quickId: 'miss_you',

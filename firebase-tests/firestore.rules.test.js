@@ -355,6 +355,19 @@ describe('Pawdo Firestore Rules', () => {
     await assertFails(updateDoc(memberEntry, { deltaCoins: 999999 }));
   });
 
+  it('keeps album memories readable to the couple and server-only to mutate', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'couples', code, 'memories', 'memory12345'), {
+        description: 'Una cita', createdBy: user1, category: 'date',
+      });
+    });
+    const memory = doc(db(user1), 'couples', code, 'memories', 'memory12345');
+    await assertSucceeds(getDoc(memory));
+    await assertSucceeds(getDoc(doc(db(user2), 'couples', code, 'memories', 'memory12345')));
+    await assertFails(getDoc(doc(db(outsider), 'couples', code, 'memories', 'memory12345')));
+    await assertFails(updateDoc(memory, { description: 'Manipulado' }));
+  });
+
   it('denies forged uploadedBy and outsider messages', async () => {
     const message = {
       type: 'image', storagePath: `couples/${code}/photos/file.jpg`,
