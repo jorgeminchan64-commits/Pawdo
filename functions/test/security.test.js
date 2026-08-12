@@ -2,6 +2,7 @@
 
 const assert = require('node:assert/strict');
 const { getFirestore, Timestamp } = require('firebase-admin/firestore');
+const { getStorage } = require('firebase-admin/storage');
 
 const projectId = process.env.GCLOUD_PROJECT || 'pawdo-aeda8';
 const code = 'ABC123';
@@ -427,6 +428,27 @@ describe('Pawdo callable security', () => {
     assert.equal(message.uploadedBy, user1);
     assert.equal(message.text, 'Hola seguro');
     assert.equal(message.schemaVersion, 2);
+  });
+
+  it('finalizes a validated voice note idempotently', async () => {
+    const messageId = 'audio-message-001';
+    const fileName = `1234567890_${user1}_${messageId}.m4a`;
+    const storagePath = `couples/${code}/audio/${fileName}`;
+    await getStorage().bucket().file(storagePath).save(Buffer.from([0, 0, 0, 20]), {
+      metadata: {
+        contentType: 'audio/mp4',
+        metadata: { uploadedBy: user1, coupleCode: code, durationMs: '1500' },
+      },
+    });
+    const payload = { coupleCode: code, messageId, fileName, storagePath, durationMs: 1500 };
+    const first = await handlers.finalizeAudioMessageHandler(request(user1, payload));
+    const repeated = await handlers.finalizeAudioMessageHandler(request(user1, payload));
+    assert.equal(first.sent, true);
+    assert.equal(repeated.alreadySent, true);
+    const message = (await db.doc(`couples/${code}/chat/${messageId}`).get()).data();
+    assert.equal(message.type, 'audio');
+    assert.equal(message.durationMs, 1500);
+    assert.equal(message.contentType, 'audio/mp4');
   });
 
   it('rate limits bursts and quick-message spam', async () => {

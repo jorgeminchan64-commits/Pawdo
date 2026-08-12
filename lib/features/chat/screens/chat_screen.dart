@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -10,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../core/services/network_recovery_service.dart';
 import '../../media/services/shared_media_service.dart';
+import '../../media/services/audio_message_service.dart';
 import '../../settings/screens/notification_preferences_screen.dart';
 import '../services/chat_service.dart';
 
@@ -72,7 +75,8 @@ class _PendingMessage {
   bool retryable = false;
 }
 
-class _CoupleChatState extends ConsumerState<_CoupleChat> {
+class _CoupleChatState extends ConsumerState<_CoupleChat>
+    with WidgetsBindingObserver {
   static const quickMessages = <String, String>{
     'miss_you': 'Te extraño',
     'need_you': 'Te necesito',
@@ -94,6 +98,9 @@ class _CoupleChatState extends ConsumerState<_CoupleChat> {
   bool _hasMore = true;
   bool _uploading = false;
   double _uploadProgress = 0;
+  bool _recording = false;
+  Duration _recordingElapsed = Duration.zero;
+  Timer? _recordingTimer;
   String? _lastReadMessageId;
   VoidCallback? _unregisterRecovery;
 
@@ -102,6 +109,7 @@ class _CoupleChatState extends ConsumerState<_CoupleChat> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scroll.addListener(_onScroll);
     _unregisterRecovery = NetworkRecoveryService.instance.registerRecoveryTask(
       'chat:${widget.coupleCode}:${widget.uid}',
@@ -111,15 +119,27 @@ class _CoupleChatState extends ConsumerState<_CoupleChat> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _unregisterRecovery?.call();
     _typingDebounce?.cancel();
     _typingStop?.cancel();
+    _recordingTimer?.cancel();
+    if (_recording) {
+      unawaited(ref.read(audioMessageServiceProvider).cancel());
+    }
     if (_typingActive) {
       unawaited(_chat.setTyping(widget.coupleCode, false).catchError((_) {}));
     }
     _message.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed && _recording) {
+      unawaited(_cancelAudio());
+    }
   }
 
   void _onScroll() {
@@ -323,6 +343,75 @@ class _CoupleChatState extends ConsumerState<_CoupleChat> {
     }
   }
 
+  Future<void> _startAudio() async {
+    if (_uploading || _recording) return;
+    try {
+      await ref.read(audioMessageServiceProvider).start();
+      if (!mounted) return;
+      setState(() {
+        _recording = true;
+        _recordingElapsed = Duration.zero;
+      });
+      _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted || !_recording) return;
+        final next = _recordingElapsed + const Duration(seconds: 1);
+        setState(() => _recordingElapsed = next);
+        if (next >= AudioMessageService.maxDuration) unawaited(_sendAudio());
+      });
+    } on AudioMessageException catch (error) {
+      _show(error.message);
+    }
+  }
+
+  Future<void> _cancelAudio() async {
+    _recordingTimer?.cancel();
+    await ref.read(audioMessageServiceProvider).cancel();
+    if (mounted) {
+      setState(() {
+        _recording = false;
+        _recordingElapsed = Duration.zero;
+      });
+    }
+  }
+
+  Future<void> _sendAudio() async {
+    if (!_recording) return;
+    _recordingTimer?.cancel();
+    final service = ref.read(audioMessageServiceProvider);
+    try {
+      final draft = await service.stop();
+      if (draft == null) {
+        throw const AudioMessageException('No se grabó audio.');
+      }
+      if (!mounted) return;
+      setState(() {
+        _recording = false;
+        _uploading = true;
+        _uploadProgress = 0;
+      });
+      await service.upload(
+        widget.coupleCode,
+        draft,
+        onProgress: (progress) {
+          if (mounted) setState(() => _uploadProgress = progress);
+        },
+      );
+    } on AudioMessageException catch (error) {
+      if (error.connection) {
+        NetworkRecoveryService.instance.reportTransientFailure();
+      }
+      _show(error.message);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _recording = false;
+          _uploading = false;
+          _recordingElapsed = Duration.zero;
+        });
+      }
+    }
+  }
+
   Future<void> _deleteMessage(String messageId) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -506,8 +595,13 @@ class _CoupleChatState extends ConsumerState<_CoupleChat> {
               _Composer(
                 controller: _message,
                 uploading: _uploading,
+                recording: _recording,
+                recordingElapsed: _recordingElapsed,
                 onChanged: _onChanged,
                 onPhoto: _choosePhoto,
+                onAudio: _startAudio,
+                onCancelAudio: _cancelAudio,
+                onSendAudio: _sendAudio,
                 onSend: _sendText,
               ),
             ],
@@ -592,14 +686,24 @@ class _Composer extends StatelessWidget {
   const _Composer({
     required this.controller,
     required this.uploading,
+    required this.recording,
+    required this.recordingElapsed,
     required this.onChanged,
     required this.onPhoto,
+    required this.onAudio,
+    required this.onCancelAudio,
+    required this.onSendAudio,
     required this.onSend,
   });
   final TextEditingController controller;
   final bool uploading;
+  final bool recording;
+  final Duration recordingElapsed;
   final ValueChanged<String> onChanged;
   final VoidCallback onPhoto;
+  final VoidCallback onAudio;
+  final VoidCallback onCancelAudio;
+  final VoidCallback onSendAudio;
   final VoidCallback onSend;
 
   @override
@@ -607,54 +711,83 @@ class _Composer extends StatelessWidget {
     top: false,
     child: Padding(
       padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          IconButton.filledTonal(
-            tooltip: 'Enviar fotografía',
-            onPressed: uploading ? null : onPhoto,
-            icon: const Icon(Icons.add_photo_alternate_outlined),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              minLines: 1,
-              maxLines: 5,
-              maxLength: 2000,
-              buildCounter:
-                  (
-                    _, {
-                    required currentLength,
-                    required isFocused,
-                    maxLength,
-                  }) => null,
-              textCapitalization: TextCapitalization.sentences,
-              onChanged: onChanged,
-              decoration: InputDecoration(
-                hintText: 'Escribe un mensaje…',
-                filled: true,
-                fillColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
+      child: recording
+          ? Row(
+              children: [
+                IconButton(
+                  tooltip: 'Cancelar audio',
+                  onPressed: onCancelAudio,
+                  icon: const Icon(Icons.delete_outline_rounded),
                 ),
-              ),
+                const Icon(Icons.fiber_manual_record, color: Colors.red),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Grabando ${_durationText(recordingElapsed)} / 1:00',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                IconButton.filled(
+                  tooltip: 'Enviar audio',
+                  onPressed: onSendAudio,
+                  icon: const Icon(Icons.send_rounded),
+                ),
+              ],
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                IconButton.filledTonal(
+                  tooltip: 'Enviar fotografía',
+                  onPressed: uploading ? null : onPhoto,
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    minLines: 1,
+                    maxLines: 5,
+                    maxLength: 2000,
+                    buildCounter:
+                        (
+                          _, {
+                          required currentLength,
+                          required isFocused,
+                          maxLength,
+                        }) => null,
+                    textCapitalization: TextCapitalization.sentences,
+                    onChanged: onChanged,
+                    decoration: InputDecoration(
+                      hintText: 'Escribe un mensaje…',
+                      filled: true,
+                      fillColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                IconButton.filledTonal(
+                  tooltip: 'Grabar audio',
+                  onPressed: uploading ? null : onAudio,
+                  icon: const Icon(Icons.mic_none_rounded),
+                ),
+                const SizedBox(width: 4),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: controller,
+                  builder: (context, value, _) => IconButton.filled(
+                    tooltip: 'Enviar',
+                    onPressed: value.text.trim().isEmpty ? null : onSend,
+                    icon: const Icon(Icons.send_rounded),
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(width: 6),
-          ValueListenableBuilder<TextEditingValue>(
-            valueListenable: controller,
-            builder: (context, value, _) => IconButton.filled(
-              tooltip: 'Enviar',
-              onPressed: value.text.trim().isEmpty ? null : onSend,
-              icon: const Icon(Icons.send_rounded),
-            ),
-          ),
-        ],
-      ),
     ),
   );
 }
@@ -677,6 +810,7 @@ class _MessageBubble extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final data = document.data();
     final isImage = data['type'] == 'image';
+    final isAudio = data['type'] == 'audio';
     final timestamp = (data['timestamp'] as Timestamp?)?.toDate();
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
@@ -709,6 +843,13 @@ class _MessageBubble extends ConsumerWidget {
                   coupleCode: coupleCode,
                   messageId: document.id,
                   storagePath: data['storagePath']?.toString() ?? '',
+                )
+              else if (isAudio)
+                _AuthenticatedAudio(
+                  coupleCode: coupleCode,
+                  messageId: document.id,
+                  storagePath: data['storagePath']?.toString() ?? '',
+                  durationMs: (data['durationMs'] as num?)?.toInt() ?? 0,
                 )
               else
                 Text(
@@ -802,6 +943,102 @@ class _PendingBubble extends StatelessWidget {
           ],
         ),
       ),
+    ),
+  );
+}
+
+class _AuthenticatedAudio extends ConsumerStatefulWidget {
+  const _AuthenticatedAudio({
+    required this.coupleCode,
+    required this.messageId,
+    required this.storagePath,
+    required this.durationMs,
+  });
+
+  final String coupleCode;
+  final String messageId;
+  final String storagePath;
+  final int durationMs;
+
+  @override
+  ConsumerState<_AuthenticatedAudio> createState() =>
+      _AuthenticatedAudioState();
+}
+
+class _AuthenticatedAudioState extends ConsumerState<_AuthenticatedAudio> {
+  final AudioPlayer _player = AudioPlayer();
+  StreamSubscription<PlayerState>? _stateSubscription;
+  PlayerState _state = PlayerState.stopped;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _stateSubscription = _player.onPlayerStateChanged.listen((state) {
+      if (mounted) setState(() => _state = state);
+    });
+  }
+
+  @override
+  void dispose() {
+    _stateSubscription?.cancel();
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _toggle() async {
+    if (_loading) return;
+    if (_state == PlayerState.playing) {
+      await _player.pause();
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final File file = await ref
+          .read(audioMessageServiceProvider)
+          .load(
+            coupleCode: widget.coupleCode,
+            storagePath: widget.storagePath,
+            cacheKey: widget.messageId,
+          );
+      await _player.play(DeviceFileSource(file.path, mimeType: 'audio/mp4'));
+    } on AudioMessageException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 210,
+    child: Row(
+      children: [
+        IconButton.filledTonal(
+          tooltip: _state == PlayerState.playing ? 'Pausar' : 'Reproducir',
+          onPressed: _toggle,
+          icon: _loading
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(
+                  _state == PlayerState.playing
+                      ? Icons.pause_rounded
+                      : Icons.play_arrow_rounded,
+                ),
+        ),
+        const SizedBox(width: 8),
+        const Expanded(child: Icon(Icons.graphic_eq_rounded, size: 32)),
+        Text(
+          _durationText(Duration(milliseconds: widget.durationMs)),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        ),
+      ],
     ),
   );
 }
@@ -1019,6 +1256,12 @@ String _timeText(DateTime? date) {
   final hour = date.hour.toString().padLeft(2, '0');
   final minute = date.minute.toString().padLeft(2, '0');
   return '$hour:$minute';
+}
+
+String _durationText(Duration duration) {
+  final minutes = duration.inMinutes;
+  final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+  return '$minutes:$seconds';
 }
 
 String _lastSeenText(DateTime? date) {

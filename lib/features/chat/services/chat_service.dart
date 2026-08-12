@@ -98,6 +98,30 @@ class ChatService {
     'fileName': fileName,
   });
 
+  Future<void> finalizeAudioMetadata({
+    required String messageId,
+    required String coupleCode,
+    required String storagePath,
+    required String fileName,
+    required int durationMs,
+  }) => _call('finalizeAudioMessage', {
+    'messageId': messageId,
+    'coupleCode': coupleCode,
+    'storagePath': storagePath,
+    'fileName': fileName,
+    'durationMs': durationMs,
+  });
+
+  Future<void> discardAudioUpload({
+    required String coupleCode,
+    required String storagePath,
+    required String fileName,
+  }) => _call('discardAudioUpload', {
+    'coupleCode': coupleCode,
+    'storagePath': storagePath,
+    'fileName': fileName,
+  });
+
   Future<void> deleteMessage({
     required String coupleCode,
     required String messageId,

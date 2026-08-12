@@ -31,6 +31,17 @@ function chatMetadata(uid, contentType = 'image/jpeg', code = coupleCode) {
   };
 }
 
+function audioRef(uid, name = '1234567890_voice.m4a', code = coupleCode) {
+  return ref(storage(uid), `couples/${code}/audio/${name}`);
+}
+
+function audioMetadata(uid, durationMs = '1500', code = coupleCode) {
+  return {
+    contentType: 'audio/mp4',
+    customMetadata: { uploadedBy: uid || 'anonymous', coupleCode: code, durationMs },
+  };
+}
+
 describe('Pawdo Storage Rules', () => {
   before(async () => {
     testEnv = await initializeTestEnvironment({
@@ -130,6 +141,41 @@ describe('Pawdo Storage Rules', () => {
     await assertFails(deleteObject(photoRef(outsider, '1234567890_delete.jpg')));
     await assertFails(deleteObject(photoRef(user1, '1234567890_delete.jpg')));
     await assertFails(deleteObject(photoRef(user2, '1234567890_delete.jpg')));
+  });
+
+  it('allows bounded M4A voice notes and member playback', async () => {
+    const bytes = new Uint8Array([0, 0, 0, 20, 102, 116, 121, 112]);
+    await assertSucceeds(uploadBytes(audioRef(user1), bytes, audioMetadata(user1)));
+    await assertSucceeds(getBytes(audioRef(user1)));
+    await assertSucceeds(getBytes(audioRef(user2)));
+  });
+
+  it('rejects forged or unsupported voice-note uploads', async () => {
+    const bytes = new Uint8Array([1, 2, 3, 4]);
+    await assertFails(uploadBytes(
+      audioRef(outsider, '1234567890_outsider.m4a'), bytes, audioMetadata(outsider),
+    ));
+    await assertFails(uploadBytes(
+      audioRef(user1, '1234567890_wrong.m4a'), bytes,
+      { ...audioMetadata(user1), contentType: 'audio/mpeg' },
+    ));
+    await assertFails(uploadBytes(
+      audioRef(user1, '1234567890_duration.m4a'), bytes, audioMetadata(user1, '999999'),
+    ));
+    await assertFails(uploadBytes(
+      audioRef(user1, '1234567890_wrong.txt'), bytes, audioMetadata(user1),
+    ));
+  });
+
+  it('keeps voice-note deletion server-only and revokes access after unlinking', async () => {
+    const target = audioRef(user1, '1234567890_private.m4a');
+    await uploadBytes(target, new Uint8Array([1, 2, 3]), audioMetadata(user1));
+    await assertFails(deleteObject(target));
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'couples', coupleCode), { status: 'unlinked' });
+    });
+    await assertFails(getBytes(audioRef(user1, '1234567890_private.m4a')));
+    await assertFails(getBytes(audioRef(user2, '1234567890_private.m4a')));
   });
 
   it('allows a profile photo only to its owner and active partner', async () => {

@@ -958,6 +958,98 @@ async function discardPhotoUploadHandler(request) {
   }
 }
 
+async function finalizeAudioMessageHandler(request) {
+  const uid = requireAuth(request);
+  const coupleCode = requireCoupleCode(request.data);
+  const messageId = requireMessageId(request.data);
+  const fileName = request.data?.fileName;
+  const storagePath = request.data?.storagePath;
+  const durationMs = number(request.data?.durationMs);
+  if (typeof fileName !== 'string' ||
+      !/^[A-Za-z0-9_-]{10,220}\.m4a$/.test(fileName) ||
+      storagePath !== `couples/${coupleCode}/audio/${fileName}` ||
+      durationMs < 500 || durationMs > 60 * 1000) {
+    throw new HttpsError('invalid-argument', 'Audio inválido.');
+  }
+
+  let metadata;
+  try {
+    [metadata] = await getStorage().bucket().file(storagePath).getMetadata();
+  } catch (error) {
+    if (error?.code === 404) throw new HttpsError('not-found', 'El audio no existe.');
+    throw error;
+  }
+  const sizeBytes = Number(metadata.size);
+  const custom = metadata.metadata || {};
+  if (!Number.isFinite(sizeBytes) || sizeBytes <= 0 ||
+      sizeBytes > 2 * 1024 * 1024 || metadata.contentType !== 'audio/mp4' ||
+      custom.uploadedBy !== uid || custom.coupleCode !== coupleCode ||
+      number(Number(custom.durationMs)) !== durationMs) {
+    throw new HttpsError('failed-precondition', 'El audio no pasó la validación.');
+  }
+
+  const db = getFirestore();
+  const coupleRef = db.doc(`couples/${coupleCode}`);
+  const messageRef = coupleRef.collection('chat').doc(messageId);
+  const rateRef = coupleRef.collection('chatRateLimits').doc(uid);
+  return db.runTransaction(async (tx) => {
+    const [coupleSnapshot, messageSnapshot, rateSnapshot] = await Promise.all([
+      tx.get(coupleRef), tx.get(messageRef), tx.get(rateRef),
+    ]);
+    assertActiveMember(coupleSnapshot.data() || {}, uid);
+    if (messageSnapshot.exists) {
+      const existing = messageSnapshot.data() || {};
+      if (existing.uploadedBy === uid && existing.storagePath === storagePath) {
+        return { messageId, sent: true, alreadySent: true };
+      }
+      throw new HttpsError('already-exists', 'El identificador ya está en uso.');
+    }
+    tx.set(rateRef, chatRateUpdate(rateSnapshot.data() || {}, Date.now(), false), {
+      merge: true,
+    });
+    tx.create(messageRef, {
+      schemaVersion: 2,
+      type: 'audio',
+      storagePath,
+      uploadedBy: uid,
+      createdAt: FieldValue.serverTimestamp(),
+      timestamp: FieldValue.serverTimestamp(),
+      coupleCode,
+      fileName,
+      contentType: 'audio/mp4',
+      sizeBytes,
+      durationMs,
+    });
+    return { messageId, sent: true, alreadySent: false };
+  });
+}
+
+async function discardAudioUploadHandler(request) {
+  const uid = requireAuth(request);
+  const coupleCode = requireCoupleCode(request.data);
+  const fileName = request.data?.fileName;
+  const storagePath = request.data?.storagePath;
+  if (typeof fileName !== 'string' ||
+      !/^[A-Za-z0-9_-]{10,220}\.m4a$/.test(fileName) ||
+      storagePath !== `couples/${coupleCode}/audio/${fileName}`) {
+    throw new HttpsError('invalid-argument', 'Ruta de audio inválida.');
+  }
+  const file = getStorage().bucket().file(storagePath);
+  try {
+    const [metadata] = await file.getMetadata();
+    if (metadata.metadata?.uploadedBy !== uid ||
+        metadata.metadata?.coupleCode !== coupleCode) {
+      throw new HttpsError('permission-denied', 'No puedes borrar este archivo.');
+    }
+    await file.delete({ ignoreNotFound: true });
+    return { deleted: true };
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    if (error?.code === 404) return { deleted: false };
+    throw error;
+  }
+}
+
 async function deleteChatMessageHandler(request) {
   const uid = requireAuth(request);
   const coupleCode = requireCoupleCode(request.data);
@@ -1050,6 +1142,7 @@ async function notifyCoupleActivityHandler(event) {
   const partner = partnerSnapshot.data() || {};
   const settings = settingsSnapshot.data() || {};
   const photo = message.type === 'photo' || message.type === 'image';
+  const audio = message.type === 'audio';
   const quick = message.type === 'quick';
   if (settings.chatEnabled === false ||
       (quick && settings.quickMessagesEnabled === false)) return;
@@ -1068,6 +1161,8 @@ async function notifyCoupleActivityHandler(event) {
   const title = quick ? 'Pawdo · mensaje rápido' : 'Pawdo';
   const body = photo
     ? 'Tu pareja compartió una foto'
+    : audio
+      ? 'Tu pareja envió un audio'
     : quick && !hidden
       ? message.text
       : 'Tienes un nuevo mensaje';
@@ -1087,7 +1182,7 @@ async function notifyCoupleActivityHandler(event) {
     data: {
       coupleCode: event.params.coupleCode,
       messageId: event.params.messageId,
-      type: photo ? 'image' : quick ? 'quick' : 'text',
+      type: photo ? 'image' : audio ? 'audio' : quick ? 'quick' : 'text',
     },
     android: {
       priority: quick ? 'high' : 'normal',
@@ -1119,17 +1214,19 @@ async function notifyCoupleActivityHandler(event) {
 
 async function cleanupSharedPhotoHandler(event) {
   const data = event.data?.data() || {};
-  if (data.type !== 'image' || typeof data.storagePath !== 'string') return;
-  const expectedPrefix = `couples/${event.params.coupleCode}/photos/`;
+  if (!['image', 'audio'].includes(data.type) ||
+      typeof data.storagePath !== 'string') return;
+  const folder = data.type === 'audio' ? 'audio' : 'photos';
+  const expectedPrefix = `couples/${event.params.coupleCode}/${folder}/`;
   if (!data.storagePath.startsWith(expectedPrefix) ||
       data.storagePath.slice(expectedPrefix.length).includes('/')) {
-    logger.error('Rejected invalid deleted photo path', { path: data.storagePath });
+    logger.error('Rejected invalid deleted media path', { path: data.storagePath });
     return;
   }
   try {
     await getStorage().bucket().file(data.storagePath).delete({ ignoreNotFound: true });
   } catch (error) {
-    logger.error('Shared photo cleanup failed', { path: data.storagePath, code: error?.code });
+    logger.error('Shared media cleanup failed', { path: data.storagePath, code: error?.code });
     throw error;
   }
 }
@@ -3039,6 +3136,8 @@ exports.setCouplePresence = onCall(setCouplePresenceHandler);
 exports.sendChatMessage = onCall(sendChatMessageHandler);
 exports.finalizePhotoMessage = onCall(finalizePhotoMessageHandler);
 exports.discardPhotoUpload = onCall(discardPhotoUploadHandler);
+exports.finalizeAudioMessage = onCall(finalizeAudioMessageHandler);
+exports.discardAudioUpload = onCall(discardAudioUploadHandler);
 exports.deleteChatMessage = onCall(deleteChatMessageHandler);
 exports.markChatRead = onCall(markChatReadHandler);
 exports.cleanupExpiredCoupleInvitations = onSchedule(
@@ -3098,6 +3197,8 @@ exports._test = {
   sendChatMessageHandler,
   finalizePhotoMessageHandler,
   discardPhotoUploadHandler,
+  finalizeAudioMessageHandler,
+  discardAudioUploadHandler,
   deleteChatMessageHandler,
   markChatReadHandler,
   notifyCoupleActivityHandler,

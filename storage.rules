@@ -64,6 +64,22 @@ service firebase.storage {
       allow delete: if false;
     }
 
+    // Voice notes use AAC-LC in an M4A container. Clients may create a new,
+    // bounded file; metadata finalization and deletion remain server-only.
+    match /couples/{coupleId}/audio/{fileName} {
+      allow read: if isCoupleMember(coupleId);
+      allow create: if resource == null && isCoupleMember(coupleId) &&
+        request.resource != null &&
+        request.resource.size > 0 &&
+        request.resource.size <= 2 * 1024 * 1024 &&
+        fileName.matches('[A-Za-z0-9_-]{10,220}\\.m4a') &&
+        request.resource.contentType == 'audio/mp4' &&
+        request.resource.metadata.uploadedBy == request.auth.uid &&
+        request.resource.metadata.coupleCode == coupleId &&
+        request.resource.metadata.durationMs.matches('[0-9]{3,5}');
+      allow update, delete: if false;
+    }
+
     // Existing profile-photo feature, kept private to authenticated Pawdo users.
     match /profile_photos/{fileName} {
       allow read: if canReadProfilePhoto(fileName);
