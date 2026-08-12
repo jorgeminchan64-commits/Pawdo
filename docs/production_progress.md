@@ -25,7 +25,8 @@
 | 16. Bienestar | Completada | Regular/irregular, historial privado y consentimiento; 61 Flutter/57 Functions/45 reglas | Recordatorios son internos; experiencia requiere prueba física | Iniciar FASE 17 |
 | 17. Widgets | Completada | Adaptable, caché privada, relación/evento y Te extraño; 63 Flutter/57 Functions/45 reglas | Foto, redimensionado y acción requieren prueba física | Iniciar FASE 18 |
 | 18. Nuevos juegos | Completada | 3 juegos locales ligeros; 65 Flutter/57 Functions/45 reglas | Conversación/maquetación requieren prueba física | Iniciar FASE 19 |
-| 19–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 19. Tienda y personalización | Completada | 10 categorías y estados explícitos; 67 Flutter/57 Functions/45 reglas | Revisión visual pendiente; dinero real permanece desactivado | Iniciar FASE 20 |
+| 20–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
 | 25. Play Store | Bloqueada | APK unsigned de 107.31 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
@@ -134,10 +135,16 @@
 - El mazo evita repetir inmediatamente la misma tarjeta y las transiciones usan solo un AnimatedSwitcher corto.
 - Dos pruebas Flutter elevan la suite a 167 pruebas automatizadas; backend/reglas no cambiaron y conservan sus compuertas aprobadas.
 - APK release de FASE 18: 112,560,211 bytes (107.35 MiB), todavía sin firma de publicación.
+- Tienda reorganizada en las diez categorías previstas: ropa, cabello, accesorios, zapatos, decoración, muebles, jardín, mascota, fondos y temas.
+- Cada categoría declara un estado visible —Gratis, Monedas, Bloqueado o Premium futuro— y las opciones no disponibles no exponen rutas de compra.
+- Ropa, cabello, accesorios y zapatos reutilizan el editor real del personaje; fondos y temas abren la edición de perfil; decoración, muebles y jardín conservan sus tiendas con compra atómica e inventario compartido.
+- No se activó dinero real. El contenido premium permanece bloqueado hasta una futura integración y validación de Google Play Billing.
+- Dos pruebas Flutter elevan la suite a 169 pruebas automatizadas; las 57 de Functions, 24 de Firestore y 21 de Storage también fueron repetidas y aprobadas.
+- APK release de FASE 19: 112,560,583 bytes (107.35 MiB), todavía sin firma de publicación.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 19: Tienda y personalización.
+1. Iniciar FASE 20: optimización integral, assets y tamaño.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.

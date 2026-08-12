@@ -113,5 +113,7 @@ Pendiente de validar:
 - Puerta final de FASE 17: analyze limpio; 63 tests Flutter, 57 Functions, 24 Firestore Rules y 21 Storage Rules aprobados; Kotlin/XML compilados dentro del APK de 112,543,651 bytes, todavía sin firma de publicación.
 - FASE 18: Tres juegos locales de tarjetas —Quién conoce mejor, Verdadero o falso y Elige uno— sin red, recompensas, temporizadores ni recursos pesados.
 - Puerta final de FASE 18: analyze limpio; 65 tests Flutter, 57 Functions, 24 Firestore Rules y 21 Storage Rules aprobados; APK de 112,560,211 bytes recompilado y todavía sin firma de publicación.
+- FASE 19: Tienda unificada en diez categorías, con estados Gratis/Monedas/Bloqueado/Premium futuro, rutas a los editores existentes y dinero real completamente desactivado.
+- Puerta final de FASE 19: analyze limpio; 67 tests Flutter, 57 Functions, 24 Firestore Rules y 21 Storage Rules aprobados; APK de 112,560,583 bytes recompilado y todavía sin firma de publicación.
 - Pruebas físicas y profiling: no ejecutados en esta fase.
-- Siguiente paso autorizado por el roadmap: FASE 14, Calendario.
+- Siguiente paso autorizado por el roadmap: FASE 20, optimización integral.

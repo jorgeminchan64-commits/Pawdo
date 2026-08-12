@@ -196,6 +196,21 @@ Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agru
 | Revisar economía | No cambia monedas, amor, energía ni ledger del servidor |
 | Volver al catálogo | Los diez juegos anteriores conservan rutas y comportamiento |
 
+## Tienda y personalización — FASE 19
+
+| Caso | Resultado esperado |
+|---|---|
+| Abrir Tienda | Muestra diez categorías sin depender de una compra o consulta remota |
+| Revisar cada tarjeta | Indica Gratis, Monedas, Bloqueado o Premium futuro de forma legible |
+| Abrir ropa, cabello, accesorios o zapatos | Lleva al editor real del personaje y permite guardar la apariencia |
+| Abrir decoración o muebles | Lleva a la tienda interior con precio e inventario validados en servidor |
+| Abrir jardín | Lleva a la tienda del jardín sin alterar el catálogo canónico |
+| Abrir fondos o temas | Lleva al perfil actual y permite guardar un tema admitido |
+| Pulsar Mascota bloqueada | Explica que aún no está disponible y no inicia ningún cobro |
+| Revisar contenido premium | Permanece bloqueado y no expone compra con dinero real |
+| Abrir historial | Muestra recibos y recompensas compartidos e inmutables |
+| Usar lector de pantalla | Anuncia categoría, estado y descripción de cada tarjeta |
+
 ## Dos teléfonos reales
 
 | Caso | Teléfono A | Teléfono B | Resultado esperado |
