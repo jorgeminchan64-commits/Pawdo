@@ -2,10 +2,14 @@ class RelationshipSummary {
   const RelationshipSummary({
     required this.durationLabel,
     required this.nextMomentLabel,
+    required this.totalDays,
+    required this.nextAnniversary,
   });
 
   final String durationLabel;
   final String nextMomentLabel;
+  final int totalDays;
+  final DateTime? nextAnniversary;
 }
 
 String greetingForHour(int hour) {
@@ -25,6 +29,8 @@ RelationshipSummary relationshipSummary(DateTime? start, DateTime now) {
     return const RelationshipSummary(
       durationLabel: 'Su historia empieza aquí',
       nextMomentLabel: 'Configuren su fecha de relación en Perfil',
+      totalDays: 0,
+      nextAnniversary: null,
     );
   }
 
@@ -34,6 +40,8 @@ RelationshipSummary relationshipSummary(DateTime? start, DateTime now) {
     return const RelationshipSummary(
       durationLabel: 'Su historia empieza pronto',
       nextMomentLabel: 'Revisa la fecha de relación en Perfil',
+      totalDays: 0,
+      nextAnniversary: null,
     );
   }
 
@@ -72,6 +80,8 @@ RelationshipSummary relationshipSummary(DateTime? start, DateTime now) {
   return RelationshipSummary(
     durationLabel: '${parts.join(', ')} juntos ❤️',
     nextMomentLabel: nextMoment,
+    totalDays: today.difference(firstDay).inDays,
+    nextAnniversary: nextAnniversary,
   );
 }
 

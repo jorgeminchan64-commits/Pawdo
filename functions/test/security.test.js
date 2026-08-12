@@ -407,6 +407,43 @@ describe('Pawdo callable security', () => {
     assert.equal((await db.doc(`users/${user2}`).get()).data().online, true);
   });
 
+  it('lets either active member set one canonical relationship date', async () => {
+    const first = await handlers.setRelationshipStartDateHandler(request(user1, {
+      coupleCode: code, date: '2024-02-29T00:00:00.000Z',
+    }));
+    assert.equal(first.updated, true);
+    let couple = (await db.doc(`couples/${code}`).get()).data();
+    assert.equal(couple.relationshipStartDate.toDate().toISOString(), '2024-02-29T00:00:00.000Z');
+    assert.equal(couple.relationshipDateUpdatedBy, user1);
+    await handlers.setRelationshipStartDateHandler(request(user2, {
+      coupleCode: code, date: '2024-03-01T00:00:00.000Z',
+    }));
+    couple = (await db.doc(`couples/${code}`).get()).data();
+    assert.equal(couple.relationshipStartDate.toDate().toISOString(), '2024-03-01T00:00:00.000Z');
+    assert.equal(couple.relationshipDateUpdatedBy, user2);
+  });
+
+  it('rejects outsiders, future days and non-normalized relationship dates', async () => {
+    await rejectsCode(
+      () => handlers.setRelationshipStartDateHandler(request(outsider, {
+        coupleCode: code, date: '2024-03-01T00:00:00.000Z',
+      })),
+      'permission-denied',
+    );
+    await rejectsCode(
+      () => handlers.setRelationshipStartDateHandler(request(user1, {
+        coupleCode: code, date: '2099-01-01T00:00:00.000Z',
+      })),
+      'invalid-argument',
+    );
+    await rejectsCode(
+      () => handlers.setRelationshipStartDateHandler(request(user1, {
+        coupleCode: code, date: '2024-03-01T18:30:00.000Z',
+      })),
+      'invalid-argument',
+    );
+  });
+
   it('sends chat messages idempotently and rejects forged retries', async () => {
     const messageId = 'chat-message-001';
     const first = await handlers.sendChatMessageHandler(request(user1, {

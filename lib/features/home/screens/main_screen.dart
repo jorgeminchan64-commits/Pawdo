@@ -10,6 +10,7 @@ import '../../location/screens/location_sharing_screen.dart';
 import '../../location/widgets/location_sharing_status_banner.dart';
 import '../../memories/screens/memory_album_screen.dart';
 import '../../pet/screens/pet_screen.dart';
+import '../../relationship/screens/relationship_counter_screen.dart';
 import '../../world/screens/world_screen.dart';
 import 'home_dashboard_screen.dart';
 import 'profile_screen.dart';
@@ -68,6 +69,8 @@ class _MainScreenState extends State<MainScreen> {
         onOpenMissions: () => _open(const DailyMissionsScreen()),
         onOpenAlbum: () => _open(const MemoryAlbumScreen()),
         onOpenCalendar: () => _open(const CoupleCalendarScreen()),
+        onOpenRelationship: (code) =>
+            _open(RelationshipCounterScreen(coupleCode: code)),
         onNavigate: changeTab,
       ),
       const PetScreen(),

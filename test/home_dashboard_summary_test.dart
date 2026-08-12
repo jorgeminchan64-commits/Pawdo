@@ -26,6 +26,8 @@ void main() {
 
       expect(summary.durationLabel, '1 año, 3 meses, 8 días juntos ❤️');
       expect(summary.nextMomentLabel, 'Próximo aniversario en 265 días');
+      expect(summary.totalDays, 465);
+      expect(summary.nextAnniversary, DateTime(2027, 5, 10));
     });
 
     test('announces the anniversary on its date', () {
@@ -36,6 +38,7 @@ void main() {
 
       expect(summary.durationLabel, '1 año juntos ❤️');
       expect(summary.nextMomentLabel, '¡Su aniversario es hoy! ❤️');
+      expect(summary.nextAnniversary, DateTime(2025, 2, 28));
     });
 
     test('provides a safe prompt when the date is missing', () {
@@ -43,6 +46,8 @@ void main() {
 
       expect(summary.durationLabel, 'Su historia empieza aquí');
       expect(summary.nextMomentLabel, contains('Perfil'));
+      expect(summary.totalDays, 0);
+      expect(summary.nextAnniversary, isNull);
     });
   });
 }

@@ -19,6 +19,7 @@ class HomeDashboardScreen extends StatefulWidget {
     required this.onOpenMissions,
     required this.onOpenAlbum,
     required this.onOpenCalendar,
+    required this.onOpenRelationship,
     required this.onNavigate,
   });
 
@@ -28,6 +29,7 @@ class HomeDashboardScreen extends StatefulWidget {
   final VoidCallback onOpenMissions;
   final VoidCallback onOpenAlbum;
   final VoidCallback onOpenCalendar;
+  final ValueChanged<String> onOpenRelationship;
   final ValueChanged<int> onNavigate;
 
   @override
@@ -74,6 +76,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             }
             return _DashboardContent(
               uid: user.uid,
+              coupleCode: code,
               ownProfile: profile,
               couple: couple,
               memberProfiles: memberProfiles,
@@ -83,6 +86,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               onOpenMissions: widget.onOpenMissions,
               onOpenAlbum: widget.onOpenAlbum,
               onOpenCalendar: widget.onOpenCalendar,
+              onOpenRelationship: widget.onOpenRelationship,
               onNavigate: widget.onNavigate,
             );
           },
@@ -95,6 +99,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 class _DashboardContent extends StatelessWidget {
   const _DashboardContent({
     required this.uid,
+    required this.coupleCode,
     required this.ownProfile,
     required this.couple,
     required this.memberProfiles,
@@ -104,10 +109,12 @@ class _DashboardContent extends StatelessWidget {
     required this.onOpenMissions,
     required this.onOpenAlbum,
     required this.onOpenCalendar,
+    required this.onOpenRelationship,
     required this.onNavigate,
   });
 
   final String uid;
+  final String coupleCode;
   final Map<String, dynamic> ownProfile;
   final Map<String, dynamic> couple;
   final Map<String, dynamic> memberProfiles;
@@ -117,6 +124,7 @@ class _DashboardContent extends StatelessWidget {
   final VoidCallback onOpenMissions;
   final VoidCallback onOpenAlbum;
   final VoidCallback onOpenCalendar;
+  final ValueChanged<String> onOpenRelationship;
   final ValueChanged<int> onNavigate;
 
   int _number(String key, int fallback) =>
@@ -141,7 +149,8 @@ class _DashboardContent extends StatelessWidget {
         (partnerSummary['displayName'] ?? partnerSummary['name'] ?? 'Tu pareja')
             .toString();
     final relationship = relationshipSummary(
-      _readDate(ownProfile['relationshipStartDate']),
+      _readDate(couple['relationshipStartDate']) ??
+          _readDate(ownProfile['relationshipStartDate']),
       DateTime.now(),
     );
     final streak = (_map(couple['dailyChest'])['streak'] as num?)?.round() ?? 0;
@@ -185,7 +194,10 @@ class _DashboardContent extends StatelessWidget {
                     partnerOnline: _presenceIsFresh(_map(presence[partnerUid])),
                   ),
                   const SizedBox(height: 14),
-                  _RelationshipCard(summary: relationship),
+                  _RelationshipCard(
+                    summary: relationship,
+                    onTap: () => onOpenRelationship(coupleCode),
+                  ),
                   const SizedBox(height: 14),
                   _PetCard(
                     onTap: () => onNavigate(1),
@@ -380,60 +392,65 @@ class _TopBarState extends State<_TopBar> {
 }
 
 class _RelationshipCard extends StatelessWidget {
-  const _RelationshipCard({required this.summary});
+  const _RelationshipCard({required this.summary, required this.onTap});
 
   final RelationshipSummary summary;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: AppTheme.plum,
-      borderRadius: BorderRadius.circular(24),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x24743B83),
-          blurRadius: 20,
-          offset: Offset(0, 8),
-        ),
-      ],
-    ),
-    child: Row(
-      children: [
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: .14),
-            shape: BoxShape.circle,
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(24),
+    child: Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppTheme.plum,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x24743B83),
+            blurRadius: 20,
+            offset: Offset(0, 8),
           ),
-          child: const Icon(Icons.favorite_rounded, color: Colors.white),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                summary.durationLabel,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                summary.nextMomentLabel,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: .78),
-                  fontSize: 12,
-                ),
-              ),
-            ],
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: .14),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.favorite_rounded, color: Colors.white),
           ),
-        ),
-      ],
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  summary.durationLabel,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  summary.nextMomentLabel,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: .78),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }

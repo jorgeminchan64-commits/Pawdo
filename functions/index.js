@@ -1961,6 +1961,33 @@ async function refreshCoupleProfilesHandler(request) {
   });
 }
 
+async function setRelationshipStartDateHandler(request) {
+  const uid = requireAuth(request);
+  const coupleCode = requireCoupleCode(request.data);
+  const date = new Date(request.data?.date);
+  const minimum = new Date('1900-01-01T00:00:00.000Z');
+  const tomorrowUtc = new Date();
+  tomorrowUtc.setUTCHours(24, 0, 0, 0);
+  if (!Number.isFinite(date.getTime()) || date < minimum || date >= tomorrowUtc ||
+      date.getUTCHours() !== 0 || date.getUTCMinutes() !== 0 ||
+      date.getUTCSeconds() !== 0 || date.getUTCMilliseconds() !== 0) {
+    throw new HttpsError('invalid-argument', 'Fecha de relación inválida.');
+  }
+  const db = getFirestore();
+  const coupleRef = db.doc(`couples/${coupleCode}`);
+  return db.runTransaction(async (tx) => {
+    const coupleSnapshot = await tx.get(coupleRef);
+    assertActiveMember(coupleSnapshot.data() || {}, uid);
+    tx.update(coupleRef, {
+      relationshipStartDate: Timestamp.fromDate(date),
+      relationshipDateUpdatedBy: uid,
+      relationshipDateUpdatedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return { updated: true, date: date.toISOString() };
+  });
+}
+
 async function setCouplePresenceHandler(request) {
   const uid = requireAuth(request);
   if (typeof request.data?.online !== 'boolean') {
@@ -3519,6 +3546,7 @@ exports.joinCouple = onCall(joinCoupleHandler);
 exports.unlinkCouple = onCall(unlinkCoupleHandler);
 exports.repairCoupleMembership = onCall(repairCoupleMembershipHandler);
 exports.refreshCoupleProfiles = onCall(refreshCoupleProfilesHandler);
+exports.setRelationshipStartDate = onCall(setRelationshipStartDateHandler);
 exports.setCouplePresence = onCall(setCouplePresenceHandler);
 exports.sendChatMessage = onCall(sendChatMessageHandler);
 exports.finalizePhotoMessage = onCall(finalizePhotoMessageHandler);
@@ -3587,6 +3615,7 @@ exports._test = {
   unlinkCoupleHandler,
   repairCoupleMembershipHandler,
   refreshCoupleProfilesHandler,
+  setRelationshipStartDateHandler,
   setCouplePresenceHandler,
   sendChatMessageHandler,
   finalizePhotoMessageHandler,
