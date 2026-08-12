@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/auth/screens/auth_gate.dart';
 import 'features/home/screens/main_screen.dart';
 import 'core/services/presence_service.dart';
+import 'core/services/app_check_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/network_recovery_service.dart';
 import 'features/couple/services/couple_service.dart';
@@ -49,6 +50,7 @@ void _recordUnhandledError(Object error, StackTrace stackTrace) {
 
 Future<void> _initializePawdoServices() async {
   await Firebase.initializeApp();
+  await AppCheckService().activate();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await NetworkRecoveryService.instance.start();
   LocationSharingService.instance.initialize();
