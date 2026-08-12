@@ -37,6 +37,19 @@ void main() {
     expect(appearance.skinTone, CharacterSkinTone.warm);
   });
 
+  test('legacy second member can use a distinct scene fallback', () {
+    final appearance = CharacterAppearance.fromMap(
+      null,
+      fallback: const CharacterAppearance(
+        baseStyle: CharacterBaseStyle.classicGirl,
+        outfitColor: CharacterOutfitColor.blue,
+      ),
+    );
+
+    expect(appearance.baseStyle, CharacterBaseStyle.classicGirl);
+    expect(appearance.outfitColor, CharacterOutfitColor.blue);
+  });
+
   testWidgets('editor previews and persists independent appearance choices', (
     tester,
   ) async {

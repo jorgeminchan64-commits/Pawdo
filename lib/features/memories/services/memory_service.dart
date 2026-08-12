@@ -215,7 +215,11 @@ class MemoryService {
     try {
       await _functions.httpsCallable(name).call(data);
     } on FirebaseFunctionsException catch (error) {
-      throw MemoryException(error.message ?? 'No se pudo actualizar el álbum.');
+      throw MemoryException(
+        error.code == 'not-found'
+            ? 'El álbum necesita una actualización del servicio de Pawdo.'
+            : error.message ?? 'No se pudo actualizar el álbum.',
+      );
     }
   }
 }

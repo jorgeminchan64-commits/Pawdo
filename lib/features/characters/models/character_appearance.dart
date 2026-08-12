@@ -32,55 +32,54 @@ class CharacterAppearance {
     this.pose = CharacterPose.idle,
   });
 
-  factory CharacterAppearance.fromMap(dynamic value) {
-    if (value is! Map) return const CharacterAppearance();
+  factory CharacterAppearance.fromMap(
+    dynamic value, {
+    CharacterAppearance fallback = const CharacterAppearance(),
+  }) {
+    if (value is! Map) return fallback;
     return CharacterAppearance(
       baseStyle: _enumValue(
         CharacterBaseStyle.values,
         value['baseStyle'],
-        CharacterBaseStyle.classicBoy,
+        fallback.baseStyle,
       ),
       hairStyle: _enumValue(
         CharacterHairStyle.values,
         value['hairStyle'],
-        CharacterHairStyle.short,
+        fallback.hairStyle,
       ),
       hairColor: _enumValue(
         CharacterHairColor.values,
         value['hairColor'],
-        CharacterHairColor.brown,
+        fallback.hairColor,
       ),
       skinTone: _enumValue(
         CharacterSkinTone.values,
         value['skinTone'],
-        CharacterSkinTone.warm,
+        fallback.skinTone,
       ),
       outfitStyle: _enumValue(
         CharacterOutfitStyle.values,
         value['outfitStyle'],
-        CharacterOutfitStyle.casual,
+        fallback.outfitStyle,
       ),
       outfitColor: _enumValue(
         CharacterOutfitColor.values,
         value['outfitColor'],
-        CharacterOutfitColor.rose,
+        fallback.outfitColor,
       ),
-      shoes: _enumValue(
-        CharacterShoes.values,
-        value['shoes'],
-        CharacterShoes.sneakers,
-      ),
+      shoes: _enumValue(CharacterShoes.values, value['shoes'], fallback.shoes),
       accessory: _enumValue(
         CharacterAccessory.values,
         value['accessory'],
-        CharacterAccessory.none,
+        fallback.accessory,
       ),
       expression: _enumValue(
         CharacterExpression.values,
         value['expression'],
-        CharacterExpression.smile,
+        fallback.expression,
       ),
-      pose: _enumValue(CharacterPose.values, value['pose'], CharacterPose.idle),
+      pose: _enumValue(CharacterPose.values, value['pose'], fallback.pose),
     );
   }
 

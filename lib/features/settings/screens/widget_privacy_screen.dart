@@ -69,6 +69,15 @@ class _WidgetPrivacyScreenState extends State<WidgetPrivacyScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
+                        'Vista previa (datos de ejemplo)',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF6F6272),
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
                         '465 días juntos ❤️',
                         style: TextStyle(
                           fontSize: 18,

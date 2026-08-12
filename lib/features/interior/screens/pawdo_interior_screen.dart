@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/widgets/landscape_game_body.dart';
 import '../../characters/models/character_appearance.dart';
 import '../../shop/data/interior_shop_items.dart';
 import '../../shop/screens/interior_shop_screen.dart';
@@ -163,7 +164,12 @@ class _PawdoInteriorScreenState extends State<PawdoInteriorScreen> {
         ? CharacterAppearance.fromMap(firstRaw['characterAppearance'])
         : const CharacterAppearance();
     final secondAppearance = secondRaw is Map
-        ? CharacterAppearance.fromMap(secondRaw['characterAppearance'])
+        ? CharacterAppearance.fromMap(
+            secondRaw['characterAppearance'],
+            fallback: const CharacterAppearance(
+              baseStyle: CharacterBaseStyle.classicGirl,
+            ),
+          )
         : const CharacterAppearance(baseStyle: CharacterBaseStyle.classicGirl);
     await game.applyCharacterAppearances(firstAppearance, secondAppearance);
   }
@@ -499,104 +505,107 @@ class _PawdoInteriorScreenState extends State<PawdoInteriorScreen> {
           final coupleCode = codeSnapshot.data;
 
           return Scaffold(
-            body: Stack(
-              children: [
-                Positioned.fill(child: GameWidget(game: game)),
+            body: LandscapeGameBody(
+              onExit: _requestExit,
+              landscapeChild: Stack(
+                children: [
+                  Positioned.fill(child: GameWidget(game: game)),
 
-                Positioned(
-                  top: 18,
-                  left: 18,
-                  child: SafeArea(
-                    child: _topButton(
-                      text: 'Volver',
-                      icon: Icons.arrow_back,
-                      onTap: _requestExit,
-                    ),
-                  ),
-                ),
-
-                Positioned(
-                  top: 18,
-                  left: 126,
-                  child: SafeArea(
-                    child: _topButton(
-                      text: isEditingInterior ? 'Salir edición' : 'Editar',
-                      icon: isEditingInterior ? Icons.close : Icons.edit,
-                      onTap: _toggleInteriorEditMode,
-                    ),
-                  ),
-                ),
-
-                if (isEditingInterior)
                   Positioned(
                     top: 18,
-                    left: 240,
+                    left: 18,
                     child: SafeArea(
-                      child: Row(
-                        children: [
-                          _topButton(
-                            text: 'Agregar',
-                            icon: Icons.add_circle,
-                            onTap: _showInteriorInventorySheet,
-                          ),
-                          const SizedBox(width: 10),
-                          _topButton(
-                            text: 'Tienda',
-                            icon: Icons.store,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const InteriorShopScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(width: 10),
-                          _topButton(
-                            text: _isSavingLayout
-                                ? 'Guardando...'
-                                : _hasUnsavedChanges
-                                ? 'Guardar *'
-                                : 'Guardado',
-                            icon: Icons.save,
-                            onTap: _saveInteriorLayout,
-                          ),
-                          const SizedBox(width: 10),
-                          _topButton(
-                            text: 'Eliminar',
-                            icon: Icons.delete,
-                            onTap: _deleteSelectedInteriorItem,
-                          ),
-                        ],
+                      child: _topButton(
+                        text: 'Volver',
+                        icon: Icons.arrow_back,
+                        onTap: _requestExit,
                       ),
                     ),
                   ),
 
-                Positioned(
-                  top: 18,
-                  right: 18,
-                  child: SafeArea(
-                    child: coupleCode == null || coupleCode.isEmpty
-                        ? const SizedBox.shrink()
-                        : _buildHud(coupleCode),
-                  ),
-                ),
-
-                Positioned(
-                  left: 18,
-                  bottom: 18,
-                  child: SafeArea(
-                    child: isEditingInterior ? _editHintBox() : _hintBox(),
-                  ),
-                ),
-                if (isEditingInterior)
                   Positioned(
-                    right: 18,
-                    bottom: 18,
-                    child: SafeArea(child: _zoneLegend()),
+                    top: 18,
+                    left: 126,
+                    child: SafeArea(
+                      child: _topButton(
+                        text: isEditingInterior ? 'Salir edición' : 'Editar',
+                        icon: isEditingInterior ? Icons.close : Icons.edit,
+                        onTap: _toggleInteriorEditMode,
+                      ),
+                    ),
                   ),
-              ],
+
+                  if (isEditingInterior)
+                    Positioned(
+                      top: 18,
+                      left: 240,
+                      child: SafeArea(
+                        child: Row(
+                          children: [
+                            _topButton(
+                              text: 'Agregar',
+                              icon: Icons.add_circle,
+                              onTap: _showInteriorInventorySheet,
+                            ),
+                            const SizedBox(width: 10),
+                            _topButton(
+                              text: 'Tienda',
+                              icon: Icons.store,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const InteriorShopScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 10),
+                            _topButton(
+                              text: _isSavingLayout
+                                  ? 'Guardando...'
+                                  : _hasUnsavedChanges
+                                  ? 'Guardar *'
+                                  : 'Guardado',
+                              icon: Icons.save,
+                              onTap: _saveInteriorLayout,
+                            ),
+                            const SizedBox(width: 10),
+                            _topButton(
+                              text: 'Eliminar',
+                              icon: Icons.delete,
+                              onTap: _deleteSelectedInteriorItem,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  Positioned(
+                    top: 18,
+                    right: 18,
+                    child: SafeArea(
+                      child: coupleCode == null || coupleCode.isEmpty
+                          ? const SizedBox.shrink()
+                          : _buildHud(coupleCode),
+                    ),
+                  ),
+
+                  Positioned(
+                    left: 18,
+                    bottom: 18,
+                    child: SafeArea(
+                      child: isEditingInterior ? _editHintBox() : _hintBox(),
+                    ),
+                  ),
+                  if (isEditingInterior)
+                    Positioned(
+                      right: 18,
+                      bottom: 18,
+                      child: SafeArea(child: _zoneLegend()),
+                    ),
+                ],
+              ),
             ),
           );
         },

@@ -160,7 +160,9 @@ class CoupleCalendarService {
       await _functions.httpsCallable(name).call(data);
     } on FirebaseFunctionsException catch (error) {
       throw CalendarException(
-        error.message ?? 'No se pudo actualizar el calendario.',
+        error.code == 'not-found'
+            ? 'El calendario necesita una actualización del servicio de Pawdo.'
+            : error.message ?? 'No se pudo actualizar el calendario.',
       );
     }
   }

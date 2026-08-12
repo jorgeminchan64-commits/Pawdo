@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/widgets/landscape_game_body.dart';
 import '../../characters/models/character_appearance.dart';
 import '../../shop/data/garden_shop_items.dart';
 import '../../shop/screens/garden_shop_screen.dart';
@@ -160,7 +161,12 @@ class _WorldScreenState extends State<WorldScreen> {
         ? CharacterAppearance.fromMap(firstRaw['characterAppearance'])
         : const CharacterAppearance();
     final secondAppearance = secondRaw is Map
-        ? CharacterAppearance.fromMap(secondRaw['characterAppearance'])
+        ? CharacterAppearance.fromMap(
+            secondRaw['characterAppearance'],
+            fallback: const CharacterAppearance(
+              baseStyle: CharacterBaseStyle.classicGirl,
+            ),
+          )
         : const CharacterAppearance(baseStyle: CharacterBaseStyle.classicGirl);
     await game.applyCharacterAppearances(firstAppearance, secondAppearance);
   }
@@ -444,119 +450,124 @@ class _WorldScreenState extends State<WorldScreen> {
         if (!didPop) _requestPop();
       },
       child: Scaffold(
-        body: Stack(
-          children: [
-            Positioned.fill(child: GameWidget(game: game)),
+        body: LandscapeGameBody(
+          onExit: _requestPop,
+          landscapeChild: Stack(
+            children: [
+              Positioned.fill(child: GameWidget(game: game)),
 
-            Positioned(
-              top: 18,
-              left: 18,
-              child: SafeArea(
-                child: _glassButton(
-                  text: isEditingGarden
-                      ? "Editando jardín ✏️"
-                      : "Jardín Pawdo 🌿",
-                  onTap: () {},
-                ),
-              ),
-            ),
-
-            Positioned(
-              top: 18,
-              left: 190,
-              right: 130,
-              child: SafeArea(child: _buildHud()),
-            ),
-
-            Positioned(
-              left: 18,
-              bottom: 18,
-              child: SafeArea(
-                child: Row(
-                  children: [
-                    _editGardenButton(
-                      text: isEditingGarden ? 'Salir edición' : 'Editar jardín',
-                      icon: isEditingGarden ? Icons.close : Icons.edit,
-                      onTap: _toggleGardenEditMode,
-                    ),
-                    if (isEditingGarden) ...[
-                      const SizedBox(width: 10),
-                      _editGardenButton(
-                        text: 'Agregar',
-                        icon: Icons.add_circle,
-                        onTap: _showGardenInventorySheet,
-                      ),
-                      const SizedBox(width: 10),
-                      _editGardenButton(
-                        text: 'Casa',
-                        icon: Icons.home,
-                        onTap: _showHouseSelectorSheet,
-                      ),
-                      const SizedBox(width: 10),
-                      _editGardenButton(
-                        text: _isSavingGarden
-                            ? 'Guardando…'
-                            : _hasUnsavedChanges
-                            ? 'Guardar *'
-                            : 'Guardado',
-                        icon: Icons.save,
-                        onTap: _saveGardenLayout,
-                      ),
-                      const SizedBox(width: 10),
-                      _editGardenButton(
-                        text: 'Eliminar',
-                        icon: Icons.delete,
-                        onTap: _deleteSelectedGardenItem,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-
-            if (!isEditingGarden)
               Positioned(
-                right: 18,
                 top: 18,
+                left: 18,
+                child: SafeArea(
+                  child: _glassButton(
+                    text: isEditingGarden
+                        ? "Editando jardín ✏️"
+                        : "Jardín Pawdo 🌿",
+                    onTap: () {},
+                  ),
+                ),
+              ),
+
+              Positioned(
+                top: 18,
+                left: 190,
+                right: 130,
+                child: SafeArea(child: _buildHud()),
+              ),
+
+              Positioned(
+                left: 18,
                 bottom: 18,
                 child: SafeArea(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Row(
                     children: [
-                      _circleMenuButton(
-                        icon: Icons.pets,
-                        label: "Mascota",
-                        onTap: () => _goToTab(1),
+                      _editGardenButton(
+                        text: isEditingGarden
+                            ? 'Salir edición'
+                            : 'Editar jardín',
+                        icon: isEditingGarden ? Icons.close : Icons.edit,
+                        onTap: _toggleGardenEditMode,
                       ),
-                      const SizedBox(height: 12),
-                      _circleMenuButton(
-                        icon: Icons.chat,
-                        label: "Chat",
-                        onTap: () => _goToTab(2),
-                      ),
-                      const SizedBox(height: 12),
-                      _circleMenuButton(
-                        icon: Icons.store,
-                        label: "Tienda",
-                        onTap: () => _goToTab(3),
-                      ),
-                      const SizedBox(height: 12),
-                      _circleMenuButton(
-                        icon: Icons.flag,
-                        label: "Misiones",
-                        onTap: () => _goToTab(4),
-                      ),
-                      const SizedBox(height: 12),
-                      _circleMenuButton(
-                        icon: Icons.person,
-                        label: "Perfil",
-                        onTap: () => _goToTab(5),
-                      ),
+                      if (isEditingGarden) ...[
+                        const SizedBox(width: 10),
+                        _editGardenButton(
+                          text: 'Agregar',
+                          icon: Icons.add_circle,
+                          onTap: _showGardenInventorySheet,
+                        ),
+                        const SizedBox(width: 10),
+                        _editGardenButton(
+                          text: 'Casa',
+                          icon: Icons.home,
+                          onTap: _showHouseSelectorSheet,
+                        ),
+                        const SizedBox(width: 10),
+                        _editGardenButton(
+                          text: _isSavingGarden
+                              ? 'Guardando…'
+                              : _hasUnsavedChanges
+                              ? 'Guardar *'
+                              : 'Guardado',
+                          icon: Icons.save,
+                          onTap: _saveGardenLayout,
+                        ),
+                        const SizedBox(width: 10),
+                        _editGardenButton(
+                          text: 'Eliminar',
+                          icon: Icons.delete,
+                          onTap: _deleteSelectedGardenItem,
+                        ),
+                      ],
                     ],
                   ),
                 ),
               ),
-          ],
+
+              if (!isEditingGarden)
+                Positioned(
+                  right: 18,
+                  top: 18,
+                  bottom: 18,
+                  child: SafeArea(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _circleMenuButton(
+                          icon: Icons.pets,
+                          label: "Mascota",
+                          onTap: () => _goToTab(1),
+                        ),
+                        const SizedBox(height: 12),
+                        _circleMenuButton(
+                          icon: Icons.chat,
+                          label: "Chat",
+                          onTap: () => _goToTab(2),
+                        ),
+                        const SizedBox(height: 12),
+                        _circleMenuButton(
+                          icon: Icons.store,
+                          label: "Tienda",
+                          onTap: () => _goToTab(3),
+                        ),
+                        const SizedBox(height: 12),
+                        _circleMenuButton(
+                          icon: Icons.flag,
+                          label: "Misiones",
+                          onTap: () => _goToTab(4),
+                        ),
+                        const SizedBox(height: 12),
+                        _circleMenuButton(
+                          icon: Icons.person,
+                          label: "Perfil",
+                          onTap: () => _goToTab(5),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

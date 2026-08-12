@@ -114,7 +114,11 @@ class WellnessService {
     try {
       await _functions.httpsCallable(name).call(data);
     } on FirebaseFunctionsException catch (error) {
-      throw WellnessException(error.message ?? 'No se pudo guardar el cambio.');
+      throw WellnessException(
+        error.code == 'not-found'
+            ? 'Bienestar necesita una actualización del servicio de Pawdo.'
+            : error.message ?? 'No se pudo guardar el cambio.',
+      );
     } on FirebaseException catch (error) {
       throw WellnessException(error.message ?? 'Error de conexión con Pawdo.');
     } catch (_) {
