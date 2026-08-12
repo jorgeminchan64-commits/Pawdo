@@ -12,7 +12,7 @@
         android:id="@+id/pawdo_widget_photo"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:contentDescription="Pawdo"
+        android:contentDescription="@string/pawdo_widget_photo_description"
         android:scaleType="centerCrop"
         android:src="@mipmap/ic_launcher" />
 
@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Pawdo tiene novedades"
+            android:text="@string/pawdo_widget_default_title"
             android:textColor="#4B2440"
             android:textSize="16sp"
             android:textStyle="bold" />
@@ -41,7 +41,7 @@
             android:layout_marginTop="3dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Contenido oculto por privacidad"
+            android:text="@string/pawdo_widget_private_content"
             android:textColor="#704D68"
             android:textSize="13sp" />
 
@@ -62,8 +62,8 @@
         android:layout_width="wrap_content"
         android:layout_height="48dp"
         android:layout_marginStart="8dp"
-        android:contentDescription="Enviar Te extraño"
-        android:text="Te extraño ❤️"
+        android:contentDescription="@string/pawdo_widget_miss_you_description"
+        android:text="@string/pawdo_widget_miss_you"
         android:textAllCaps="false"
         android:textSize="11sp" />
 </LinearLayout>

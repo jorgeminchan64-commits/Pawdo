@@ -127,8 +127,7 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun permissionGranted(permission: String): Boolean =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-            checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
+        checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 
     private fun requestCallPermissions(result: MethodChannel.Result) {
         val permissions = mutableListOf<String>()
@@ -144,10 +143,6 @@ class MainActivity : FlutterActivity() {
         }
         if (pendingCallPermissionResult != null) {
             result.error("request-in-progress", "Ya hay una solicitud de permisos activa.", null)
-            return
-        }
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            result.success(callCapabilities())
             return
         }
         pendingCallPermissionResult = result

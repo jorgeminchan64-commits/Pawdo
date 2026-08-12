@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pawdo_widget_photo_description">Foto de Pawdo</string>
+    <string name="pawdo_widget_default_title">Pawdo tiene novedades</string>
+    <string name="pawdo_widget_private_content">Contenido oculto por privacidad</string>
+    <string name="pawdo_widget_miss_you_description">Enviar Te extraño</string>
+    <string name="pawdo_widget_miss_you">Te extraño ❤️</string>
+</resources>
