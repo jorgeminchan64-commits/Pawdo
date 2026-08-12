@@ -2,7 +2,7 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/pawdo_widget_description"
     android:initialLayout="@layout/pawdo_widget"
-    android:minWidth="250dp"
+    android:minWidth="110dp"
     android:minHeight="72dp"
     android:previewImage="@mipmap/ic_launcher"
     android:resizeMode="horizontal|vertical"

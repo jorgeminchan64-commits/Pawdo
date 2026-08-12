@@ -1,5 +1,23 @@
 import 'package:flutter/services.dart';
 
+class WidgetDashboardData {
+  const WidgetDashboardData({
+    required this.daysTogether,
+    required this.duration,
+    required this.nextEvent,
+    required this.petStatus,
+  });
+  final int daysTogether;
+  final String duration;
+  final String nextEvent;
+  final String petStatus;
+
+  String get title =>
+      '$daysTogether ${daysTogether == 1 ? 'día' : 'días'} juntos ❤️';
+  String get body => duration;
+  String get activity => nextEvent.isNotEmpty ? nextEvent : petStatus;
+}
+
 class AndroidWidgetPreferences {
   const AndroidWidgetPreferences({
     required this.enabled,
@@ -17,21 +35,36 @@ class AndroidWidgetService {
   static const MethodChannel _channel = MethodChannel('pawdo/android_widget');
 
   Future<void> updateDashboard({
-    required int energy,
-    required int streak,
-    String? lastActivity,
+    required WidgetDashboardData data,
+    Uint8List? partnerPhoto,
   }) async {
     try {
-      await _channel.invokeMethod<void>('updateWidget', {
-        'title': 'Pawdo está esperando 🐾',
-        'body': 'Energía $energy% · Racha $streak días',
-        'activity': lastActivity?.trim() ?? '',
-      });
+      final payload = <String, dynamic>{
+        'title': data.title,
+        'body': data.body,
+        'activity': data.activity,
+      };
+      if (partnerPhoto != null) payload['photo'] = partnerPhoto;
+      await _channel.invokeMethod<void>('updateWidget', payload);
     } on PlatformException {
       // El widget es complementario y nunca debe bloquear la aplicación.
     } on MissingPluginException {
       // Solo Android implementa este canal.
     }
+  }
+
+  Future<String?> pendingAction() async {
+    try {
+      return await _channel.invokeMethod<String>('takePendingAction');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> completePendingAction() async {
+    try {
+      await _channel.invokeMethod<void>('completePendingAction');
+    } catch (_) {}
   }
 
   Future<AndroidWidgetPreferences> preferences() async {

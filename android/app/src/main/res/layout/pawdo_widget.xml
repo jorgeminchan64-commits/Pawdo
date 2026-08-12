@@ -9,9 +9,11 @@
     android:padding="16dp">
 
     <ImageView
+        android:id="@+id/pawdo_widget_photo"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:contentDescription="Pawdo"
+        android:scaleType="centerCrop"
         android:src="@mipmap/ic_launcher" />
 
     <LinearLayout
@@ -54,4 +56,14 @@
             android:textSize="11sp"
             android:visibility="gone" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/pawdo_widget_miss_you"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:contentDescription="Enviar Te extraño"
+        android:text="Te extraño ❤️"
+        android:textAllCaps="false"
+        android:textSize="11sp" />
 </LinearLayout>

@@ -19,6 +19,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import java.io.File
 import kotlin.math.sqrt
 
 class MainActivity : FlutterActivity() {
@@ -56,27 +57,48 @@ class MainActivity : FlutterActivity() {
                         val title = call.argument<String>("title")?.take(80).orEmpty()
                         val body = call.argument<String>("body")?.take(120).orEmpty()
                         val activity = call.argument<String>("activity")?.take(120).orEmpty()
+                        val photo = call.argument<ByteArray>("photo")
+                        val photoFile = File(filesDir, "pawdo_widget_photo.jpg")
+                        val photoHash = photo?.contentHashCode() ?: preferences.getInt("photoHash", 0)
+                        if (photo != null && photo.isNotEmpty() && photo.size <= 512 * 1024) {
+                            photoFile.writeBytes(photo)
+                        }
                         val changed = title != preferences.getString("title", "") ||
                             body != preferences.getString("body", "") ||
-                            activity != preferences.getString("activity", "")
+                            activity != preferences.getString("activity", "") ||
+                            photoHash != preferences.getInt("photoHash", 0)
                         if (changed) {
                             preferences.edit()
                                 .putString("title", title)
                                 .putString("body", body)
                                 .putString("activity", activity)
+                                .putString("photoPath", if (photoFile.exists()) photoFile.absolutePath else null)
+                                .putInt("photoHash", photoHash)
                                 .apply()
                             PawdoWidgetProvider.updateAll(this)
                         }
                         result.success(null)
                     }
                     "clearWidget" -> {
+                        File(filesDir, "pawdo_widget_photo.jpg").delete()
                         preferences.edit()
                             .remove("title")
                             .remove("body")
                             .remove("activity")
+                            .remove("photoPath")
+                            .remove("photoHash")
+                            .putBoolean("pendingMissYou", false)
                             .putBoolean("showContent", false)
                             .apply()
                         PawdoWidgetProvider.updateAll(this)
+                        result.success(null)
+                    }
+                    "takePendingAction" -> {
+                        val pending = preferences.getBoolean("pendingMissYou", false)
+                        result.success(if (pending) "miss_you" else null)
+                    }
+                    "completePendingAction" -> {
+                        preferences.edit().putBoolean("pendingMissYou", false).apply()
                         result.success(null)
                     }
                     else -> result.notImplemented()

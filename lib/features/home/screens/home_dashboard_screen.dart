@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -8,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/android_widget_service.dart';
 import '../../couple/services/couple_service.dart';
+import '../../chat/services/chat_service.dart';
 import '../models/home_dashboard_summary.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
@@ -38,6 +41,85 @@ class HomeDashboardScreen extends StatefulWidget {
 
 class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   bool _profileRefreshRequested = false;
+  bool _widgetSyncing = false;
+  bool _widgetActionRunning = false;
+  String _lastWidgetSignature = '';
+
+  Future<void> _syncWidget({
+    required String uid,
+    required String code,
+    required Map<String, dynamic> profile,
+    required Map<String, dynamic> couple,
+  }) async {
+    final start =
+        _readDate(couple['relationshipStartDate']) ??
+        _readDate(profile['relationshipStartDate']);
+    final summary = relationshipSummary(start, DateTime.now());
+    final signature = '$code:${summary.totalDays}:${couple['updatedAt']}';
+    if (_widgetSyncing || signature == _lastWidgetSignature) return;
+    _widgetSyncing = true;
+    try {
+      final now = Timestamp.now();
+      final eventQuery = await FirebaseFirestore.instance
+          .collection('couples')
+          .doc(code)
+          .collection('calendarEvents')
+          .where('date', isGreaterThanOrEqualTo: now)
+          .orderBy('date')
+          .limit(1)
+          .get();
+      final event = eventQuery.docs.firstOrNull?.data();
+      final nextEvent = event == null
+          ? ''
+          : '${event['emoji'] ?? '📅'} ${event['title'] ?? 'Próximo evento'}';
+      final members = _map(couple['memberProfiles']);
+      final firstUid = couple['user1']?.toString() ?? '';
+      final partnerUid = firstUid == uid
+          ? couple['user2']?.toString() ?? ''
+          : firstUid;
+      final photoPath = _map(
+        members[partnerUid],
+      )['photoStoragePath']?.toString();
+      Uint8List? photo;
+      if (photoPath != null && photoPath == 'profile_photos/$partnerUid.jpg') {
+        photo = await FirebaseStorage.instance
+            .ref(photoPath)
+            .getData(512 * 1024);
+      }
+      await AndroidWidgetService.instance.updateDashboard(
+        data: WidgetDashboardData(
+          daysTogether: summary.totalDays,
+          duration: summary.durationLabel,
+          nextEvent: nextEvent,
+          petStatus: '🐾 Pawdo los espera',
+        ),
+        partnerPhoto: photo,
+      );
+      _lastWidgetSignature = signature;
+    } catch (_) {
+      // El widget conserva el último estado válido y se reintenta en el
+      // siguiente snapshot o al recuperar conectividad.
+    } finally {
+      _widgetSyncing = false;
+    }
+  }
+
+  Future<void> _handleWidgetAction(String code) async {
+    if (_widgetActionRunning) return;
+    _widgetActionRunning = true;
+    try {
+      final action = await AndroidWidgetService.instance.pendingAction();
+      if (action == 'miss_you') {
+        await ChatService().sendQuickMessage(code, 'miss_you');
+        await AndroidWidgetService.instance.completePendingAction();
+      }
+    } catch (_) {
+      // El chat informa y permite reintentar desde la app; nunca se guardan
+      // credenciales ni colas sensibles en el widget nativo.
+    } finally {
+      _widgetActionRunning = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +150,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             final couple =
                 coupleSnapshot.data?.data() ?? const <String, dynamic>{};
             final memberProfiles = _map(couple['memberProfiles']);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _syncWidget(
+                uid: user.uid,
+                code: code,
+                profile: profile,
+                couple: couple,
+              );
+              _handleWidgetAction(code);
+            });
             if (memberProfiles.isEmpty && !_profileRefreshRequested) {
               _profileRefreshRequested = true;
               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -154,14 +245,6 @@ class _DashboardContent extends StatelessWidget {
       DateTime.now(),
     );
     final streak = (_map(couple['dailyChest'])['streak'] as num?)?.round() ?? 0;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AndroidWidgetService.instance.updateDashboard(
-        energy: _number('energy', 70),
-        streak: streak,
-        lastActivity: couple['lastAction']?.toString(),
-      );
-    });
-
     return AnimatedContainer(
       duration: const Duration(milliseconds: 350),
       decoration: BoxDecoration(

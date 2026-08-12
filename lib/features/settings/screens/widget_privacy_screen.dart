@@ -69,17 +69,17 @@ class _WidgetPrivacyScreenState extends State<WidgetPrivacyScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Pawdo está esperando 🐾',
+                        '465 días juntos ❤️',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
                       SizedBox(height: 6),
-                      Text('Energía 70% · Racha 4 días'),
+                      Text('1 año, 3 meses, 8 días juntos'),
                       SizedBox(height: 8),
                       Text(
-                        'Vista previa del primer widget de texto y estado.',
+                        'El tamaño mediano añade próxima cita y Te extraño ❤️.',
                         style: TextStyle(fontSize: 11),
                       ),
                     ],
@@ -108,7 +108,7 @@ class _WidgetPrivacyScreenState extends State<WidgetPrivacyScreen> {
                   child: Padding(
                     padding: EdgeInsets.all(16),
                     child: Text(
-                      'El widget no incluye datos del ciclo, notas, fotografías ni mensajes. Está disponible solo para la pantalla principal de Android.',
+                      'La foto de pareja solo se guarda en la caché privada del teléfono. El widget nunca incluye ciclo, notas ni mensajes. Al cerrar sesión o desvincular se limpia inmediatamente.',
                     ),
                   ),
                 ),
