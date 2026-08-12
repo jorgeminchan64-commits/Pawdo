@@ -378,6 +378,11 @@ describe('Pawdo callable security', () => {
       uid: user1, coupleCode: code, profileCompleted: true,
       name: 'Nombre privado', displayName: 'Uno visible',
       photoStoragePath: `profile_photos/${user1}.jpg`,
+      characterAppearance: {
+        baseStyle: 'classicGirl', hairStyle: 'curls', hairColor: 'copper',
+        skinTone: 'deep', outfitStyle: 'elegant', outfitColor: 'blue',
+        shoes: 'boots', accessory: 'glasses', expression: 'excited', pose: 'wave',
+      },
     });
     await db.doc(`users/${user2}`).set({
       uid: user2, coupleCode: code, profileCompleted: true,
@@ -389,7 +394,10 @@ describe('Pawdo callable security', () => {
     let couple = (await db.doc(`couples/${code}`).get()).data();
     assert.equal(couple.memberProfiles[user1].name, 'Uno visible');
     assert.equal(couple.memberProfiles[user1].photoStoragePath, `profile_photos/${user1}.jpg`);
+    assert.equal(couple.memberProfiles[user1].characterAppearance.pose, 'wave');
+    assert.equal(couple.memberProfiles[user1].characterAppearance.accessory, 'glasses');
     assert.equal(couple.memberProfiles[user2].photoStoragePath, undefined);
+    assert.equal(couple.memberProfiles[user2].characterAppearance, undefined);
 
     const presence = await handlers.setCouplePresenceHandler(request(user2, { online: true }));
     assert.equal(presence.updated, true);

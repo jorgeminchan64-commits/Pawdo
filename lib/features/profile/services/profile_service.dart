@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 import '../../couple/services/couple_service.dart';
+import '../../characters/models/character_appearance.dart';
 import '../../media/services/shared_media_service.dart';
 import '../models/profile_data.dart';
 
@@ -30,7 +31,12 @@ abstract class ProfileRepository {
   });
 }
 
-class ProfileService implements ProfileRepository {
+abstract class CharacterAppearanceRepository {
+  Future<void> updateCharacterAppearance(CharacterAppearance appearance);
+}
+
+class ProfileService
+    implements ProfileRepository, CharacterAppearanceRepository {
   ProfileService({
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
@@ -154,6 +160,31 @@ class ProfileService implements ProfileRepository {
     } catch (_) {
       // El perfil personal ya quedó guardado. El dashboard vuelve a solicitar
       // el resumen compartido al reconstruirse o recuperar conectividad.
+    }
+  }
+
+  @override
+  Future<void> updateCharacterAppearance(CharacterAppearance appearance) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw const ProfileException(
+        'Inicia sesión para personalizar tu personaje.',
+      );
+    }
+    try {
+      await _db.collection('users').doc(user.uid).update({
+        'characterAppearance': appearance.toMap(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } on FirebaseException {
+      throw const ProfileException(
+        'No se pudo guardar el personaje. Revisa tu conexión.',
+      );
+    }
+    try {
+      await _coupleService.refreshCoupleProfiles();
+    } catch (_) {
+      // La apariencia personal quedó guardada y se sincronizará al reconectar.
     }
   }
 }

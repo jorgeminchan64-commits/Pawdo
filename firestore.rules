@@ -59,12 +59,34 @@ service cloud.firestore {
         value >= timestamp.date(1900, 1, 1) && value <= request.time;
     }
 
+    function validCharacterAppearance(value) {
+      return value is map &&
+        value.keys().hasOnly([
+          'baseStyle', 'hairStyle', 'hairColor', 'skinTone', 'outfitStyle',
+          'outfitColor', 'shoes', 'accessory', 'expression', 'pose'
+        ]) &&
+        value.keys().hasAll([
+          'baseStyle', 'hairStyle', 'hairColor', 'skinTone', 'outfitStyle',
+          'outfitColor', 'shoes', 'accessory', 'expression', 'pose'
+        ]) &&
+        value.baseStyle in ['classicBoy', 'classicGirl'] &&
+        value.hairStyle in ['short', 'long', 'curls'] &&
+        value.hairColor in ['brown', 'black', 'blonde', 'copper'] &&
+        value.skinTone in ['light', 'warm', 'deep'] &&
+        value.outfitStyle in ['casual', 'cozy', 'elegant'] &&
+        value.outfitColor in ['rose', 'plum', 'blue', 'green'] &&
+        value.shoes in ['sneakers', 'boots'] &&
+        value.accessory in ['none', 'glasses', 'heartPin', 'headband'] &&
+        value.expression in ['smile', 'calm', 'excited'] &&
+        value.pose in ['idle', 'wave', 'sit'];
+    }
+
     function validProfileCreate(userId) {
       return request.resource.data.keys().hasOnly([
           'uid', 'email', 'name', 'displayName', 'birthday',
           'relationshipStartDate', 'profileTheme', 'profileCompleted',
           'photoStoragePath', 'createdAt', 'updatedAt', 'coupleCode',
-          'pendingCoupleCode'
+          'pendingCoupleCode', 'characterAppearance'
         ]) &&
         (!request.resource.data.keys().hasAny(['uid']) ||
          request.resource.data.uid == userId) &&
@@ -81,6 +103,8 @@ service cloud.firestore {
          validProfileDate(request.resource.data.relationshipStartDate)) &&
         (!request.resource.data.keys().hasAny(['profileTheme']) ||
          request.resource.data.profileTheme in ['rose', 'lavender', 'sunset']) &&
+        (!request.resource.data.keys().hasAny(['characterAppearance']) ||
+         validCharacterAppearance(request.resource.data.characterAppearance)) &&
         (!request.resource.data.keys().hasAny(['profileCompleted']) ||
          request.resource.data.profileCompleted is bool) &&
         (!request.resource.data.keys().hasAny(['photoStoragePath']) ||
@@ -100,7 +124,8 @@ service cloud.firestore {
       let changed = request.resource.data.diff(resource.data).affectedKeys();
       return changed.hasOnly([
           'uid', 'name', 'displayName', 'birthday', 'relationshipStartDate',
-          'profileTheme', 'profileCompleted', 'photoStoragePath', 'updatedAt'
+          'profileTheme', 'profileCompleted', 'photoStoragePath', 'updatedAt',
+          'characterAppearance'
         ]) &&
         (!changed.hasAny(['uid']) ||
          (!resource.data.keys().hasAny(['uid']) &&
@@ -114,6 +139,8 @@ service cloud.firestore {
          validProfileDate(request.resource.data.relationshipStartDate)) &&
         (!changed.hasAny(['profileTheme']) ||
          request.resource.data.profileTheme in ['rose', 'lavender', 'sunset']) &&
+        (!changed.hasAny(['characterAppearance']) ||
+         validCharacterAppearance(request.resource.data.characterAppearance)) &&
         (!changed.hasAny(['profileCompleted']) ||
          request.resource.data.profileCompleted is bool) &&
         (!changed.hasAny(['photoStoragePath']) ||

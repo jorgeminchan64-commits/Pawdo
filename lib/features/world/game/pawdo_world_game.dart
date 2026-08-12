@@ -5,6 +5,8 @@ import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
+import '../../characters/models/character_appearance.dart';
+
 import '../components/actors/animated_actor_component.dart';
 import '../components/depth_priority.dart';
 import '../components/editable_garden_item.dart';
@@ -261,37 +263,16 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
 
     await _addInteractiveGardenObjects();
 
-    final boySheet = await images.load(
-      'avatars/avatar_boy_pro_spritesheet.png',
-    );
-
-    boy = AnimatedActorComponent(
-      spriteSheet: boySheet,
-      startPosition: Vector2(790, 660),
-      size: Vector2(150, 265),
-      spriteLayout: ActorSpriteLayout.boy,
+    boy = await _createHuman(
+      const CharacterAppearance(),
+      position: Vector2(790, 660),
       depthTieBreaker: 1,
-      speed: 155,
-      anchor: Anchor.bottomCenter,
     );
-
-    world.add(boy);
-
-    final girlSheet = await images.load(
-      'avatars/avatar_girl_pro_spritesheet.png',
-    );
-
-    girl = AnimatedActorComponent(
-      spriteSheet: girlSheet,
-      startPosition: Vector2(1010, 660),
-      size: Vector2(150, 265),
-      spriteLayout: ActorSpriteLayout.girl,
+    girl = await _createHuman(
+      const CharacterAppearance(baseStyle: CharacterBaseStyle.classicGirl),
+      position: Vector2(1010, 660),
       depthTieBreaker: 2,
-      speed: 155,
-      anchor: Anchor.bottomCenter,
     );
-
-    world.add(girl);
 
     final dogSheet = await images.load('pets/dog_pro_spritesheet.png');
 
@@ -306,6 +287,62 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
     );
 
     world.add(dog);
+  }
+
+  Future<AnimatedActorComponent> _createHuman(
+    CharacterAppearance appearance, {
+    required Vector2 position,
+    required int depthTieBreaker,
+  }) async {
+    final isGirl = appearance.baseStyle == CharacterBaseStyle.classicGirl;
+    final sheet = await images.load(
+      isGirl
+          ? 'avatars/avatar_girl_pro_spritesheet.png'
+          : 'avatars/avatar_boy_pro_spritesheet.png',
+    );
+    final actor = AnimatedActorComponent(
+      spriteSheet: sheet,
+      startPosition: position,
+      size: Vector2(150, 265),
+      spriteLayout: isGirl ? ActorSpriteLayout.girl : ActorSpriteLayout.boy,
+      depthTieBreaker: depthTieBreaker,
+      speed: 155,
+      anchor: Anchor.bottomCenter,
+    );
+    world.add(actor);
+    _applyInitialPose(actor, appearance.pose);
+    return actor;
+  }
+
+  Future<void> applyCharacterAppearances(
+    CharacterAppearance first,
+    CharacterAppearance second,
+  ) async {
+    final firstPosition = boy.position.clone();
+    final secondPosition = girl.position.clone();
+    boy.removeFromParent();
+    girl.removeFromParent();
+    boy = await _createHuman(
+      first,
+      position: firstPosition,
+      depthTieBreaker: 1,
+    );
+    girl = await _createHuman(
+      second,
+      position: secondPosition,
+      depthTieBreaker: 2,
+    );
+  }
+
+  void _applyInitialPose(AnimatedActorComponent actor, CharacterPose pose) {
+    switch (pose) {
+      case CharacterPose.idle:
+        return;
+      case CharacterPose.wave:
+        actor.wave();
+      case CharacterPose.sit:
+        actor.sit();
+    }
   }
 
   Future<void> _addGardenDecoration() async {

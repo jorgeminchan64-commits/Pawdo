@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../characters/models/character_appearance.dart';
 import '../../shop/data/garden_shop_items.dart';
 import '../../shop/screens/garden_shop_screen.dart';
 import '../../interior/screens/pawdo_interior_screen.dart';
@@ -122,6 +123,9 @@ class _WorldScreenState extends State<WorldScreen> {
         ? _toInt(plantData['stage'], 1).clamp(1, 3)
         : 1;
 
+    await game.loaded;
+    await _applySharedCharacterAppearances(data);
+
     for (int i = 0; i < 20; i++) {
       if (game.editableItems.isNotEmpty) {
         if (layout is List) await game.loadGardenLayout(layout);
@@ -138,6 +142,27 @@ class _WorldScreenState extends State<WorldScreen> {
 
       await Future.delayed(const Duration(milliseconds: 250));
     }
+  }
+
+  Future<void> _applySharedCharacterAppearances(
+    Map<String, dynamic> coupleData,
+  ) async {
+    final profiles = coupleData['memberProfiles'];
+    final firstUid = coupleData['user1']?.toString();
+    final secondUid = coupleData['user2']?.toString();
+    final firstRaw = profiles is Map && firstUid != null
+        ? profiles[firstUid]
+        : null;
+    final secondRaw = profiles is Map && secondUid != null
+        ? profiles[secondUid]
+        : null;
+    final firstAppearance = firstRaw is Map
+        ? CharacterAppearance.fromMap(firstRaw['characterAppearance'])
+        : const CharacterAppearance();
+    final secondAppearance = secondRaw is Map
+        ? CharacterAppearance.fromMap(secondRaw['characterAppearance'])
+        : const CharacterAppearance(baseStyle: CharacterBaseStyle.classicGirl);
+    await game.applyCharacterAppearances(firstAppearance, secondAppearance);
   }
 
   Future<void> _loadSelectedHouseFromFirebase() async {

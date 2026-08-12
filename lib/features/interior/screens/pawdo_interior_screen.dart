@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../characters/models/character_appearance.dart';
 import '../../shop/data/interior_shop_items.dart';
 import '../../shop/screens/interior_shop_screen.dart';
 import '../../economy/services/economy_service.dart';
@@ -125,6 +126,7 @@ class _PawdoInteriorScreenState extends State<PawdoInteriorScreen> {
       final revision = data['interiorRevision'];
 
       await game.loaded;
+      await _applySharedCharacterAppearances(data);
       await game.loadInteriorLayout(layout is List ? layout : const []);
       if (!mounted) return;
       setState(() {
@@ -143,6 +145,27 @@ class _PawdoInteriorScreenState extends State<PawdoInteriorScreen> {
         SnackBar(content: Text('No se pudo cargar el interior: $error')),
       );
     }
+  }
+
+  Future<void> _applySharedCharacterAppearances(
+    Map<String, dynamic> coupleData,
+  ) async {
+    final profiles = coupleData['memberProfiles'];
+    final firstUid = coupleData['user1']?.toString();
+    final secondUid = coupleData['user2']?.toString();
+    final firstRaw = profiles is Map && firstUid != null
+        ? profiles[firstUid]
+        : null;
+    final secondRaw = profiles is Map && secondUid != null
+        ? profiles[secondUid]
+        : null;
+    final firstAppearance = firstRaw is Map
+        ? CharacterAppearance.fromMap(firstRaw['characterAppearance'])
+        : const CharacterAppearance();
+    final secondAppearance = secondRaw is Map
+        ? CharacterAppearance.fromMap(secondRaw['characterAppearance'])
+        : const CharacterAppearance(baseStyle: CharacterBaseStyle.classicGirl);
+    await game.applyCharacterAppearances(firstAppearance, secondAppearance);
   }
 
   Future<void> _saveInteriorLayout() async {

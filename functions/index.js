@@ -353,7 +353,31 @@ function safeMemberProfile(uid, profile) {
   if (rawPath === `profile_photos/${uid}.jpg`) {
     summary.photoStoragePath = rawPath;
   }
+  const appearance = safeCharacterAppearance(profile?.characterAppearance);
+  if (appearance) summary.characterAppearance = appearance;
   return summary;
+}
+
+function safeCharacterAppearance(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const allowed = {
+    baseStyle: new Set(['classicBoy', 'classicGirl']),
+    hairStyle: new Set(['short', 'long', 'curls']),
+    hairColor: new Set(['brown', 'black', 'blonde', 'copper']),
+    skinTone: new Set(['light', 'warm', 'deep']),
+    outfitStyle: new Set(['casual', 'cozy', 'elegant']),
+    outfitColor: new Set(['rose', 'plum', 'blue', 'green']),
+    shoes: new Set(['sneakers', 'boots']),
+    accessory: new Set(['none', 'glasses', 'heartPin', 'headband']),
+    expression: new Set(['smile', 'calm', 'excited']),
+    pose: new Set(['idle', 'wave', 'sit']),
+  };
+  const result = {};
+  for (const [key, options] of Object.entries(allowed)) {
+    if (!options.has(value[key])) return null;
+    result[key] = value[key];
+  }
+  return result;
 }
 
 function isPendingInvitation(couple) {

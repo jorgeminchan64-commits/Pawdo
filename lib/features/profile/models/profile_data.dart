@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../characters/models/character_appearance.dart';
+
 enum ProfileTheme { rose, lavender, sunset }
 
 class ProfileData {
@@ -13,6 +15,7 @@ class ProfileData {
     required this.photoStoragePath,
     required this.coupleCode,
     required this.theme,
+    this.characterAppearance = const CharacterAppearance(),
     this.revision = '',
   });
 
@@ -32,6 +35,9 @@ class ProfileData {
         (theme) => theme.name == data['profileTheme']?.toString(),
         orElse: () => ProfileTheme.rose,
       ),
+      characterAppearance: CharacterAppearance.fromMap(
+        data['characterAppearance'],
+      ),
       revision:
           _readDate(data['updatedAt'])?.millisecondsSinceEpoch.toString() ?? '',
     );
@@ -46,6 +52,7 @@ class ProfileData {
   final String photoStoragePath;
   final String coupleCode;
   final ProfileTheme theme;
+  final CharacterAppearance characterAppearance;
   final String revision;
 
   String get greetingName {

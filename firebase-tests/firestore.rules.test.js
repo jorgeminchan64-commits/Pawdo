@@ -111,6 +111,40 @@ describe('Pawdo Firestore Rules', () => {
     }));
   });
 
+  it('accepts only complete and known character appearance values', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'users', user1), {
+        uid: user1,
+        profileCompleted: true,
+      });
+    });
+    const validAppearance = {
+      baseStyle: 'classicGirl',
+      hairStyle: 'curls',
+      hairColor: 'copper',
+      skinTone: 'deep',
+      outfitStyle: 'elegant',
+      outfitColor: 'blue',
+      shoes: 'boots',
+      accessory: 'glasses',
+      expression: 'excited',
+      pose: 'wave',
+    };
+    await assertSucceeds(updateDoc(doc(db(user1), 'users', user1), {
+      characterAppearance: validAppearance,
+      updatedAt: serverTimestamp(),
+    }));
+    await assertFails(updateDoc(doc(db(user1), 'users', user1), {
+      characterAppearance: { ...validAppearance, pose: 'teleport' },
+    }));
+    await assertFails(updateDoc(doc(db(user1), 'users', user1), {
+      characterAppearance: { ...validAppearance, hiddenAdminStyle: true },
+    }));
+    await assertFails(updateDoc(doc(db(user1), 'users', user1), {
+      characterAppearance: { baseStyle: 'classicBoy' },
+    }));
+  });
+
   it('does not treat a pending invitation as a complete couple', async () => {
     const pendingCode = 'WAIT24';
     await testEnv.withSecurityRulesDisabled(async (context) => {

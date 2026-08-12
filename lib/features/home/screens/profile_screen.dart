@@ -6,6 +6,7 @@ import '../../../core/services/android_widget_service.dart';
 import '../../../core/services/notification_service.dart';
 import '../../account/screens/account_privacy_screen.dart';
 import '../../calls/screens/call_readiness_screen.dart';
+import '../../characters/screens/character_editor_screen.dart';
 import '../../couple/services/couple_service.dart';
 import '../../location/screens/location_sharing_screen.dart';
 import '../../location/services/location_sharing_service.dart';
@@ -162,6 +163,17 @@ class _ProfileBody extends StatelessWidget {
               title: 'Editar perfil y estilo',
               subtitle: 'Nombre, foto, fechas y fondo',
               onTap: () => _openEditor(context),
+            ),
+            _ProfileTile(
+              icon: Icons.accessibility_new_rounded,
+              title: 'Personalizar personaje',
+              subtitle: 'Cabello, piel, ropa, accesorios y pose',
+              onTap: () => _open(
+                context,
+                CharacterEditorScreen(
+                  initialAppearance: profile.characterAppearance,
+                ),
+              ),
             ),
             const _SectionTitle('Conexión y bienestar'),
             _ProfileTile(
