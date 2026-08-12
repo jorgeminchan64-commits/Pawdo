@@ -29,7 +29,8 @@
 | 20. Optimización global | Completada técnica | Carga diferida, -37.5% latidos, assets limpiados, 69 Flutter y APK/AAB medidos | FPS/RAM/visual requieren dos teléfonos | Iniciar FASE 21 |
 | 21. App Check | Completada técnica | Debug/Play Integrity, renovación automática, 72 Flutter y APK | Enforcement exige consola, certificados y dos teléfonos | Iniciar FASE 22 |
 | 22. Crashlytics | Completada técnica | Captura global redactada, plugin Android, 73 Flutter y APK | Primer evento requiere build interna y Firebase Console | Iniciar FASE 23 |
-| 23–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 23. Seguridad final | Completada técnica | Esquemas cerrados, Functions estable y 177 pruebas | Audit transitivo y gates externos requieren seguimiento | Iniciar FASE 24 |
+| 24. Pruebas completas | Pendiente | — | Requiere matriz integral y pruebas físicas | Iniciar ahora |
 | 25. Play Store | Bloqueada | APK unsigned de 107.31 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
@@ -157,10 +158,15 @@
 - La excepción original se reemplaza por su tipo técnico antes de reportar, evitando adjuntar correos, mensajes, URLs, rutas u otros datos personales.
 - El complemento Android 3.0.7 quedó integrado; una prueba nueva eleva la suite a 175 automatizadas y el APK release compila en 112,505,685 bytes.
 - El primer evento visible y la revisión de su contenido requieren una build interna controlada; no se añadió ningún botón de crash al producto.
+- Cine dejó de aceptar documentos arbitrarios: reacciones, mensajes, fuente y reproducción tienen esquemas cerrados, autor autenticado, timestamps del servidor y límites de tamaño.
+- El documento de pareja rechaza cualquier campo cliente fuera de los cuatro campos explícitos de Cine; los demás dominios permanecen server-only.
+- Functions usa ahora `firebase-functions` 7.3.2 estable en lugar del release candidate, con sus 57 pruebas aprobadas sin cambios de contrato.
+- La compuerta queda en 73 Flutter, 57 Functions, 26 Firestore y 21 Storage: 177 pruebas automatizadas aprobadas; APK release de 112,505,685 bytes.
+- `npm audit` conserva 12 avisos transitivos (3 altos) documentados; no se ejecutó una corrección forzada que propone degradar Firebase y el runner de pruebas.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 23: seguridad final.
+1. Iniciar FASE 24: pruebas completas y matriz de lanzamiento.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.
