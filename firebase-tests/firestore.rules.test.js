@@ -227,6 +227,22 @@ describe('Pawdo Firestore Rules', () => {
     await assertFails(updateDoc(game, { turnSide: 'B' }));
   });
 
+  it('lets members observe Pawdo but keeps pet care server-only', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'couples', code, 'state', 'pet'), {
+        name: 'Pawdo', hunger: 70, happiness: 80, energy: 65,
+      });
+    });
+    await assertSucceeds(getDoc(doc(db(user1), 'couples', code, 'state', 'pet')));
+    await assertSucceeds(getDoc(doc(db(user2), 'couples', code, 'state', 'pet')));
+    await assertFails(updateDoc(doc(db(user1), 'couples', code, 'state', 'pet'), {
+      hunger: 100,
+    }));
+    await assertFails(setDoc(doc(db(outsider), 'couples', code, 'state', 'pet'), {
+      hunger: 100,
+    }));
+  });
+
   it('denies private game state and reward claims to every client', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const adminDb = context.firestore();

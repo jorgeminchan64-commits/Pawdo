@@ -39,6 +39,18 @@ const ACTIONS = Object.freeze({
   room_movie: { coins: 8, love: 12, energy: -5, mission: 'watch_movie', label: 'Vieron una película juntos 🎬' },
 });
 
+const PET_ACTIONS = Object.freeze({
+  pet: { happiness: 8, message: '¡Me encantan sus caricias! 💗' },
+  feed: { hunger: 24, happiness: 4, hygiene: -2, toiletNeed: 14, message: '¡Qué rico! 🍖' },
+  play: { hunger: -10, happiness: 18, energy: -14, hygiene: -5, toiletNeed: 5, message: '¡Fue muy divertido! 🎾' },
+  sleep: { message: 'Buenas noches… 💤' },
+  wake: { message: '¡Buenos días! ☀️' },
+  bathe: { happiness: -2, hygiene: 38, message: '¡Limpio y brillante! 🫧' },
+  toilet: { hygiene: 6, toiletNeed: -100, message: 'Ahora me siento mucho mejor.' },
+});
+
+const PET_ACTION_COOLDOWN_MS = 900;
+
 const MISSION_REWARDS = Object.freeze({
   water_plant: { coins: 15, love: 2, energy: 0 },
   pet_pawdo: { coins: 12, love: 3, energy: 0 },
@@ -1864,6 +1876,91 @@ async function performCoupleActionHandler(request) {
   });
 }
 
+async function performPetActionHandler(request) {
+  const uid = requireAuth(request);
+  const coupleCode = requireCoupleCode(request.data);
+  const actionId = request.data?.action;
+  const action = typeof actionId === 'string' ? PET_ACTIONS[actionId] : null;
+  if (!action) throw new HttpsError('invalid-argument', 'Acción de mascota inválida.');
+
+  const db = getFirestore();
+  const coupleRef = db.doc(`couples/${coupleCode}`);
+  const petRef = coupleRef.collection('state').doc('pet');
+  const nowMs = Date.now();
+
+  return db.runTransaction(async (tx) => {
+    const [coupleSnapshot, petSnapshot] = await Promise.all([
+      tx.get(coupleRef), tx.get(petRef),
+    ]);
+    if (!coupleSnapshot.exists) throw new HttpsError('not-found', 'Pareja no encontrada.');
+    assertActiveMember(coupleSnapshot.data(), uid);
+
+    const current = petSnapshot.data() || {};
+    const lastActionMs = timestampMillis(current.lastActionAt);
+    if (lastActionMs && nowMs - lastActionMs < PET_ACTION_COOLDOWN_MS) {
+      throw new HttpsError('resource-exhausted', 'Pawdo necesita un momento.');
+    }
+
+    const updatedMs = timestampMillis(current.updatedAt);
+    const elapsedHours = updatedMs
+      ? Math.min(48, Math.max(0, Math.floor((nowMs - updatedMs) / (60 * 60 * 1000))))
+      : 0;
+    const sleeping = current.isSleeping === true;
+    let hunger = clamp(number(current.hunger, 70) - elapsedHours * 3);
+    let happiness = clamp(number(current.happiness, 80) - elapsedHours);
+    let energy = clamp(number(current.energy, 65) + elapsedHours * (sleeping ? 6 : -2));
+    let hygiene = clamp(number(current.hygiene, 85) - elapsedHours);
+    let toiletNeed = clamp(number(current.toiletNeed, 15) + elapsedHours * 4);
+
+    if (sleeping && !['wake', 'pet'].includes(actionId)) {
+      throw new HttpsError('failed-precondition', 'Pawdo está dormido. Despiértalo primero.');
+    }
+    if (actionId === 'sleep' && sleeping) {
+      throw new HttpsError('failed-precondition', 'Pawdo ya está dormido.');
+    }
+    if (actionId === 'wake' && !sleeping) {
+      throw new HttpsError('failed-precondition', 'Pawdo ya está despierto.');
+    }
+    if (actionId === 'play' && (energy < 15 || hunger < 10)) {
+      throw new HttpsError('failed-precondition', 'Pawdo necesita comer o descansar antes de jugar.');
+    }
+
+    hunger = clamp(hunger + number(action.hunger));
+    happiness = clamp(happiness + number(action.happiness));
+    energy = clamp(energy + number(action.energy));
+    hygiene = clamp(hygiene + number(action.hygiene));
+    toiletNeed = clamp(toiletNeed + number(action.toiletNeed));
+    const nextSleeping = actionId === 'sleep' ? true : actionId === 'wake' ? false : sleeping;
+    const petState = {
+      name: typeof current.name === 'string' && current.name.trim() && current.name.trim().length <= 30
+        ? current.name.trim()
+        : 'Pawdo',
+      hunger,
+      happiness,
+      energy,
+      hygiene,
+      toiletNeed,
+      isSleeping: nextSleeping,
+      lastAction: actionId,
+      lastActionBy: uid,
+      lastActionAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+    tx.set(petRef, petState, { merge: true });
+    return {
+      cared: true,
+      action: actionId,
+      message: action.message,
+      pet: { hunger, happiness, energy, hygiene, toiletNeed, isSleeping: nextSleeping },
+    };
+  });
+}
+
+function timestampMillis(value) {
+  if (value && typeof value.toMillis === 'function') return value.toMillis();
+  return 0;
+}
+
 async function purchaseItemHandler(request) {
   const uid = requireAuth(request);
   const coupleCode = requireCoupleCode(request.data);
@@ -2949,6 +3046,7 @@ exports.cleanupExpiredCoupleInvitations = onSchedule(
   cleanupExpiredCoupleInvitationsHandler,
 );
 exports.performCoupleAction = onCall(performCoupleActionHandler);
+exports.performPetAction = onCall(performPetActionHandler);
 exports.purchaseItem = onCall(purchaseItemHandler);
 exports.claimDailyReward = onCall(claimDailyRewardHandler);
 exports.saveSharedLayout = onCall(saveSharedLayoutHandler);
@@ -2977,6 +3075,7 @@ exports.deleteAccount = onCall(deleteAccountHandler);
 // Export handlers for emulator-backed unit tests without bypassing validation.
 exports._test = {
   performCoupleActionHandler,
+  performPetActionHandler,
   purchaseItemHandler,
   claimDailyRewardHandler,
   saveSharedLayoutHandler,

@@ -531,6 +531,57 @@ describe('Pawdo callable security', () => {
     );
   });
 
+  it('applies shared pet care on the server and rejects outsiders', async () => {
+    await db.doc(`couples/${code}/state/pet`).set({
+      name: 'Pawdo', hunger: 50, happiness: 60, energy: 50,
+      hygiene: 45, toiletNeed: 70, isSleeping: false,
+      updatedAt: Timestamp.fromMillis(Date.now() - 2 * 60 * 60 * 1000),
+      lastActionAt: Timestamp.fromMillis(Date.now() - 5000),
+    });
+    const result = await handlers.performPetActionHandler(request(user1, {
+      coupleCode: code, action: 'feed',
+    }));
+    assert.equal(result.cared, true);
+    assert.equal(result.action, 'feed');
+    const pet = (await db.doc(`couples/${code}/state/pet`).get()).data();
+    assert.equal(pet.hunger, 68);
+    assert.equal(pet.happiness, 62);
+    assert.equal(pet.hygiene, 41);
+    assert.equal(pet.toiletNeed, 92);
+    assert.equal(pet.lastActionBy, user1);
+    await rejectsCode(
+      () => handlers.performPetActionHandler(request(outsider, {
+        coupleCode: code, action: 'pet',
+      })),
+      'permission-denied',
+    );
+  });
+
+  it('enforces sleep and play preconditions for Pawdo', async () => {
+    await db.doc(`couples/${code}/state/pet`).set({
+      hunger: 70, happiness: 80, energy: 65, hygiene: 85,
+      toiletNeed: 15, isSleeping: true,
+      updatedAt: Timestamp.now(),
+      lastActionAt: Timestamp.fromMillis(Date.now() - 5000),
+    });
+    await rejectsCode(
+      () => handlers.performPetActionHandler(request(user1, {
+        coupleCode: code, action: 'play',
+      })),
+      'failed-precondition',
+    );
+    await db.doc(`couples/${code}/state/pet`).set({
+      hunger: 5, energy: 8, isSleeping: false,
+      lastActionAt: Timestamp.fromMillis(Date.now() - 5000),
+    }, { merge: true });
+    await rejectsCode(
+      () => handlers.performPetActionHandler(request(user1, {
+        coupleCode: code, action: 'play',
+      })),
+      'failed-precondition',
+    );
+  });
+
   it('rejects a missing match', async () => {
     await rejectsCode(
       () => handlers.moveLudoTokenHandler(request(user1, {

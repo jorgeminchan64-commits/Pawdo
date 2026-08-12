@@ -1,48 +1,60 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
-enum PetAction { feed, play, sleep }
+enum PetAction { pet, feed, play, sleep, wake, bathe, toilet }
+
+class PetException implements Exception {
+  const PetException(this.code, this.message);
+
+  final String code;
+  final String message;
+
+  @override
+  String toString() => message;
+}
 
 class PetService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  PetService({FirebaseFirestore? firestore, FirebaseFunctions? functions})
+    : _db = firestore ?? FirebaseFirestore.instance,
+      _functions = functions ?? FirebaseFunctions.instance;
+
+  final FirebaseFirestore _db;
+  final FirebaseFunctions _functions;
+
   DocumentReference<Map<String, dynamic>> _ref(String coupleCode) =>
       _db.collection('couples').doc(coupleCode).collection('state').doc('pet');
+
   Stream<DocumentSnapshot<Map<String, dynamic>>> watch(String coupleCode) =>
       _ref(coupleCode).snapshots();
 
-  Future<void> performAction(String coupleCode, PetAction action) async {
-    final ref = _ref(coupleCode);
-    await _db.runTransaction((transaction) async {
-      final current =
-          (await transaction.get(ref)).data() ?? <String, dynamic>{};
-      int value(String key, int fallback) =>
-          (current[key] as num?)?.toInt() ?? fallback;
-      var hunger = value('hunger', 70);
-      var happiness = value('happiness', 80);
-      var energy = value('energy', 65);
-      switch (action) {
-        case PetAction.feed:
-          hunger += 20;
-          happiness += 4;
-          break;
-        case PetAction.play:
-          happiness += 15;
-          energy -= 12;
-          hunger -= 8;
-          break;
-        case PetAction.sleep:
-          energy += 25;
-          hunger -= 6;
-          break;
-      }
-      int clamp(int number) => number.clamp(0, 100);
-      transaction.set(ref, {
-        'name': current['name'] ?? 'Pawdo',
-        'hunger': clamp(hunger),
-        'happiness': clamp(happiness),
-        'energy': clamp(energy),
-        'lastAction': action.name,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    });
+  Future<Map<String, dynamic>> performAction(
+    String coupleCode,
+    PetAction action,
+  ) async {
+    try {
+      final result = await _functions.httpsCallable('performPetAction').call({
+        'coupleCode': coupleCode,
+        'action': action.name,
+      });
+      return Map<String, dynamic>.from(result.data as Map);
+    } on FirebaseFunctionsException catch (error) {
+      throw PetException(error.code, _messageFor(error));
+    } catch (_) {
+      throw const PetException(
+        'unavailable',
+        'No se pudo cuidar a Pawdo. Revisa tu conexión.',
+      );
+    }
+  }
+
+  String _messageFor(FirebaseFunctionsException error) {
+    return switch (error.code) {
+      'failed-precondition' =>
+        error.message ?? 'Pawdo no puede hacer eso ahora.',
+      'resource-exhausted' => 'Dale un momento a Pawdo antes de otra acción.',
+      'permission-denied' => 'Ya no tienes acceso a esta mascota compartida.',
+      'unavailable' => 'Sin conexión. La acción no fue confirmada.',
+      _ => error.message ?? 'No se pudo completar la acción.',
+    };
   }
 }

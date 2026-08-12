@@ -288,8 +288,14 @@ service cloud.firestore {
         allow create, update, delete: if false;
       }
 
+      match /state/pet {
+        allow read: if member(code);
+        allow create, update, delete: if false;
+      }
+
       match /state/{document=**} {
-        allow read, write: if member(code);
+        allow read: if member(code);
+        allow write: if false;
       }
 
       match /cinemaReactions/{document=**} {

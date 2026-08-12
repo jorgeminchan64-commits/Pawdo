@@ -4,12 +4,49 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/app_providers.dart';
+import '../models/pet_state.dart';
 import '../services/pet_service.dart';
 
-class PetScreen extends ConsumerWidget {
+class PetScreen extends ConsumerStatefulWidget {
   const PetScreen({super.key});
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PetScreen> createState() => _PetScreenState();
+}
+
+class _PetScreenState extends ConsumerState<PetScreen> {
+  PetAction? _busyAction;
+  String? _localReaction;
+
+  Future<void> _perform(
+    PetService service,
+    String code,
+    PetAction action,
+  ) async {
+    if (_busyAction != null) return;
+    setState(() {
+      _busyAction = action;
+      _localReaction = _reactionFor(action);
+    });
+    try {
+      final result = await service.performAction(code, action);
+      final message = result['message']?.toString();
+      if (mounted && message != null && message.isNotEmpty) {
+        setState(() => _localReaction = message);
+      }
+    } on PetException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _busyAction = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return const SizedBox.shrink();
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -30,72 +67,166 @@ class PetScreen extends ConsumerWidget {
         return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
           stream: service.watch(code),
           builder: (context, snapshot) {
-            final pet = snapshot.data?.data() ?? const <String, dynamic>{};
-            int stat(String key, int fallback) =>
-                (pet[key] as num?)?.toInt() ?? fallback;
+            if (snapshot.hasError) {
+              return const Scaffold(
+                body: Center(child: Text('No se pudo cargar a Pawdo.')),
+              );
+            }
+            final pet = PetState.fromMap(snapshot.data?.data());
             return Scaffold(
-              appBar: AppBar(title: const Text('Pawdo'), centerTitle: true),
-              body: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
+              appBar: AppBar(
+                title: Text(pet.name),
+                centerTitle: true,
+                actions: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: Center(
+                      child: Text(
+                        '${pet.moodEmoji} ${pet.moodLabel}',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              body: SafeArea(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(24, 18, 24, 30),
                   children: [
-                    const Spacer(),
-                    Container(
-                      width: 180,
-                      height: 180,
-                      padding: const EdgeInsets.all(10),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFFE8F2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Image.asset(
-                        'assets/images/pets/dog_01.png',
-                        fit: BoxFit.contain,
-                        cacheWidth: 420,
+                    Center(
+                      child: GestureDetector(
+                        onTap: _busyAction == null
+                            ? () => _perform(service, code, PetAction.pet)
+                            : null,
+                        child: AnimatedScale(
+                          scale: _busyAction == null ? 1 : 1.06,
+                          duration: const Duration(milliseconds: 240),
+                          curve: Curves.easeOutBack,
+                          child: AnimatedOpacity(
+                            opacity: pet.isSleeping ? .72 : 1,
+                            duration: const Duration(milliseconds: 300),
+                            child: Container(
+                              width: 190,
+                              height: 190,
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFE8F2),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.pink.withValues(alpha: .16),
+                                    blurRadius: 24,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: Image.asset(
+                                'assets/images/pets/dog_01.png',
+                                fit: BoxFit.contain,
+                                cacheWidth: 420,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      pet['name']?.toString() ?? 'Pawdo',
-                      style: Theme.of(context).textTheme.headlineSmall,
+                    const SizedBox(height: 14),
+                    Semantics(
+                      liveRegion: true,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Text(
+                          _localReaction ?? pet.reaction,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     _Stat(
                       label: 'Hambre',
-                      value: stat('hunger', 70),
+                      value: pet.hunger,
                       color: Colors.orange,
                     ),
                     _Stat(
                       label: 'Felicidad',
-                      value: stat('happiness', 80),
+                      value: pet.happiness,
                       color: Colors.pink,
                     ),
                     _Stat(
                       label: 'Energía',
-                      value: stat('energy', 65),
+                      value: pet.energy,
                       color: Colors.blue,
                     ),
-                    const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    _Stat(
+                      label: 'Higiene',
+                      value: pet.hygiene,
+                      color: Colors.cyan,
+                    ),
+                    _Stat(
+                      label: 'Necesidad de baño',
+                      value: pet.toiletNeed,
+                      color: Colors.brown,
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      alignment: WrapAlignment.spaceEvenly,
+                      spacing: 14,
+                      runSpacing: 18,
                       children: [
                         _Action(
                           icon: Icons.restaurant,
                           label: 'Alimentar',
-                          onTap: () =>
-                              service.performAction(code, PetAction.feed),
+                          busy: _busyAction == PetAction.feed,
+                          onTap: () => _perform(service, code, PetAction.feed),
                         ),
                         _Action(
                           icon: Icons.sports_tennis,
                           label: 'Jugar',
-                          onTap: () =>
-                              service.performAction(code, PetAction.play),
+                          busy: _busyAction == PetAction.play,
+                          onTap: () => _perform(service, code, PetAction.play),
                         ),
                         _Action(
-                          icon: Icons.bedtime,
-                          label: 'Dormir',
+                          icon: pet.isSleeping
+                              ? Icons.wb_sunny_rounded
+                              : Icons.bedtime,
+                          label: pet.isSleeping ? 'Despertar' : 'Dormir',
+                          busy:
+                              _busyAction == PetAction.sleep ||
+                              _busyAction == PetAction.wake,
+                          onTap: () => _perform(
+                            service,
+                            code,
+                            pet.isSleeping ? PetAction.wake : PetAction.sleep,
+                          ),
+                        ),
+                        _Action(
+                          icon: Icons.bathtub_rounded,
+                          label: 'Bañar',
+                          busy: _busyAction == PetAction.bathe,
+                          onTap: () => _perform(service, code, PetAction.bathe),
+                        ),
+                        _Action(
+                          icon: Icons.wc_rounded,
+                          label: 'Ir al baño',
+                          busy: _busyAction == PetAction.toilet,
                           onTap: () =>
-                              service.performAction(code, PetAction.sleep),
+                              _perform(service, code, PetAction.toilet),
+                        ),
+                        _Action(
+                          icon: Icons.favorite_rounded,
+                          label: 'Acariciar',
+                          busy: _busyAction == PetAction.pet,
+                          onTap: () => _perform(service, code, PetAction.pet),
                         ),
                       ],
                     ),
@@ -108,6 +239,16 @@ class PetScreen extends ConsumerWidget {
       },
     );
   }
+
+  String _reactionFor(PetAction action) => switch (action) {
+    PetAction.pet => '¡Más caricias! 💗',
+    PetAction.feed => '¡Qué rico! 🍖',
+    PetAction.play => '¡Vamos a jugar! 🎾',
+    PetAction.sleep => 'Buenas noches… 💤',
+    PetAction.wake => '¡Buenos días! ☀️',
+    PetAction.bathe => '¡Burbujas! 🫧',
+    PetAction.toilet => 'Ahora me siento más cómodo.',
+  };
 }
 
 class _Stat extends StatelessWidget {
@@ -137,15 +278,32 @@ class _Stat extends StatelessWidget {
 }
 
 class _Action extends StatelessWidget {
-  const _Action({required this.icon, required this.label, required this.onTap});
+  const _Action({
+    required this.icon,
+    required this.label,
+    required this.busy,
+    required this.onTap,
+  });
   final IconData icon;
   final String label;
+  final bool busy;
   final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      IconButton.filled(onPressed: onTap, icon: Icon(icon)),
-      Text(label),
-    ],
+  Widget build(BuildContext context) => SizedBox(
+    width: 86,
+    child: Column(
+      children: [
+        IconButton.filled(
+          onPressed: busy ? null : onTap,
+          icon: busy
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(icon),
+        ),
+        Text(label, textAlign: TextAlign.center),
+      ],
+    ),
   );
 }
