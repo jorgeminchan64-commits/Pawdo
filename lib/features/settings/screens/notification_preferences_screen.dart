@@ -34,6 +34,7 @@ class _NotificationPreferencesScreenState
       await reference.set({
         'chatEnabled': values['chatEnabled'] ?? true,
         'quickMessagesEnabled': values['quickMessagesEnabled'] ?? true,
+        'calendarEnabled': values['calendarEnabled'] ?? true,
         'hideSensitiveContent': values['hideSensitiveContent'] ?? true,
         'quietHoursEnabled': values['quietHoursEnabled'] ?? false,
         'quietStartHour': values['quietStartHour'] ?? 22,
@@ -58,6 +59,7 @@ class _NotificationPreferencesScreenState
                 final data = snapshot.data?.data() ?? const <String, dynamic>{};
                 final chatEnabled = data['chatEnabled'] != false;
                 final quickEnabled = data['quickMessagesEnabled'] != false;
+                final calendarEnabled = data['calendarEnabled'] != false;
                 final hideContent = data['hideSensitiveContent'] != false;
                 final quietEnabled = data['quietHoursEnabled'] == true;
                 final start = (data['quietStartHour'] as num?)?.toInt() ?? 22;
@@ -65,6 +67,7 @@ class _NotificationPreferencesScreenState
                 final values = <String, dynamic>{
                   'chatEnabled': chatEnabled,
                   'quickMessagesEnabled': quickEnabled,
+                  'calendarEnabled': calendarEnabled,
                   'hideSensitiveContent': hideContent,
                   'quietHoursEnabled': quietEnabled,
                   'quietStartHour': start,
@@ -133,6 +136,15 @@ class _NotificationPreferencesScreenState
                               ...values,
                               'quickMessagesEnabled': value,
                             }),
+                    ),
+                    SwitchListTile(
+                      value: calendarEnabled,
+                      title: const Text('Calendario compartido'),
+                      subtitle: const Text('Avisar sobre eventos programados.'),
+                      onChanged: _saving
+                          ? null
+                          : (value) =>
+                                _save({...values, 'calendarEnabled': value}),
                     ),
                     SwitchListTile(
                       value: hideContent,

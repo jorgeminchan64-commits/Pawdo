@@ -55,6 +55,17 @@ function memoryMetadata(uid, memoryId, variant, code = coupleCode) {
   };
 }
 
+function calendarRef(uid, eventId, code = coupleCode) {
+  return ref(storage(uid), `couples/${code}/calendar/${eventId}/photo.jpg`);
+}
+
+function calendarMetadata(uid, eventId, code = coupleCode) {
+  return {
+    contentType: 'image/jpeg',
+    customMetadata: { uploadedBy: uid, coupleCode: code, eventId },
+  };
+}
+
 describe('Pawdo Storage Rules', () => {
   before(async () => {
     testEnv = await initializeTestEnvironment({
@@ -222,6 +233,29 @@ describe('Pawdo Storage Rules', () => {
     await assertFails(uploadBytes(
       memoryRef(user1, memoryId, 'thumb.jpg'), new Uint8Array(250 * 1024 + 1),
       memoryMetadata(user1, memoryId, 'thumbnail'),
+    ));
+  });
+
+  it('allows a bounded calendar photo and member playback', async () => {
+    const eventId = 'calendar-event-001';
+    await assertSucceeds(uploadBytes(
+      calendarRef(user1, eventId), smallJpeg, calendarMetadata(user1, eventId),
+    ));
+    await assertSucceeds(getBytes(calendarRef(user2, eventId)));
+    await assertFails(deleteObject(calendarRef(user1, eventId)));
+  });
+
+  it('rejects forged, outsider and oversized calendar photos', async () => {
+    const eventId = 'calendar-event-002';
+    await assertFails(uploadBytes(
+      calendarRef(outsider, eventId), smallJpeg, calendarMetadata(outsider, eventId),
+    ));
+    await assertFails(uploadBytes(
+      calendarRef(user1, eventId), smallJpeg, calendarMetadata(user1, 'another-event'),
+    ));
+    await assertFails(uploadBytes(
+      calendarRef(user1, eventId), new Uint8Array(750 * 1024 + 1),
+      calendarMetadata(user1, eventId),
     ));
   });
 

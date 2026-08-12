@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/widgets/network_status_banner.dart';
 import '../../chat/screens/chat_screen.dart';
+import '../../calendar/screens/couple_calendar_screen.dart';
 import '../../games/screens/games_hub_screen.dart';
 import '../../interior/screens/pawdo_interior_screen.dart';
 import '../../missions/screens/daily_missions_screen.dart';
@@ -66,6 +67,7 @@ class _MainScreenState extends State<MainScreen> {
         onOpenGames: () => _open(const GamesHubScreen()),
         onOpenMissions: () => _open(const DailyMissionsScreen()),
         onOpenAlbum: () => _open(const MemoryAlbumScreen()),
+        onOpenCalendar: () => _open(const CoupleCalendarScreen()),
         onNavigate: changeTab,
       ),
       const PetScreen(),

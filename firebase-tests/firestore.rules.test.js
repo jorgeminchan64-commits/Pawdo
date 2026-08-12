@@ -303,11 +303,13 @@ describe('Pawdo Firestore Rules', () => {
     const settings = doc(db(user1), 'users', user1, 'settings', 'notifications');
     await assertSucceeds(setDoc(settings, {
       chatEnabled: true, quickMessagesEnabled: true,
+      calendarEnabled: true,
       hideSensitiveContent: true, quietHoursEnabled: false,
       quietStartHour: 22, quietEndHour: 8, updatedAt: serverTimestamp(),
     }));
     await assertFails(setDoc(settings, {
       chatEnabled: true, quickMessagesEnabled: true,
+      calendarEnabled: true,
       hideSensitiveContent: true, quietHoursEnabled: false,
       quietStartHour: 99, quietEndHour: 8, updatedAt: serverTimestamp(),
     }));
@@ -366,6 +368,19 @@ describe('Pawdo Firestore Rules', () => {
     await assertSucceeds(getDoc(doc(db(user2), 'couples', code, 'memories', 'memory12345')));
     await assertFails(getDoc(doc(db(outsider), 'couples', code, 'memories', 'memory12345')));
     await assertFails(updateDoc(memory, { description: 'Manipulado' }));
+  });
+
+  it('keeps calendar events readable to the couple and server-only to mutate', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'couples', code, 'calendarEvents', 'event12345'), {
+        title: 'Nuestra cita', createdBy: user1, category: 'date',
+      });
+    });
+    const event = doc(db(user1), 'couples', code, 'calendarEvents', 'event12345');
+    await assertSucceeds(getDoc(event));
+    await assertSucceeds(getDoc(doc(db(user2), 'couples', code, 'calendarEvents', 'event12345')));
+    await assertFails(getDoc(doc(db(outsider), 'couples', code, 'calendarEvents', 'event12345')));
+    await assertFails(updateDoc(event, { title: 'Manipulado' }));
   });
 
   it('denies forged uploadedBy and outsider messages', async () => {

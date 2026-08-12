@@ -98,6 +98,19 @@ service firebase.storage {
       allow update, delete: if false;
     }
 
+    match /couples/{coupleId}/calendar/{eventId}/photo.jpg {
+      allow read: if isCoupleMember(coupleId);
+      allow create: if resource == null && isCoupleMember(coupleId) &&
+        request.resource != null && request.resource.size > 0 &&
+        request.resource.size <= 750 * 1024 &&
+        request.resource.contentType == 'image/jpeg' &&
+        eventId.matches('[A-Za-z0-9_-]{10,80}') &&
+        request.resource.metadata.uploadedBy == request.auth.uid &&
+        request.resource.metadata.coupleCode == coupleId &&
+        request.resource.metadata.eventId == eventId;
+      allow update, delete: if false;
+    }
+
     // Existing profile-photo feature, kept private to authenticated Pawdo users.
     match /profile_photos/{fileName} {
       allow read: if canReadProfilePhoto(fileName);

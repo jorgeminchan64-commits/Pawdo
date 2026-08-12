@@ -175,11 +175,13 @@ service cloud.firestore {
         allow read: if signedIn() && request.auth.uid == userId;
         allow create, update: if signedIn() && request.auth.uid == userId &&
           request.resource.data.keys().hasOnly([
-            'chatEnabled', 'quickMessagesEnabled', 'hideSensitiveContent',
+            'chatEnabled', 'quickMessagesEnabled', 'calendarEnabled',
+            'hideSensitiveContent',
             'quietHoursEnabled', 'quietStartHour', 'quietEndHour', 'updatedAt'
           ]) &&
           request.resource.data.chatEnabled is bool &&
           request.resource.data.quickMessagesEnabled is bool &&
+          request.resource.data.calendarEnabled is bool &&
           request.resource.data.hideSensitiveContent is bool &&
           request.resource.data.quietHoursEnabled is bool &&
           request.resource.data.quietStartHour is int &&
@@ -275,6 +277,11 @@ service cloud.firestore {
       }
 
       match /memories/{memoryId} {
+        allow read: if member(code);
+        allow create, update, delete: if false;
+      }
+
+      match /calendarEvents/{eventId} {
         allow read: if member(code);
         allow create, update, delete: if false;
       }

@@ -18,6 +18,7 @@ class HomeDashboardScreen extends StatefulWidget {
     required this.onOpenGames,
     required this.onOpenMissions,
     required this.onOpenAlbum,
+    required this.onOpenCalendar,
     required this.onNavigate,
   });
 
@@ -26,6 +27,7 @@ class HomeDashboardScreen extends StatefulWidget {
   final VoidCallback onOpenGames;
   final VoidCallback onOpenMissions;
   final VoidCallback onOpenAlbum;
+  final VoidCallback onOpenCalendar;
   final ValueChanged<int> onNavigate;
 
   @override
@@ -80,6 +82,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               onOpenGames: widget.onOpenGames,
               onOpenMissions: widget.onOpenMissions,
               onOpenAlbum: widget.onOpenAlbum,
+              onOpenCalendar: widget.onOpenCalendar,
               onNavigate: widget.onNavigate,
             );
           },
@@ -100,6 +103,7 @@ class _DashboardContent extends StatelessWidget {
     required this.onOpenGames,
     required this.onOpenMissions,
     required this.onOpenAlbum,
+    required this.onOpenCalendar,
     required this.onNavigate,
   });
 
@@ -112,6 +116,7 @@ class _DashboardContent extends StatelessWidget {
   final VoidCallback onOpenGames;
   final VoidCallback onOpenMissions;
   final VoidCallback onOpenAlbum;
+  final VoidCallback onOpenCalendar;
   final ValueChanged<int> onNavigate;
 
   int _number(String key, int fallback) =>
@@ -268,6 +273,11 @@ class _DashboardContent extends StatelessWidget {
                         Icons.photo_album_rounded,
                         'Álbum',
                         onOpenAlbum,
+                      ),
+                      _Shortcut(
+                        Icons.calendar_month_rounded,
+                        'Calendario',
+                        onOpenCalendar,
                       ),
                       _Shortcut(
                         Icons.settings_rounded,

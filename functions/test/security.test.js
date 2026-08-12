@@ -494,6 +494,69 @@ describe('Pawdo callable security', () => {
     assert.equal(deleted.deleted, true);
   });
 
+  it('creates a calendar event with a server reminder and protects deletion', async () => {
+    const eventId = 'calendar-event-001';
+    const result = await handlers.saveCalendarEventHandler(request(user1, {
+      coupleCode: code,
+      eventId,
+      title: 'Nuestra cita',
+      description: 'Cena juntos',
+      date: '2026-08-20T01:00:00.000Z',
+      category: 'date',
+      emoji: '💗',
+      reminderMinutes: 60,
+      photoPath: null,
+    }));
+    assert.equal(result.saved, true);
+    const stored = (await db.doc(`couples/${code}/calendarEvents/${eventId}`).get()).data();
+    assert.equal(stored.createdBy, user1);
+    assert.equal(stored.reminderPending, true);
+    assert.equal(stored.reminderAt.toDate().toISOString(), '2026-08-20T00:00:00.000Z');
+    await rejectsCode(
+      () => handlers.deleteCalendarEventHandler(request(user2, { coupleCode: code, eventId })),
+      'permission-denied',
+    );
+    const deleted = await handlers.deleteCalendarEventHandler(request(user1, {
+      coupleCode: code, eventId,
+    }));
+    assert.equal(deleted.deleted, true);
+  });
+
+  it('rejects invalid calendar categories and reminder intervals', async () => {
+    const base = {
+      coupleCode: code, eventId: 'calendar-invalid-001', title: 'Evento',
+      description: '', date: '2026-08-20T01:00:00.000Z', emoji: '📅', photoPath: null,
+    };
+    await rejectsCode(
+      () => handlers.saveCalendarEventHandler(request(user1, {
+        ...base, category: 'private', reminderMinutes: 60,
+      })),
+      'invalid-argument',
+    );
+    await rejectsCode(
+      () => handlers.saveCalendarEventHandler(request(user1, {
+        ...base, category: 'special', reminderMinutes: 999,
+      })),
+      'invalid-argument',
+    );
+  });
+
+  it('processes each due calendar reminder only once', async () => {
+    await db.doc(`couples/${code}/calendarEvents/calendar-due-001`).set({
+      title: 'Cena', emoji: '📅', date: Timestamp.fromDate(new Date('2026-08-20T01:00:00Z')),
+      reminderAt: Timestamp.fromMillis(Date.now() - 60 * 1000), reminderPending: true,
+    });
+    const first = await handlers.sendCalendarRemindersHandler();
+    const second = await handlers.sendCalendarRemindersHandler();
+    const stored = (await db.doc(
+      `couples/${code}/calendarEvents/calendar-due-001`,
+    ).get()).data();
+    assert.equal(first.processed, 1);
+    assert.equal(second.processed, 0);
+    assert.equal(stored.reminderPending, false);
+    assert.ok(stored.reminderProcessedAt);
+  });
+
   it('rate limits bursts and quick-message spam', async () => {
     await handlers.sendChatMessageHandler(request(user1, {
       coupleCode: code, messageId: 'quick-message-001', quickId: 'miss_you',

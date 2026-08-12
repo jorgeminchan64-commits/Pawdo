@@ -184,6 +184,11 @@ const QUICK_MESSAGES = Object.freeze({
 const MEMORY_CATEGORIES = new Set([
   'travel', 'date', 'anniversary', 'special', 'other',
 ]);
+const CALENDAR_CATEGORIES = new Set([
+  'anniversary', 'date', 'outing', 'travel', 'birthday', 'special',
+  'memory', 'conversation', 'reminder',
+]);
+const CALENDAR_REMINDERS = new Set([null, 0, 30, 60, 1440, 10080]);
 
 const COUPLE_QUESTIONS = Object.freeze([
   '¿Cuál es tu recuerdo favorito de nosotros?',
@@ -452,6 +457,14 @@ function requireMemoryId(data) {
     throw new HttpsError('invalid-argument', 'Identificador de recuerdo inválido.');
   }
   return memoryId;
+}
+
+function requireEventId(data) {
+  const eventId = data?.eventId;
+  if (typeof eventId !== 'string' || !/^[A-Za-z0-9_-]{10,80}$/.test(eventId)) {
+    throw new HttpsError('invalid-argument', 'Identificador de evento inválido.');
+  }
+  return eventId;
 }
 
 function chatRateUpdate(rate, nowMillis, isQuick) {
@@ -1224,6 +1237,192 @@ async function cleanupMemoryFilesHandler(event) {
     getStorage().bucket().file(`${prefix}/original.jpg`).delete({ ignoreNotFound: true }),
     getStorage().bucket().file(`${prefix}/thumb.jpg`).delete({ ignoreNotFound: true }),
   ]);
+}
+
+async function saveCalendarEventHandler(request) {
+  const uid = requireAuth(request);
+  const coupleCode = requireCoupleCode(request.data);
+  const eventId = requireEventId(request.data);
+  const title = typeof request.data?.title === 'string' ? request.data.title.trim() : '';
+  const description = typeof request.data?.description === 'string'
+    ? request.data.description.trim()
+    : '';
+  const emoji = typeof request.data?.emoji === 'string' ? request.data.emoji.trim() : '';
+  const category = request.data?.category;
+  const reminderMinutes = request.data?.reminderMinutes ?? null;
+  const date = new Date(request.data?.date);
+  const expectedPhotoPath = `couples/${coupleCode}/calendar/${eventId}/photo.jpg`;
+  const photoPath = request.data?.photoPath == null ? null : request.data.photoPath;
+  if (!title || title.length > 100 || description.length > 500 ||
+      !emoji || [...emoji].length > 8 || !CALENDAR_CATEGORIES.has(category) ||
+      !CALENDAR_REMINDERS.has(reminderMinutes) || !Number.isFinite(date.getTime()) ||
+      date < new Date('1900-01-01T00:00:00Z') ||
+      date > new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000) ||
+      (photoPath !== null && photoPath !== expectedPhotoPath)) {
+    throw new HttpsError('invalid-argument', 'Datos del evento inválidos.');
+  }
+  if (photoPath) {
+    let metadata;
+    try {
+      [metadata] = await getStorage().bucket().file(photoPath).getMetadata();
+    } catch (error) {
+      if (error?.code === 404) throw new HttpsError('not-found', 'La foto no existe.');
+      throw error;
+    }
+    const custom = metadata.metadata || {};
+    const size = Number(metadata.size);
+    if (!Number.isFinite(size) || size <= 0 || size > 750 * 1024 ||
+        metadata.contentType !== 'image/jpeg' || custom.uploadedBy !== uid ||
+        custom.coupleCode !== coupleCode || custom.eventId !== eventId) {
+      throw new HttpsError('failed-precondition', 'La foto no pasó la validación.');
+    }
+  }
+  const db = getFirestore();
+  const coupleRef = db.doc(`couples/${coupleCode}`);
+  const eventRef = coupleRef.collection('calendarEvents').doc(eventId);
+  return db.runTransaction(async (tx) => {
+    const [coupleSnapshot, eventSnapshot] = await Promise.all([
+      tx.get(coupleRef), tx.get(eventRef),
+    ]);
+    assertActiveMember(coupleSnapshot.data() || {}, uid);
+    if (eventSnapshot.exists) throw new HttpsError('already-exists', 'Ese evento ya existe.');
+    tx.create(eventRef, {
+      schemaVersion: 1, title, description, date: Timestamp.fromDate(date),
+      category, emoji, reminderMinutes, createdBy: uid,
+      reminderPending: reminderMinutes !== null,
+      ...(reminderMinutes !== null
+        ? { reminderAt: Timestamp.fromMillis(date.getTime() - reminderMinutes * 60 * 1000) }
+        : {}),
+      ...(photoPath ? { photoPath } : {}),
+      createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
+    });
+    return { saved: true, eventId };
+  });
+}
+
+async function deleteCalendarEventHandler(request) {
+  const uid = requireAuth(request);
+  const coupleCode = requireCoupleCode(request.data);
+  const eventId = requireEventId(request.data);
+  const db = getFirestore();
+  const coupleRef = db.doc(`couples/${coupleCode}`);
+  const eventRef = coupleRef.collection('calendarEvents').doc(eventId);
+  return db.runTransaction(async (tx) => {
+    const [coupleSnapshot, eventSnapshot] = await Promise.all([tx.get(coupleRef), tx.get(eventRef)]);
+    assertActiveMember(coupleSnapshot.data() || {}, uid);
+    if (!eventSnapshot.exists) return { deleted: false };
+    if (eventSnapshot.data()?.createdBy !== uid) {
+      throw new HttpsError('permission-denied', 'Solo quien creó el evento puede eliminarlo.');
+    }
+    tx.delete(eventRef);
+    return { deleted: true };
+  });
+}
+
+async function discardCalendarUploadHandler(request) {
+  const uid = requireAuth(request);
+  const coupleCode = requireCoupleCode(request.data);
+  const eventId = requireEventId(request.data);
+  const file = getStorage().bucket().file(`couples/${coupleCode}/calendar/${eventId}/photo.jpg`);
+  try {
+    const [metadata] = await file.getMetadata();
+    if (metadata.metadata?.uploadedBy === uid && metadata.metadata?.coupleCode === coupleCode) {
+      await file.delete({ ignoreNotFound: true });
+    }
+  } catch (error) {
+    if (error?.code !== 404) throw error;
+  }
+  return { deleted: true };
+}
+
+async function cleanupCalendarPhotoHandler(event) {
+  await getStorage().bucket()
+    .file(`couples/${event.params.coupleCode}/calendar/${event.params.eventId}/photo.jpg`)
+    .delete({ ignoreNotFound: true });
+}
+
+async function sendCalendarReminderToUser(db, uid, event, coupleCode, eventId) {
+  const userRef = db.doc(`users/${uid}`);
+  const [userSnapshot, settingsSnapshot, devicesSnapshot] = await Promise.all([
+    userRef.get(),
+    userRef.collection('settings').doc('notifications').get(),
+    userRef.collection('devices').where('enabled', '==', true).limit(20).get(),
+  ]);
+  const settings = settingsSnapshot.data() || {};
+  if (settings.calendarEnabled === false) return;
+  const user = userSnapshot.data() || {};
+  const deviceDocs = devicesSnapshot.docs.filter((document) => {
+    const token = document.data()?.token;
+    return typeof token === 'string' && token.length > 20;
+  });
+  const tokens = [...new Set(deviceDocs.map((document) => document.data().token))];
+  if (tokens.length === 0 && typeof user.fcmToken === 'string') tokens.push(user.fcmToken);
+  if (tokens.length === 0) return;
+  const response = await getMessaging().sendEachForMulticast({
+    tokens,
+    notification: {
+      title: `${event.emoji || '📅'} ${event.title}`,
+      body: 'Recordatorio del calendario de pareja',
+    },
+    data: { type: 'calendar', coupleCode, eventId },
+    android: {
+      priority: 'high',
+      collapseKey: `pawdo_calendar_${eventId}`,
+      notification: {
+        channelId: 'pawdo_reminders',
+        visibility: 'private',
+        tag: `pawdo_calendar_${eventId}`,
+      },
+    },
+  });
+  const invalidCodes = new Set([
+    'messaging/registration-token-not-registered',
+    'messaging/invalid-registration-token',
+  ]);
+  const cleanup = [];
+  response.responses.forEach((result, index) => {
+    if (result.success || !invalidCodes.has(result.error?.code)) return;
+    const token = tokens[index];
+    for (const document of deviceDocs) {
+      if (document.data().token === token) cleanup.push(document.ref.delete());
+    }
+    if (user.fcmToken === token) cleanup.push(userRef.update({ fcmToken: FieldValue.delete() }));
+  });
+  if (cleanup.length > 0) await Promise.allSettled(cleanup);
+}
+
+async function sendCalendarRemindersHandler() {
+  const db = getFirestore();
+  const now = Timestamp.now();
+  const snapshot = await db.collectionGroup('calendarEvents')
+    .where('reminderPending', '==', true)
+    .limit(300)
+    .get();
+  const due = snapshot.docs.filter((document) => {
+    const reminderAt = document.data()?.reminderAt;
+    return reminderAt?.toMillis && reminderAt.toMillis() <= now.toMillis();
+  });
+  for (const document of due) {
+    const event = document.data() || {};
+    const coupleRef = document.ref.parent.parent;
+    if (!coupleRef) continue;
+    const coupleSnapshot = await coupleRef.get();
+    const couple = coupleSnapshot.data() || {};
+    const eventTime = event.date?.toMillis?.() || 0;
+    const valid = coupleSnapshot.exists && isActiveCouple(couple) &&
+      eventTime >= now.toMillis() - 24 * 60 * 60 * 1000;
+    await document.ref.update({
+      reminderPending: false,
+      reminderProcessedAt: FieldValue.serverTimestamp(),
+    });
+    if (!valid) continue;
+    const recipients = [...new Set([couple.user1, couple.user2])]
+      .filter((uid) => typeof uid === 'string' && uid);
+    await Promise.allSettled(recipients.map((uid) => sendCalendarReminderToUser(
+      db, uid, event, coupleRef.id, document.id,
+    )));
+  }
+  return { processed: due.length };
 }
 
 async function deleteChatMessageHandler(request) {
@@ -3306,6 +3505,14 @@ exports.cleanupMemoryFiles = onDocumentDeleted(
   'couples/{coupleCode}/memories/{memoryId}',
   cleanupMemoryFilesHandler,
 );
+exports.cleanupCalendarPhoto = onDocumentDeleted(
+  'couples/{coupleCode}/calendarEvents/{eventId}',
+  cleanupCalendarPhotoHandler,
+);
+exports.sendCalendarReminders = onSchedule(
+  'every 15 minutes',
+  sendCalendarRemindersHandler,
+);
 exports.createCoupleCode = onCall(createCoupleCodeHandler);
 exports.cancelCoupleInvitation = onCall(cancelCoupleInvitationHandler);
 exports.joinCouple = onCall(joinCoupleHandler);
@@ -3322,6 +3529,9 @@ exports.finalizeMemory = onCall(finalizeMemoryHandler);
 exports.discardMemoryUpload = onCall(discardMemoryUploadHandler);
 exports.toggleMemoryFavorite = onCall(toggleMemoryFavoriteHandler);
 exports.deleteMemory = onCall(deleteMemoryHandler);
+exports.saveCalendarEvent = onCall(saveCalendarEventHandler);
+exports.deleteCalendarEvent = onCall(deleteCalendarEventHandler);
+exports.discardCalendarUpload = onCall(discardCalendarUploadHandler);
 exports.deleteChatMessage = onCall(deleteChatMessageHandler);
 exports.markChatRead = onCall(markChatReadHandler);
 exports.cleanupExpiredCoupleInvitations = onSchedule(
@@ -3388,6 +3598,11 @@ exports._test = {
   toggleMemoryFavoriteHandler,
   deleteMemoryHandler,
   cleanupMemoryFilesHandler,
+  saveCalendarEventHandler,
+  deleteCalendarEventHandler,
+  discardCalendarUploadHandler,
+  cleanupCalendarPhotoHandler,
+  sendCalendarRemindersHandler,
   deleteChatMessageHandler,
   markChatReadHandler,
   notifyCoupleActivityHandler,
