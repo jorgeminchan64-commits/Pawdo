@@ -27,7 +27,8 @@
 | 18. Nuevos juegos | Completada | 3 juegos locales ligeros; 65 Flutter/57 Functions/45 reglas | Conversación/maquetación requieren prueba física | Iniciar FASE 19 |
 | 19. Tienda y personalización | Completada | 10 categorías y estados explícitos; 67 Flutter/57 Functions/45 reglas | Revisión visual pendiente; dinero real permanece desactivado | Iniciar FASE 20 |
 | 20. Optimización global | Completada técnica | Carga diferida, -37.5% latidos, assets limpiados, 69 Flutter y APK/AAB medidos | FPS/RAM/visual requieren dos teléfonos | Iniciar FASE 21 |
-| 21–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 21. App Check | Completada técnica | Debug/Play Integrity, renovación automática, 72 Flutter y APK | Enforcement exige consola, certificados y dos teléfonos | Iniciar FASE 22 |
+| 22–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
 | 25. Play Store | Bloqueada | APK unsigned de 107.31 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
@@ -147,10 +148,14 @@
 - Un PNG huérfano de 220,777 bytes, una pantalla de acceso duplicada y tres archivos vacíos fueron eliminados tras confirmar que no tenían consumidores.
 - Assets: 50,351,206 bytes. APK universal: 112,339,592 bytes, 220,991 menos que FASE 19. AAB técnico arm64: 72,544,764 bytes; APK por ABI entre 71,481,306 y 75,261,986 bytes.
 - Dos pruebas Flutter elevan la suite a 171 pruebas automatizadas; analyze quedó limpio. Backend y reglas no cambiaron y conservan la compuerta completa repetida en FASE 19.
+- App Check se activa antes de usar servicios Firebase: Debug solo en compilaciones debug y Play Integrity en Android release, con renovación automática del token.
+- Plataformas no preparadas no fingen attestation; Auth, reglas y validaciones server-side permanecen obligatorias.
+- Tres pruebas Flutter elevan la suite a 174 pruebas automatizadas; analyze quedó limpio y el APK release con App Check compiló en 112,356,448 bytes.
+- Enforcement remoto no fue activado: requiere registrar certificados, probar dos teléfonos y observar métricas antes de habilitarlo gradualmente.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 21: Firebase App Check.
+1. Iniciar FASE 22: Crashlytics.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.
