@@ -1,7 +1,7 @@
 # Pawdo — auditoría inicial de producción
 
-Fecha de actualización: 2026-08-11
-Alcance actualizado hasta el cierre de FASE 13. Este documento no declara la aplicación lista para producción.
+Fecha de actualización: 2026-08-12
+Alcance actualizado hasta la puerta técnica de FASE 24. Este documento no declara la aplicación lista para producción.
 
 ## Resumen ejecutivo
 
@@ -45,8 +45,8 @@ Los bloqueos de producción son concretos: release sin firma, `targetSdk` 34, do
 | Código legacy/duplicado | Media | `login_screen_new.dart`, `uth_gate.dart`, `features/home/screens/chat_screen.dart`, `pet_screen.dart` | Implementaciones antiguas no importadas por flujo activo | Confusión, tamaño fuente y riesgo de editar archivo equivocado | Confirmar rutas y eliminar en commit separado con tests | Pendiente gradual |
 | Functions monolítica | Media | `functions/index.js` (~115 KB) | Múltiples dominios y exports en un solo archivo | Revisión, ownership y pruebas selectivas difíciles | Modularizar sin cambiar contratos/export names | Pendiente gradual |
 | Presencia periódica | Baja | `presence_service.dart` | Latido cada 120 s, dentro de una frescura visual de 3 min | Coste Firestore/batería en sesiones largas | Sincronización inmediata en eventos y medición física | Mitigado FASE 20; 37.5% menos escrituras periódicas |
-| Cobertura UI y lifecycle insuficiente | Alta | `test`, `docs/phase_g_test_matrix.md` | 10 archivos de test Flutter; matriz manual todavía no ejecutada completamente | Navegación, permisos y recorridos físicos siguen sin garantía total | Añadir integration tests y repetir en dos teléfonos | Pendiente FASE 24 |
-| Compatibilidad 16 KB no demostrada | Alta | dependencias Android/artefacto | No se inspeccionaron todas las librerías nativas en dispositivo 16 KB | Posible incumplimiento/crash en dispositivos modernos | Analizar AAB/APK y probar entorno 16 KB tras actualizar dependencias | Pendiente FASE 25 |
+| Cobertura UI y lifecycle insuficiente | Alta | `test`, `docs/phase_g_test_matrix.md` | 75 pruebas Flutter pasan, pero cubren 10.7% de líneas y la matriz manual no se ejecutó en dispositivos | Navegación, permisos y recorridos físicos siguen sin garantía total | Ejecutar la matriz completa en dos teléfonos y añadir integración donde aparezcan brechas | Puerta automatizada FASE 24 aprobada; gate físico pendiente |
+| Compatibilidad 16 KB no demostrada | Alta | dependencias Android/artefacto | El APK pasa `zipalign -P 16`, pero no fue instalado en un entorno de páginas de 16 KB | Posible incumplimiento/crash en dispositivos modernos | Inspeccionar AAB/librerías nativas y probar arranque real en 16 KB | Parcial FASE 24; pendiente FASE 25 |
 
 ## Recursos y rendimiento
 
@@ -123,5 +123,7 @@ Pendiente de validar:
 - Puerta técnica de FASE 22: analyze limpio; 73 tests Flutter aprobados y APK de 112,505,685 bytes recompilado. Primer evento en consola pendiente de build interna.
 - FASE 23: documento de pareja y Cine con listas positivas, identidad y límites; Functions reemplazó su RC por 7.3.2 estable sin variar contratos.
 - Puerta técnica de FASE 23: analyze limpio; 73 Flutter, 57 Functions, 26 Firestore y 21 Storage aprobadas (177 total); APK de 112,505,685 bytes.
-- Pruebas físicas y profiling: no ejecutados en esta fase.
-- Siguiente paso autorizado por el roadmap: FASE 24, pruebas completas.
+- FASE 24: permisos y manifiesto fusionado auditados; Analytics sin uso retirado; cámara/micrófono opcionales; Lint Android sin errores y alineación ZIP 16 KB aprobada.
+- Puerta automatizada de FASE 24: analyze limpio; 75 Flutter, 57 Functions, 26 Firestore y 21 Storage aprobadas (179 total); cobertura 10.7%; APK de 112,069,422 bytes todavía sin firma.
+- Pruebas físicas, profiling, App Check enforced y primer evento Crashlytics: pendientes en dos teléfonos/build interna.
+- Siguiente paso autorizado por el roadmap: FASE 25, preparación de Play Store sin desplegar producción.

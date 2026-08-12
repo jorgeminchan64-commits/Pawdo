@@ -1,6 +1,6 @@
 # Pawdo — progreso hacia producción
 
-Última actualización: 2026-08-11
+Última actualización: 2026-08-12
 
 ## Estado por fase
 
@@ -30,8 +30,8 @@
 | 21. App Check | Completada técnica | Debug/Play Integrity, renovación automática, 72 Flutter y APK | Enforcement exige consola, certificados y dos teléfonos | Iniciar FASE 22 |
 | 22. Crashlytics | Completada técnica | Captura global redactada, plugin Android, 73 Flutter y APK | Primer evento requiere build interna y Firebase Console | Iniciar FASE 23 |
 | 23. Seguridad final | Completada técnica | Esquemas cerrados, Functions estable y 177 pruebas | Audit transitivo y gates externos requieren seguimiento | Iniciar FASE 24 |
-| 24. Pruebas completas | Pendiente | — | Requiere matriz integral y pruebas físicas | Iniciar ahora |
-| 25. Play Store | Bloqueada | APK unsigned de 107.31 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
+| 24. Pruebas completas | Completada técnica | 179 pruebas; analyze limpio; Lint 0 errores; permisos y APK inspeccionados | Cobertura 10.7% y matriz en dos teléfonos pendientes | Iniciar FASE 25 sin publicar |
+| 25. Play Store | En preparación | APK sin firma de 112,069,422 bytes; alineación ZIP 16 KB aprobada | Firma, target vigente, dominio propio, AAB, Data Safety y dispositivos | Resolver gate de publicación |
 
 ## Completado
 
@@ -163,13 +163,18 @@
 - Functions usa ahora `firebase-functions` 7.3.2 estable en lugar del release candidate, con sus 57 pruebas aprobadas sin cambios de contrato.
 - La compuerta queda en 73 Flutter, 57 Functions, 26 Firestore y 21 Storage: 177 pruebas automatizadas aprobadas; APK release de 112,505,685 bytes.
 - `npm audit` conserva 12 avisos transitivos (3 altos) documentados; no se ejecutó una corrección forzada que propone degradar Firebase y el runner de pruebas.
+- FASE 24 repite la batería completa con 75 Flutter, 57 Functions, 26 Firestore y 21 Storage: 179 pruebas aprobadas.
+- La cobertura Flutter medida es 10.7% (1,125 de 10,517 líneas); no reemplaza la matriz física.
+- Android Lint release queda en 0 errores y 13 advertencias; el APK de 112,069,422 bytes pasa la alineación ZIP de 16 KB, pero continúa sin firma.
+- Se retiró Firebase Analytics sin uso; el APK dejó de declarar `AD_ID`, AdServices e Install Referrer. Cámara y micrófono quedaron como hardware opcional y no existe ubicación en segundo plano.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 24: pruebas completas y matriz de lanzamiento.
-2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
-3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
-4. Completar Data Safety y comprobar ambos correos antes de Play Store.
+1. Iniciar FASE 25: requisitos vigentes de Google Play, versionado, target, AAB y firma segura.
+2. Ejecutar la matriz de FASE 24 en dos teléfonos antes de promover el release.
+3. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
+4. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
+5. Completar Data Safety y comprobar ambos correos antes de Play Store.
 
 ## Archivos modificados en FASE 0–7
 

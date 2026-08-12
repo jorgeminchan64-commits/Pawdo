@@ -1,6 +1,6 @@
 # Fase G: matriz de pruebas finales
 
-Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agrupar toda la validación al final.
+La parte automatizada se ejecutó el 2026-08-12: 179 pruebas aprobadas, análisis limpio y Android Lint sin errores. Las filas de esta matriz son la validación física pendiente y deben ejecutarse en dos teléfonos antes del lanzamiento. La evidencia y las limitaciones están en `docs/phase_24_test_gate.md`.
 
 ## Navegación e Inicio — FASE 7
 
