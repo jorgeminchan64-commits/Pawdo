@@ -100,6 +100,25 @@ Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agru
 | App en segundo plano durante grabación/reproducción | No mantiene una grabación oculta; al volver permite una acción controlada |
 | Dos teléfonos físicos | Audio grabado en A se reproduce claramente en B y viceversa |
 
+## Álbum de recuerdos — FASE 13
+
+| Caso | Resultado esperado |
+|---|---|
+| Abrir Álbum desde Inicio | Muestra estado vacío o recuerdos compartidos sin mezclarlos con el chat |
+| Crear con foto, descripción y fecha | Comprime, sube original/miniatura y aparece en ambos teléfonos |
+| Agregar lugar y etiquetas repetidas | Lugar se conserva; etiquetas se normalizan, deduplican y limitan a 10 |
+| Elegir cada categoría | Viajes, Citas, Aniversarios, Momentos especiales y Otros se muestran correctamente |
+| Cambiar cuadrícula/línea de tiempo | Conserva datos y orden descendente por fecha sin nuevas descargas del original |
+| Abrir detalle | Descarga original autenticado, permite zoom y muestra todos los metadatos |
+| Marcar favorito en A y B | Cada integrante conserva su propio corazón sin borrar el del otro |
+| Eliminar como creador | Documento desaparece y el trigger limpia original y miniatura |
+| Intentar eliminar como pareja no creadora | El servidor lo rechaza sin pérdida de datos |
+| Subir original >1 MB o miniatura >250 KB | Storage rechaza la variante fuera de límite |
+| Alterar ruta, pareja, variante o propietario | Storage/Functions rechazan el intento |
+| Desvincular pareja | Álbum e imágenes dejan de ser legibles desde ambos perfiles anteriores |
+| Perder red entre original y metadata | No publica un recuerdo parcial y solicita reintento |
+| Cargar 100 recuerdos | Cuadrícula usa miniaturas, desplazamiento fluido y caché acotada a la sesión |
+
 ## Dos teléfonos reales
 
 | Caso | Teléfono A | Teléfono B | Resultado esperado |
