@@ -20,8 +20,9 @@
 | 11. Mascota | Completada | Cuidado server-side, 7 emociones, 49 Flutter/48 Functions/35 reglas; APK recompilado | Validación táctil en dos teléfonos; voz/sonido descartados por permisos y consumo | Iniciar FASE 12 |
 | 12. Chat y audio | Completada | Audio privado AAC, 52 Flutter/49 Functions/38 reglas; APK recompilado | Grabación/reproducción física pendiente en dos teléfonos | Iniciar FASE 13 |
 | 13. Álbum | Completada | Cuadrícula/línea de tiempo, detalle, originales+miniaturas; 55 Flutter/50 Functions/41 reglas | Flujo visual y cámara física pendientes en dos teléfonos | Iniciar FASE 14 |
-| 14–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
-| 25. Play Store | Bloqueada | APK unsigned de 106.50 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
+| 14. Calendario | Completada | Mes/próximos/recuerdos, eventos, foto y avisos; 58 Flutter/53 Functions/44 reglas | Aviso push y zona horaria requieren prueba en dos teléfonos | Iniciar FASE 15 |
+| 15–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 25. Play Store | Bloqueada | APK unsigned de 107.31 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
 
@@ -29,7 +30,7 @@
 - Refuerzo de `.gitignore` contra dependencias, artefactos y credenciales privadas.
 - Punto de retorno del proyecto original.
 - Formato automático aislado en commit propio.
-- 55 tests Flutter, 50 de Functions, 22 de Firestore Rules y 19 de Storage Rules aprobados.
+- 58 tests Flutter, 53 de Functions, 23 de Firestore Rules y 21 de Storage Rules aprobados.
 - APK release compilado y verificado como no firmado.
 - Inventario inicial de assets y checklist Play Store.
 - 78 hallazgos estáticos corregidos; `flutter analyze` queda limpio.
@@ -101,10 +102,16 @@
 - Documentos y favoritos son server-only; Storage valida membresía, ruta, variante, tamaño y metadatos. Solo quien creó un recuerdo puede eliminarlo.
 - Tres pruebas Flutter, una de Functions, una de Firestore y dos de Storage elevan la suite a 146 pruebas automatizadas.
 - APK release de FASE 13: 111,674,279 bytes (106.50 MiB), todavía sin firma.
+- Calendario compartido accesible desde Inicio con vistas de mes, próximos eventos y enlace directo al Álbum de recuerdos.
+- Eventos con título, descripción, fecha/hora, nueve categorías, emoji, foto JPEG opcional optimizada a 750 KB y eliminación confirmada solo por su creador.
+- Recordatorios procesados cada 15 minutos en el servidor, entrega a ambos integrantes, preferencia individual para desactivarlos y marca idempotente contra avisos repetidos.
+- Documentos de calendario server-only y fotos privadas con ruta, membresía, propietario, tipo, metadatos y tamaño validados por Storage y Functions.
+- Tres pruebas Flutter, tres de Functions, una de Firestore y dos de Storage elevan la suite a 155 pruebas automatizadas.
+- APK release de FASE 14: 112,526,631 bytes (107.31 MiB), todavía sin firma de publicación.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 14: Calendario.
+1. Iniciar FASE 15: Contador de relación.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.

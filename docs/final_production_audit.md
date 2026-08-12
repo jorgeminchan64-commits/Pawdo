@@ -103,6 +103,7 @@ Pendiente de validar:
 - FASE 12: chat existente preservado y ampliado con grabación contextual, subida privada, validación server-side, reproducción autenticada y limpieza de notas de voz AAC de hasta 60 segundos.
 - Puerta final de FASE 12: analyze limpio; 52 tests Flutter, 49 Functions, 21 Firestore Rules y 17 Storage Rules aprobados; APK de 111,444,371 bytes recompilado y verificado como no firmado.
 - FASE 13: Álbum compartido con cuadrícula, línea de tiempo, detalle, categorías, fecha, lugar, etiquetas y favoritos individuales; originales/miniaturas optimizados y privados.
-- Puerta final de FASE 13: analyze limpio; 55 tests Flutter, 50 Functions, 22 Firestore Rules y 19 Storage Rules aprobados; APK de 111,674,279 bytes recompilado y verificado como no firmado.
+- FASE 14: Calendario compartido con mes, próximos, recuerdos, nueve categorías, fotos privadas y recordatorios periódicos idempotentes para ambos integrantes.
+- Puerta final de FASE 14: analyze limpio; 58 tests Flutter, 53 Functions, 23 Firestore Rules y 21 Storage Rules aprobados; APK de 112,526,631 bytes recompilado y verificado como no firmado de publicación.
 - Pruebas físicas y profiling: no ejecutados en esta fase.
 - Siguiente paso autorizado por el roadmap: FASE 14, Calendario.

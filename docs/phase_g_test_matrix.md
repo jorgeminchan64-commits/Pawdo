@@ -119,6 +119,23 @@ Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agru
 | Perder red entre original y metadata | No publica un recuerdo parcial y solicita reintento |
 | Cargar 100 recuerdos | Cuadrícula usa miniaturas, desplazamiento fluido y caché acotada a la sesión |
 
+## Calendario compartido — FASE 14
+
+| Caso | Resultado esperado |
+|---|---|
+| Abrir Calendario desde Inicio | Presenta el mes actual sin pedir permisos ni mezclar datos de otras parejas |
+| Crear cada categoría | Aniversario, cita, salida, viaje, cumpleaños, día especial, recuerdo, situación y recordatorio se muestran con etiqueta correcta |
+| Añadir descripción, emoji y fecha/hora | Los datos aparecen iguales en ambos teléfonos y sobreviven al reinicio |
+| Añadir foto | Sube JPEG optimizado de hasta 750 KB y ambos integrantes pueden abrirlo con autenticación |
+| Alterar ruta, propietario, pareja o tamaño | Storage/Functions rechazan el intento sin crear el evento |
+| Elegir un recordatorio | El servidor calcula la hora, notifica una sola vez a ambos y marca el evento como procesado |
+| Desactivar avisos de calendario | Ese integrante deja de recibirlos sin afectar a su pareja |
+| Vista Próximos | Omite eventos pasados y ordena ascendentemente los futuros |
+| Vista Recuerdos | Abre el álbum compartido sin anidar barras de navegación |
+| Eliminar como creador | Solicita confirmación, elimina el documento y el servidor limpia la foto |
+| Eliminar como pareja no creadora | El servidor rechaza el intento y conserva evento/foto |
+| Desvincular pareja | Eventos y fotos dejan de ser legibles desde los perfiles anteriores |
+
 ## Dos teléfonos reales
 
 | Caso | Teléfono A | Teléfono B | Resultado esperado |
