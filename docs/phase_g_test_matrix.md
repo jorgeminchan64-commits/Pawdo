@@ -183,6 +183,19 @@ Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agru
 | Cerrar sesión o desvincular | Elimina foto cacheada, acción pendiente y todo contenido personal |
 | Reiniciar teléfono | Android reconstruye el widget desde caché privada y abre Pawdo correctamente |
 
+## Minijuegos ligeros — FASE 18
+
+| Caso | Resultado esperado |
+|---|---|
+| Abrir ¿Quién conoce mejor? | Muestra trivia de gustos/recuerdos y alterna quién responde |
+| Abrir Verdadero o falso | Presenta preferencias sin afirmar que exista una respuesta correcta |
+| Abrir Elige uno | Ofrece dos planes claros y fomenta explicar la elección |
+| Pulsar Siguiente 30 veces | Nunca repite la misma tarjeta de forma consecutiva |
+| Salir o enviar al fondo | No queda temporizador, audio, animación continua ni tarea pendiente |
+| Jugar sin conexión | Todas las tarjetas y transiciones funcionan sin Firebase |
+| Revisar economía | No cambia monedas, amor, energía ni ledger del servidor |
+| Volver al catálogo | Los diez juegos anteriores conservan rutas y comportamiento |
+
 ## Dos teléfonos reales
 
 | Caso | Teléfono A | Teléfono B | Resultado esperado |

@@ -24,7 +24,8 @@
 | 15. Contador de relación | Completada | Fecha canónica, duración, días y aniversario; 58 Flutter/55 Functions/44 reglas | Sincronización visual requiere prueba en dos teléfonos | Iniciar FASE 16 |
 | 16. Bienestar | Completada | Regular/irregular, historial privado y consentimiento; 61 Flutter/57 Functions/45 reglas | Recordatorios son internos; experiencia requiere prueba física | Iniciar FASE 17 |
 | 17. Widgets | Completada | Adaptable, caché privada, relación/evento y Te extraño; 63 Flutter/57 Functions/45 reglas | Foto, redimensionado y acción requieren prueba física | Iniciar FASE 18 |
-| 18–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
+| 18. Nuevos juegos | Completada | 3 juegos locales ligeros; 65 Flutter/57 Functions/45 reglas | Conversación/maquetación requieren prueba física | Iniciar FASE 19 |
+| 19–24 | Pendiente | — | Deben respetar el orden del roadmap | No iniciar aún |
 | 25. Play Store | Bloqueada | APK unsigned de 107.31 MiB | Firma, target 36, dominio propio, AAB y dispositivos | Resolver fases anteriores |
 
 ## Completado
@@ -33,7 +34,7 @@
 - Refuerzo de `.gitignore` contra dependencias, artefactos y credenciales privadas.
 - Punto de retorno del proyecto original.
 - Formato automático aislado en commit propio.
-- 63 tests Flutter, 57 de Functions, 24 de Firestore Rules y 21 de Storage Rules aprobados.
+- 65 tests Flutter, 57 de Functions, 24 de Firestore Rules y 21 de Storage Rules aprobados.
 - APK release compilado y verificado como no firmado.
 - Inventario inicial de assets y checklist Play Store.
 - 78 hallazgos estáticos corregidos; `flutter analyze` queda limpio.
@@ -128,10 +129,15 @@
 - Sin polling, servicio permanente ni WorkManager: actualiza por snapshots reales, conserva el último estado válido sin red y limpia foto/datos al cerrar sesión o desvincular.
 - Dos pruebas Flutter elevan la suite a 165 pruebas automatizadas; la integración Kotlin/XML quedó comprobada por la compilación release.
 - APK release de FASE 17: 112,543,651 bytes (107.33 MiB), todavía sin firma de publicación.
+- Tres minijuegos nuevos y distintos: ¿Quién conoce mejor?, Verdadero o falso y Elige uno, con 18 tarjetas iniciales y dos opciones por ronda.
+- Se ejecutan juntos en un teléfono, sin red, temporizadores, audio, partículas, escrituras Firebase ni recompensas; abandonar la pantalla no deja trabajo activo.
+- El mazo evita repetir inmediatamente la misma tarjeta y las transiciones usan solo un AnimatedSwitcher corto.
+- Dos pruebas Flutter elevan la suite a 167 pruebas automatizadas; backend/reglas no cambiaron y conservan sus compuertas aprobadas.
+- APK release de FASE 18: 112,560,211 bytes (107.35 MiB), todavía sin firma de publicación.
 
 ## Pendiente inmediato
 
-1. Iniciar FASE 18: Nuevos juegos.
+1. Iniciar FASE 19: Tienda y personalización.
 2. Conservar para lanzamiento el despliegue coordinado y la prueba destructiva de cuenta en staging.
 3. Registrar `pawdo.site`, completar sus DNS pendientes y sustituir las URLs legales antes de Play Store.
 4. Completar Data Safety y comprobar ambos correos antes de Play Store.

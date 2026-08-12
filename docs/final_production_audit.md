@@ -111,5 +111,7 @@ Pendiente de validar:
 - Puerta final de FASE 16: analyze limpio; 61 tests Flutter, 57 Functions, 24 Firestore Rules y 21 Storage Rules aprobados; APK de 112,527,019 bytes recompilado y verificado como no firmado de publicación.
 - FASE 17: Widget Android adaptable con foto privada cacheada, días/tiempo juntos, próximo evento y Te extraño autenticado; sin sondeo ni servicio persistente.
 - Puerta final de FASE 17: analyze limpio; 63 tests Flutter, 57 Functions, 24 Firestore Rules y 21 Storage Rules aprobados; Kotlin/XML compilados dentro del APK de 112,543,651 bytes, todavía sin firma de publicación.
+- FASE 18: Tres juegos locales de tarjetas —Quién conoce mejor, Verdadero o falso y Elige uno— sin red, recompensas, temporizadores ni recursos pesados.
+- Puerta final de FASE 18: analyze limpio; 65 tests Flutter, 57 Functions, 24 Firestore Rules y 21 Storage Rules aprobados; APK de 112,560,211 bytes recompilado y todavía sin firma de publicación.
 - Pruebas físicas y profiling: no ejecutados en esta fase.
 - Siguiente paso autorizado por el roadmap: FASE 14, Calendario.
