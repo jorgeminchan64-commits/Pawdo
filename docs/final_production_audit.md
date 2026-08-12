@@ -107,5 +107,7 @@ Pendiente de validar:
 - Puerta final de FASE 14: analyze limpio; 58 tests Flutter, 53 Functions, 23 Firestore Rules y 21 Storage Rules aprobados; APK de 112,526,631 bytes recompilado y verificado como no firmado de publicación.
 - FASE 15: Contador basado en una fecha canónica de pareja, con duración calendario, días totales, próximo aniversario y edición confirmada por cualquier integrante activo.
 - Puerta final de FASE 15: analyze limpio; 58 tests Flutter, 55 Functions, 23 Firestore Rules y 21 Storage Rules aprobados; APK de 112,527,019 bytes recompilado y verificado como no firmado de publicación.
+- FASE 16: Bienestar voluntario y privado con ciclos regulares/irregulares, fecha o rango orientativos, historial propietario, lenguaje respetuoso y consentimiento revocable por campo.
+- Puerta final de FASE 16: analyze limpio; 61 tests Flutter, 57 Functions, 24 Firestore Rules y 21 Storage Rules aprobados; APK de 112,527,019 bytes recompilado y verificado como no firmado de publicación.
 - Pruebas físicas y profiling: no ejecutados en esta fase.
 - Siguiente paso autorizado por el roadmap: FASE 14, Calendario.

@@ -150,6 +150,23 @@ Estas pruebas están preparadas, pero no se han ejecutado porque se acordó agru
 | Usuario externo o pareja desvinculada | Functions rechaza el cambio por membresía |
 | Cuenta antigua sin fecha común | Inicio usa temporalmente su dato personal hasta guardar la fuente canónica |
 
+## Bienestar y ciclo — FASE 16
+
+| Caso | Resultado esperado |
+|---|---|
+| Abrir por primera vez | No crea datos ni comparte nada hasta pulsar Activar |
+| Seleccionar ciclo regular | Muestra una próxima fecha orientativa basada en el promedio |
+| Seleccionar ciclo irregular | Muestra un rango aproximado, nunca una fecha presentada como certeza |
+| Registrar último periodo, fin, intensidad y síntomas | Guarda únicamente en el historial privado de quien registra |
+| Escribir una nota | Solo su propietario puede leerla; nunca aparece en wellnessShared |
+| Activar compartir sin elegir campos | No publica historial, fecha ni notas |
+| Consentir solo estado de ánimo | La pareja ve únicamente ese campo y un mensaje de apoyo respetuoso |
+| Cambiar estado de ánimo por síntomas | Borra inmediatamente el resumen anterior hasta el próximo registro |
+| Revocar consentimiento | El resumen compartido desaparece sin borrar el historial privado |
+| Eliminar todos los datos | Borra configuración, registros y cualquier resumen compartido |
+| Intentar lectura como pareja o escritura directa | Firestore Rules rechaza historial y mutaciones cliente |
+| Revisar textos médicos | No diagnostican fertilidad, embarazo, ovulación ni atribuyen emociones al ciclo |
+
 ## Dos teléfonos reales
 
 | Caso | Teléfono A | Teléfono B | Resultado esperado |
