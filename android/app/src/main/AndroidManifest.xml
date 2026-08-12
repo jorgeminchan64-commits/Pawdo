@@ -14,7 +14,7 @@
     <application
         android:label="Pawdo"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher_v2">
 
         <activity
             android:name=".MainActivity"
@@ -57,7 +57,7 @@
             android:value="pawdo_messages" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@mipmap/ic_launcher" />
+            android:resource="@drawable/ic_stat_pawdo" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/pawdo_icon_background" />

@@ -45,6 +45,9 @@ migrate_working_dir/
 **/credentials*.json
 **/*.pem
 **/*.p12
+**/*.jks
+**/*.keystore
+/android/key.properties
 
 # Symbolication related
 app.*.symbols

@@ -96,7 +96,7 @@ class PawdoWidgetProvider : AppWidgetProvider() {
                 if (enabled && showContent && bitmap != null) {
                     setImageViewBitmap(R.id.pawdo_widget_photo, bitmap)
                 } else {
-                    setImageViewResource(R.id.pawdo_widget_photo, R.mipmap.ic_launcher)
+                    setImageViewResource(R.id.pawdo_widget_photo, R.mipmap.ic_launcher_v2)
                 }
                 val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
                     ?: Intent(context, MainActivity::class.java)

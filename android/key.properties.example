@@ -1,0 +1,6 @@
+# Copy this file to android/key.properties. Never commit the real file.
+# Prefer forward slashes in the absolute Windows path.
+storeFile=C:/secure/pawdo-upload.jks
+storePassword=REPLACE_WITH_A_STRONG_UNIQUE_PASSWORD
+keyAlias=pawdo-upload
+keyPassword=REPLACE_WITH_A_STRONG_UNIQUE_PASSWORD

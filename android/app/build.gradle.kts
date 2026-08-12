@@ -1,9 +1,19 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
+}
+
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        FileInputStream(keystorePropertiesFile).use(::load)
+    }
 }
 
 android {
@@ -14,9 +24,9 @@ android {
     defaultConfig {
         applicationId = "com.pawdo.app"
         minSdk = flutter.minSdkVersion
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 36
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
     }
 
     compileOptions {
@@ -26,6 +36,31 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                    ?: error("Missing keyAlias in android/key.properties")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                    ?: error("Missing keyPassword in android/key.properties")
+                storeFile = file(
+                    keystoreProperties.getProperty("storeFile")
+                        ?: error("Missing storeFile in android/key.properties"),
+                )
+                storePassword = keystoreProperties.getProperty("storePassword")
+                    ?: error("Missing storePassword in android/key.properties")
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
     }
 }
 
