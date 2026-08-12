@@ -6,6 +6,8 @@ import 'package:flutter/widgets.dart';
 import '../../features/couple/services/couple_service.dart';
 
 class PresenceService with WidgetsBindingObserver {
+  static const heartbeatInterval = Duration(minutes: 2);
+
   PresenceService(this._coupleService, {FirebaseAuth? auth})
     : _auth = auth ?? FirebaseAuth.instance;
 
@@ -28,10 +30,7 @@ class PresenceService with WidgetsBindingObserver {
       _lastSentAt = null;
       _sync(force: true);
     });
-    _heartbeat = Timer.periodic(
-      const Duration(seconds: 75),
-      (_) => _sync(force: true),
-    );
+    _heartbeat = Timer.periodic(heartbeatInterval, (_) => _sync(force: true));
     _sync(force: true);
   }
 

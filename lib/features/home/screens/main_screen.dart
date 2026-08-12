@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/widgets/network_status_banner.dart';
+import '../../../core/widgets/lazy_indexed_stack.dart';
 import '../../chat/screens/chat_screen.dart';
 import '../../calendar/screens/couple_calendar_screen.dart';
 import '../../games/screens/games_hub_screen.dart';
@@ -61,26 +62,27 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      HomeDashboardScreen(
-        onOpenHouse: _openHouse,
-        onOpenGarden: _openGarden,
-        onOpenGames: () => _open(const GamesHubScreen()),
-        onOpenMissions: () => _open(const DailyMissionsScreen()),
-        onOpenAlbum: () => _open(const MemoryAlbumScreen()),
-        onOpenCalendar: () => _open(const CoupleCalendarScreen()),
-        onOpenRelationship: (code) =>
-            _open(RelationshipCounterScreen(coupleCode: code)),
-        onNavigate: changeTab,
-      ),
-      const PetScreen(),
-      const ChatScreen(),
-      const ShopScreen(),
-      const ProfileScreen(),
-    ];
-
     return Scaffold(
-      body: IndexedStack(index: index, children: pages),
+      body: LazyIndexedStack(
+        index: index,
+        builders: [
+          (_) => HomeDashboardScreen(
+            onOpenHouse: _openHouse,
+            onOpenGarden: _openGarden,
+            onOpenGames: () => _open(const GamesHubScreen()),
+            onOpenMissions: () => _open(const DailyMissionsScreen()),
+            onOpenAlbum: () => _open(const MemoryAlbumScreen()),
+            onOpenCalendar: () => _open(const CoupleCalendarScreen()),
+            onOpenRelationship: (code) =>
+                _open(RelationshipCounterScreen(coupleCode: code)),
+            onNavigate: changeTab,
+          ),
+          (_) => const PetScreen(),
+          (_) => const ChatScreen(),
+          (_) => const ShopScreen(),
+          (_) => const ProfileScreen(),
+        ],
+      ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
