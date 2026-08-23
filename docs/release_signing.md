@@ -44,7 +44,15 @@ Después se compila con `flutter build appbundle --release`, se verifica con
 
 ## Play App Signing y Firebase
 
-Activar Play App Signing. Google custodiará la clave de firma de distribución y la clave local será la upload key. Registrar en Firebase las huellas SHA-256 necesarias de la upload key y, cuando Play Console la muestre, de la app signing key. Validar App Check/Play Integrity en la pista interna antes de activar enforcement.
+Las huellas SHA-1/SHA-256 de la upload key ya están registradas en Firebase
+para `com.pawdo.app`, y `android/app/google-services.json` contiene el cliente
+OAuth Android resultante.
+
+Activar Play App Signing. Google custodiará la clave de firma de distribución
+y la clave local será la upload key. Cuando Play Console muestre la app signing
+key, registrar también sus huellas SHA-1/SHA-256 en Firebase. Validar Google
+Sign-In y App Check/Play Integrity en la pista interna antes de activar
+enforcement.
 
 Para cada nueva subida, aumentar `version:` en `pubspec.yaml`; Android hereda de allí `versionName` y `versionCode`. Nunca reutilizar un `versionCode` ya enviado a Play.
 

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -81,5 +82,29 @@ void main() {
     expect(build, contains('pawdoSkipCrashlyticsMappingUpload'));
     expect(build, contains('mappingFileUploadEnabled'));
     expect(build, contains('!skipCrashlyticsMappingUpload'));
+  });
+
+  test('Firebase Android config contains the signed release OAuth client', () {
+    final config =
+        jsonDecode(File('android/app/google-services.json').readAsStringSync())
+            as Map<String, dynamic>;
+    final clients = config['client'] as List<dynamic>;
+    final app = clients.single as Map<String, dynamic>;
+    final info = app['client_info'] as Map<String, dynamic>;
+    final androidInfo = info['android_client_info'] as Map<String, dynamic>;
+    final oauthClients = app['oauth_client'] as List<dynamic>;
+
+    expect(androidInfo['package_name'], 'com.pawdo.app');
+    expect(
+      oauthClients.where((dynamic client) {
+        final value = client as Map<String, dynamic>;
+        final oauthAndroid = value['android_info'] as Map<String, dynamic>?;
+        return value['client_type'] == 1 &&
+            oauthAndroid?['package_name'] == 'com.pawdo.app' &&
+            oauthAndroid?['certificate_hash'] ==
+                'ac6bbda1742ddb1938f650bb9b94ee01d8d067f8';
+      }),
+      hasLength(1),
+    );
   });
 }

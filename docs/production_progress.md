@@ -32,7 +32,7 @@
 | 23. Seguridad final | Completada técnica | Esquemas cerrados, Functions estable y 177 pruebas | Audit transitivo y gates externos requieren seguimiento | Iniciar FASE 24 |
 | 24. Pruebas completas | Completada técnica | 179 pruebas; analyze limpio; Lint 0 errores; permisos y APK inspeccionados | Cobertura 10.7% y matriz en dos teléfonos pendientes | Iniciar FASE 25 sin publicar |
 | 25. Play Store | Completada técnica | API 36; 182 pruebas; AAB 100,674,591 bytes; ELF 16 KB; recursos/ficha/Data Safety preparados | Firma, consola, dominio, staging y dos teléfonos | Completar gates externos sin publicar prematuramente |
-| 26. Experiencia 2.5D y release firmado | Completada local | Avatares modulares, jardín/exterior/interior 2.5D; 198 pruebas; APK/AAB firmados | Un binding IAM, dominio y matriz física siguen externos | Autorizar IAM exacto y continuar gates de Play |
+| 26. Experiencia 2.5D y release firmado | Completada local | Avatares modulares, jardín/exterior/interior 2.5D; 199 pruebas; APK/AAB firmados | Un binding IAM, dominio y matriz física siguen externos | Autorizar IAM exacto y continuar gates de Play |
 
 ## Completado
 
@@ -175,8 +175,9 @@
 - Ficha, Data Safety, firma y reporte final quedan documentados. La política legal local incorpora Crashlytics/App Check y supera 4 pruebas; no fue desplegada sin autorización.
 - FASE 26 integra un renderer 2.5D compartido para avatares modulares en el editor, jardín e interior, con cabello, piel, ropa, calzado, accesorios, expresión y pose persistentes.
 - Casa, muebles, plantas, Pawdo y personajes usan profundidad por la base, sombras de contacto, iluminación cálida, atmósfera determinista y microanimación sin alterar posiciones guardadas ni funciones existentes.
-- La compuerta final queda en 94 Flutter, 57 Functions, 26 Firestore y 21 Storage: 198 pruebas aprobadas; `dart analyze` termina sin hallazgos.
+- La compuerta final queda en 95 Flutter, 57 Functions, 26 Firestore y 21 Storage: 199 pruebas aprobadas; `dart analyze` termina sin hallazgos.
 - La upload key de Jorge Luis Minchan Huaman fue creada y protegida fuera de Git. APK universal, tres APK por ABI y AAB tienen firma release verificada; el AAB final mide 97.16 MiB.
+- Las huellas SHA-1/SHA-256 de la upload key están registradas en Firebase y `google-services.json` incluye el cliente OAuth Android resultante para `com.pawdo.app`.
 - Firestore Rules, Storage Rules y las Functions nuevas fueron desplegadas. Solo `savecalendarevent` requiere un binding Cloud Run IAM explícito para que el transporte llegue a su validación Firebase Auth.
 
 ## Pendiente inmediato
@@ -185,7 +186,7 @@
 2. Respaldar juntos `android/app/pawdo-release.jks` y `android/key.properties` en dos ubicaciones privadas.
 3. Ejecutar la matriz de FASE 24 en dos teléfonos y un entorno de páginas de 16 KB; validar App Check, Crashlytics y notificaciones con la build firmada.
 4. Registrar `pawdo.site`, completar DNS/HTTPS y publicar la política legal actualizada.
-5. Registrar las huellas release en Firebase, activar Play App Signing y completar Play Console, Data Safety, clasificación, capturas y prueba cerrada si aplica.
+5. Activar Play App Signing, registrar las huellas de su certificado de distribución en Firebase y completar Play Console, Data Safety, clasificación, capturas y prueba cerrada si aplica.
 
 ## Archivos modificados en FASE 0–7
 
