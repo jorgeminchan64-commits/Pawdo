@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../../characters/models/character_appearance.dart';
 import '../../world/components/actors/animated_actor_component.dart';
 import '../../world/components/depth_priority.dart';
+import '../../world/components/scene_atmosphere_component.dart';
 import '../components/editable_interior_item.dart';
 import '../models/interior_layout_policy.dart';
 
@@ -45,7 +46,7 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
 
   bool isInteriorEditMode = false;
   bool _actionRunning = false;
-  double _dogTimer = 0;
+  double _dogTimer = 4.5;
 
   final List<EditableInteriorItem> furnitureItems = [];
   EditableInteriorItem? selectedInteriorItem;
@@ -73,6 +74,12 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
     await _addRoomBackground();
     await _addDefaultFurniture();
     await _addActors();
+    world.add(
+      SceneAtmosphereComponent(
+        sceneSize: Vector2(roomWidth, roomHeight),
+        isIndoor: true,
+      ),
+    );
   }
 
   Future<void> _addRoomBackground() async {
@@ -124,16 +131,26 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
     required int depthTieBreaker,
   }) async {
     final isGirl = appearance.baseStyle == CharacterBaseStyle.classicGirl;
-    final sheet = await images.load(
-      isGirl
-          ? 'avatars/avatar_girl_pro_spritesheet.png'
-          : 'avatars/avatar_boy_pro_spritesheet.png',
-    );
+    final prefix = isGirl ? 'avatar_girl' : 'avatar_boy';
+    final loaded = await Future.wait([
+      images.load('avatars/${prefix}_pro_spritesheet.png'),
+      images.load('avatars/layers/${prefix}_hair.png'),
+      images.load('avatars/layers/${prefix}_skin.png'),
+      images.load('avatars/layers/${prefix}_outfit.png'),
+      images.load('avatars/layers/${prefix}_shoes.png'),
+    ]);
     final actor = AnimatedActorComponent(
-      spriteSheet: sheet,
+      spriteSheet: loaded[0],
       startPosition: position,
       size: Vector2(150, 265),
       spriteLayout: isGirl ? ActorSpriteLayout.girl : ActorSpriteLayout.boy,
+      appearanceLayers: ActorAppearanceLayers(
+        appearance: appearance,
+        hairMask: loaded[1],
+        skinMask: loaded[2],
+        outfitMask: loaded[3],
+        shoesMask: loaded[4],
+      ),
       depthTieBreaker: depthTieBreaker,
       speed: 155,
       anchor: Anchor.bottomCenter,

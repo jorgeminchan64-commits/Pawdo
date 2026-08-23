@@ -58,6 +58,7 @@ flutter:
     - assets/images/backgrounds/
     - assets/images/houses/
     - assets/images/avatars/
+    - assets/images/avatars/layers/
     - assets/images/pets/
     - assets/images/furniture/
     - assets/images/garden/

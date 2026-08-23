@@ -10,6 +10,7 @@ import '../../characters/models/character_appearance.dart';
 import '../components/actors/animated_actor_component.dart';
 import '../components/depth_priority.dart';
 import '../components/editable_garden_item.dart';
+import '../components/scene_atmosphere_component.dart';
 import '../models/garden_interaction_policy.dart';
 
 class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
@@ -51,7 +52,7 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
   bool isGardenEditMode = false;
   bool _actionRunning = false;
 
-  double _dogTimer = 0;
+  double _dogTimer = 4.5;
 
   final Vector2 tablePos = Vector2(900, 625);
   final Vector2 plantPos = Vector2(590, 670);
@@ -287,6 +288,12 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
     );
 
     world.add(dog);
+    world.add(
+      SceneAtmosphereComponent(
+        sceneSize: Vector2(worldWidth, worldHeight),
+        isIndoor: false,
+      ),
+    );
   }
 
   Future<AnimatedActorComponent> _createHuman(
@@ -295,16 +302,26 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
     required int depthTieBreaker,
   }) async {
     final isGirl = appearance.baseStyle == CharacterBaseStyle.classicGirl;
-    final sheet = await images.load(
-      isGirl
-          ? 'avatars/avatar_girl_pro_spritesheet.png'
-          : 'avatars/avatar_boy_pro_spritesheet.png',
-    );
+    final prefix = isGirl ? 'avatar_girl' : 'avatar_boy';
+    final loaded = await Future.wait([
+      images.load('avatars/${prefix}_pro_spritesheet.png'),
+      images.load('avatars/layers/${prefix}_hair.png'),
+      images.load('avatars/layers/${prefix}_skin.png'),
+      images.load('avatars/layers/${prefix}_outfit.png'),
+      images.load('avatars/layers/${prefix}_shoes.png'),
+    ]);
     final actor = AnimatedActorComponent(
-      spriteSheet: sheet,
+      spriteSheet: loaded[0],
       startPosition: position,
       size: Vector2(150, 265),
       spriteLayout: isGirl ? ActorSpriteLayout.girl : ActorSpriteLayout.boy,
+      appearanceLayers: ActorAppearanceLayers(
+        appearance: appearance,
+        hairMask: loaded[1],
+        skinMask: loaded[2],
+        outfitMask: loaded[3],
+        shoesMask: loaded[4],
+      ),
       depthTieBreaker: depthTieBreaker,
       speed: 155,
       anchor: Anchor.bottomCenter,
@@ -452,12 +469,10 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
 
     final houseImage = await images.load(assetPath);
 
-    houseSprite = SpriteComponent(
+    houseSprite = _GroundedHouseComponent(
       sprite: Sprite(houseImage),
       position: Vector2(worldWidth / 2, 350),
       size: Vector2(440, 440),
-      anchor: Anchor.center,
-      priority: 430,
     );
 
     world.add(houseSprite!);
@@ -1196,5 +1211,37 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
 
     camera.viewfinder.zoom = math.max(zoomX, zoomY) * 1.05;
     camera.viewfinder.position = Vector2(worldWidth / 2, 470);
+  }
+}
+
+class _GroundedHouseComponent extends SpriteComponent {
+  _GroundedHouseComponent({
+    required Sprite sprite,
+    required Vector2 position,
+    required Vector2 size,
+  }) : super(
+         sprite: sprite,
+         position: position,
+         size: size,
+         anchor: Anchor.center,
+         priority: sceneDepthPriority(
+           layer: SceneDepthLayer.entity,
+           baselineY: position.y + size.y / 2,
+         ),
+       );
+
+  @override
+  void render(Canvas canvas) {
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(size.x * .5, size.y * .82),
+        width: size.x * .66,
+        height: size.y * .09,
+      ),
+      Paint()
+        ..color = const Color(0xFF3C2E38).withValues(alpha: .18)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+    );
+    super.render(canvas);
   }
 }

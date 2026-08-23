@@ -1,26 +1,46 @@
 # Firma de publicación Android
 
-Estado: configuración preparada; upload key real pendiente del propietario.
+Estado: upload key release creada y artefactos firmados verificados el 22 de
+agosto de 2026.
 
-Pawdo nunca guarda contraseñas ni claves de firma en Git. `android/key.properties`, `*.jks` y `*.keystore` están ignorados. Gradle firma el tipo `release` solamente cuando existe `android/key.properties`; sin ese archivo permite generar un AAB técnico, pero el resultado queda sin firma y no debe subirse a Play Console.
+Pawdo nunca guarda contraseñas ni claves de firma en Git.
+`android/key.properties`, `*.jks` y `*.keystore` están ignorados. Gradle firma
+el tipo `release` solamente cuando existe `android/key.properties`; sin ese
+archivo permite generar un artefacto técnico, pero no debe distribuirse.
 
-## Crear la upload key
+Archivos locales actuales:
 
-Crear una carpeta privada fuera del repositorio, por ejemplo `C:/secure/pawdo`, y ejecutar de forma interactiva:
-
-```powershell
-keytool -genkeypair -v -keystore C:/secure/pawdo/pawdo-upload.jks -alias pawdo-upload -keyalg RSA -keysize 4096 -validity 10000
+```text
+android/app/pawdo-release.jks
+android/key.properties
 ```
 
-Usar una contraseña fuerte y única. No escribirla en chats, tickets, commits ni capturas. Guardar dos copias cifradas en ubicaciones separadas y conservar también el alias.
+El certificado pertenece a `Jorge Luis Minchan Huaman`, alias `pawdo`, y vence
+el 7 de enero de 2054. Huellas:
 
-Después:
+```text
+SHA-1   AC:6B:BD:A1:74:2D:DB:19:38:F6:50:BB:9B:94:EE:01:D8:D0:67:F8
+SHA-256 CF:FC:2E:D7:AD:09:63:AE:95:85:F6:84:11:BD:9F:E2:
+        70:9E:DD:59:7A:B7:9E:90:BB:D6:0D:09:89:27:02:8C
+```
 
-1. Copiar `android/key.properties.example` como `android/key.properties`.
-2. Cambiar `storeFile`, `storePassword`, `keyAlias` y `keyPassword` por los valores reales.
-3. Ejecutar `flutter build appbundle --release`.
-4. Confirmar con `jarsigner -verify -verbose -certs build/app/outputs/bundle/release/app-release.aab` que el bundle está verificado.
-5. Subir primero a Prueba interna, no a Producción.
+Respaldar ambos archivos juntos en dos ubicaciones privadas. El archivo
+`key.properties` contiene la contraseña necesaria y no debe compartirse ni
+subirse a Git.
+
+## Recrear solo para una aplicación nueva
+
+No ejecutar el generador otra vez para esta misma ficha de Play. El script
+`tool/create_release_signing.ps1` se niega a sobrescribir la llave existente.
+Solo para una aplicación nueva y sin upload key se puede ejecutar:
+
+```powershell
+.\tool\create_release_signing.ps1
+```
+
+El script genera una contraseña aleatoria de 40 caracteres y no la imprime.
+Después se compila con `flutter build appbundle --release`, se verifica con
+`jarsigner -verify` y se sube primero a Prueba interna, no a Producción.
 
 ## Play App Signing y Firebase
 

@@ -1,6 +1,6 @@
 # Pawdo — progreso hacia producción
 
-Última actualización: 2026-08-12
+Última actualización: 2026-08-22
 
 ## Estado por fase
 
@@ -32,6 +32,7 @@
 | 23. Seguridad final | Completada técnica | Esquemas cerrados, Functions estable y 177 pruebas | Audit transitivo y gates externos requieren seguimiento | Iniciar FASE 24 |
 | 24. Pruebas completas | Completada técnica | 179 pruebas; analyze limpio; Lint 0 errores; permisos y APK inspeccionados | Cobertura 10.7% y matriz en dos teléfonos pendientes | Iniciar FASE 25 sin publicar |
 | 25. Play Store | Completada técnica | API 36; 182 pruebas; AAB 100,674,591 bytes; ELF 16 KB; recursos/ficha/Data Safety preparados | Firma, consola, dominio, staging y dos teléfonos | Completar gates externos sin publicar prematuramente |
+| 26. Experiencia 2.5D y release firmado | Completada local | Avatares modulares, jardín/exterior/interior 2.5D; 198 pruebas; APK/AAB firmados | Un binding IAM, dominio y matriz física siguen externos | Autorizar IAM exacto y continuar gates de Play |
 
 ## Completado
 
@@ -172,14 +173,19 @@
 - AAB técnico final: 100,674,591 bytes, sin firma; sus 12 ELF cumplen alineación mínima de 16 KB. APK técnico: 111,757,970 bytes, alineado y sin firma.
 - Icono adaptable/monocromático, icono de notificación, app icon 512 × 512 y feature graphic 1024 × 500 quedan preparados.
 - Ficha, Data Safety, firma y reporte final quedan documentados. La política legal local incorpora Crashlytics/App Check y supera 4 pruebas; no fue desplegada sin autorización.
+- FASE 26 integra un renderer 2.5D compartido para avatares modulares en el editor, jardín e interior, con cabello, piel, ropa, calzado, accesorios, expresión y pose persistentes.
+- Casa, muebles, plantas, Pawdo y personajes usan profundidad por la base, sombras de contacto, iluminación cálida, atmósfera determinista y microanimación sin alterar posiciones guardadas ni funciones existentes.
+- La compuerta final queda en 94 Flutter, 57 Functions, 26 Firestore y 21 Storage: 198 pruebas aprobadas; `dart analyze` termina sin hallazgos.
+- La upload key de Jorge Luis Minchan Huaman fue creada y protegida fuera de Git. APK universal, tres APK por ABI y AAB tienen firma release verificada; el AAB final mide 97.16 MiB.
+- Firestore Rules, Storage Rules y las Functions nuevas fueron desplegadas. Solo `savecalendarevent` requiere un binding Cloud Run IAM explícito para que el transporte llegue a su validación Firebase Auth.
 
 ## Pendiente inmediato
 
-1. Crear/custodiar la upload key y generar el AAB firmado.
-2. Ejecutar la matriz de FASE 24 en dos teléfonos y un entorno de páginas de 16 KB.
-3. Completar staging, borrado destructivo, App Check/Crashlytics y después autorizar despliegues.
+1. Autorizar y aplicar `allUsers → roles/run.invoker` únicamente al servicio Cloud Run `savecalendarevent`; `requireAuth()` conserva la protección de datos.
+2. Respaldar juntos `android/app/pawdo-release.jks` y `android/key.properties` en dos ubicaciones privadas.
+3. Ejecutar la matriz de FASE 24 en dos teléfonos y un entorno de páginas de 16 KB; validar App Check, Crashlytics y notificaciones con la build firmada.
 4. Registrar `pawdo.site`, completar DNS/HTTPS y publicar la política legal actualizada.
-5. Completar Play Console, Data Safety, clasificación, capturas y 12 testers/14 días si aplica.
+5. Registrar las huellas release en Firebase, activar Play App Signing y completar Play Console, Data Safety, clasificación, capturas y prueba cerrada si aplica.
 
 ## Archivos modificados en FASE 0–7
 
@@ -222,7 +228,7 @@
 - Firebase CLI tuvo un cierre transitorio de hub después de que las aserciones pasaran; una repetición aislada cerró con código 0.
 - `connectivity_plus` sólo representa disponibilidad de transporte; no se interpreta por sí solo como garantía de acceso a Internet.
 - Firestore mantiene su persistencia offline nativa; los callables y cargas de Storage requieren la recuperación explícita implementada o una nueva acción del usuario.
-- El APK universal final excede 100 MiB y no está firmado; el AAB técnico final mide 100,674,591 bytes y la validación en Play Console es un gate externo posterior a FASE 25.
+- El APK universal final excede 100 MiB, pero ya está firmado. El AAB firmado mide 97.16 MiB y la validación en Play Console continúa como gate externo posterior a FASE 26.
 - No se ejecutó profiling de FPS/RAM/GPU en dispositivo; queda como gate físico de FASE 24.
 - PIN/biometría no se añadió: la reautenticación de Firebase protege las acciones sensibles sin guardar otro secreto local. Puede evaluarse más adelante como bloqueo opcional de interfaz.
 - Identidad personal, URLs legales públicas y correos de soporte/borrado quedaron configurados y enlazados en la aplicación.

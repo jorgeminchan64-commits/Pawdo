@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
@@ -13,6 +15,7 @@ class EditableInteriorItem extends SpriteComponent {
   final bool deletable;
 
   bool isSelected = false;
+  double _lifeTime = 0;
 
   EditableInteriorItem({
     required this.itemId,
@@ -32,12 +35,23 @@ class EditableInteriorItem extends SpriteComponent {
          position: position,
          size: size,
          anchor: Anchor.center,
-         priority: priority,
+         priority: sceneDepthPriority(
+           layer: itemType == 'rug'
+               ? SceneDepthLayer.floor
+               : SceneDepthLayer.entity,
+           baselineY: position.y + size.y / 2,
+           tieBreaker: stableDepthTieBreaker(itemId),
+         ),
        );
 
   @override
   void update(double dt) {
     super.update(dt);
+    _lifeTime += dt;
+    if (itemType == 'plant') {
+      scale.x = 1 + math.sin(_lifeTime * .72 + _motionSeed) * .0035;
+      scale.y = 1 + math.sin(_lifeTime * .64 + _motionSeed) * .002;
+    }
     priority = sceneDepthPriority(
       layer: itemType == 'rug' ? SceneDepthLayer.floor : SceneDepthLayer.entity,
       baselineY: position.y + size.y / 2,
@@ -76,29 +90,63 @@ class EditableInteriorItem extends SpriteComponent {
 
   @override
   void render(Canvas canvas) {
+    _renderContactShadow(canvas);
+
+    canvas.save();
+    if (isSelected) canvas.translate(0, -5);
     super.render(canvas);
+    canvas.restore();
 
     if (!isSelected) return;
 
-    final rect = Rect.fromLTWH(0, 0, size.x, size.y);
+    final rect = Rect.fromLTWH(2, -3, size.x - 4, size.y - 4);
 
     final selectedPaint = Paint()
-      ..color = Colors.purpleAccent.withValues(alpha: 0.95)
+      ..color = const Color(0xFF8B3D96).withValues(alpha: .78)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 5;
+      ..strokeWidth = 2.5;
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(rect, const Radius.circular(18)),
       selectedPaint,
     );
 
-    final dotPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
+    final dotPaint = Paint()..color = const Color(0xFFFDF8FC);
+    final dotStroke = Paint()
+      ..color = const Color(0xFF8B3D96)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    for (final point in <Offset>[
+      const Offset(8, 3),
+      Offset(size.x - 8, 3),
+      Offset(8, size.y - 9),
+      Offset(size.x - 8, size.y - 9),
+    ]) {
+      canvas.drawCircle(point, 5, dotPaint);
+      canvas.drawCircle(point, 5, dotStroke);
+    }
+  }
 
-    canvas.drawCircle(const Offset(10, 10), 6, dotPaint);
-    canvas.drawCircle(Offset(size.x - 10, 10), 6, dotPaint);
-    canvas.drawCircle(Offset(10, size.y - 10), 6, dotPaint);
-    canvas.drawCircle(Offset(size.x - 10, size.y - 10), 6, dotPaint);
+  double get _motionSeed => (stableDepthTieBreaker(itemId) % 19) * .27;
+
+  void _renderContactShadow(Canvas canvas) {
+    if (itemType == 'rug') return;
+    final profile = switch (itemType) {
+      'bed' || 'sofa' => (width: .79, height: .12, alpha: .18),
+      'table' || 'tv' => (width: .70, height: .12, alpha: .17),
+      'plant' || 'lamp' => (width: .48, height: .10, alpha: .16),
+      'pet_bed' => (width: .68, height: .14, alpha: .15),
+      _ => (width: .62, height: .11, alpha: .14),
+    };
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(size.x * .5, size.y * .89),
+        width: size.x * profile.width,
+        height: math.max(5, size.y * profile.height),
+      ),
+      Paint()
+        ..color = const Color(0xFF392A35).withValues(alpha: profile.alpha)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+    );
   }
 }

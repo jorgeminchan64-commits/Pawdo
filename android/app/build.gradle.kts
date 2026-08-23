@@ -1,5 +1,6 @@
 import java.io.FileInputStream
 import java.util.Properties
+import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 
 plugins {
     id("com.android.application")
@@ -10,6 +11,10 @@ plugins {
 }
 
 val keystorePropertiesFile = rootProject.file("key.properties")
+val skipCrashlyticsMappingUpload = providers
+    .gradleProperty("pawdoSkipCrashlyticsMappingUpload")
+    .orNull
+    .toBoolean()
 val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) {
         FileInputStream(keystorePropertiesFile).use(::load)
@@ -59,6 +64,11 @@ android {
         getByName("release") {
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
+            }
+            configure<CrashlyticsExtension> {
+                // Local/offline builds may skip only the network upload. The
+                // generated mapping file and Crashlytics runtime stay intact.
+                mappingFileUploadEnabled = !skipCrashlyticsMappingUpload
             }
         }
     }

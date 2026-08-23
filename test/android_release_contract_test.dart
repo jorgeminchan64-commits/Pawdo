@@ -74,4 +74,12 @@ void main() {
     expect(ignores, contains('/android/key.properties'));
     expect(ignores, contains('**/*.jks'));
   });
+
+  test('offline release builds can skip only Crashlytics map upload', () {
+    final build = File('android/app/build.gradle.kts').readAsStringSync();
+
+    expect(build, contains('pawdoSkipCrashlyticsMappingUpload'));
+    expect(build, contains('mappingFileUploadEnabled'));
+    expect(build, contains('!skipCrashlyticsMappingUpload'));
+  });
 }

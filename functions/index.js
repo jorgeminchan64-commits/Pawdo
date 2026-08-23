@@ -3562,7 +3562,13 @@ exports.finalizeMemory = onCall(finalizeMemoryHandler);
 exports.discardMemoryUpload = onCall(discardMemoryUploadHandler);
 exports.toggleMemoryFavorite = onCall(toggleMemoryFavoriteHandler);
 exports.deleteMemory = onCall(deleteMemoryHandler);
-exports.saveCalendarEvent = onCall(saveCalendarEventHandler);
+// Explicitly keep the callable endpoint publicly invokable at the transport
+// layer. Pawdo authentication is still enforced inside requireAuth(). This
+// also repairs Cloud Run IAM if a first deployment was interrupted by quota.
+exports.saveCalendarEvent = onCall(
+  { invoker: 'public' },
+  saveCalendarEventHandler,
+);
 exports.deleteCalendarEvent = onCall(deleteCalendarEventHandler);
 exports.discardCalendarUpload = onCall(discardCalendarUploadHandler);
 exports.deleteChatMessage = onCall(deleteChatMessageHandler);
