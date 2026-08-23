@@ -180,6 +180,7 @@
 - Las huellas SHA-1/SHA-256 de la upload key están registradas en Firebase y `google-services.json` incluye el cliente OAuth Android resultante para `com.pawdo.app`.
 - Firestore Rules, Storage Rules y las Functions nuevas fueron desplegadas. `savecalendarevent` recibió el binding Cloud Run IAM exacto y ahora llega a su validación Firebase Auth: sin sesión responde `401 UNAUTHENTICATED`.
 - Los probes remotos confirman la misma barrera `401 UNAUTHENTICATED` en `finalizeMemory`, `deleteCalendarEvent`, `saveWellnessSettings` y `saveCalendarEvent`.
+- Las releases remotas activas de Firestore y Storage fueron leídas mediante Firebase Rules API y su contenido coincide exactamente con `firestore.rules` y `storage.rules` locales.
 
 ## Pendiente inmediato
 
