@@ -12,6 +12,8 @@ import '../../location/widgets/location_sharing_status_banner.dart';
 import '../../memories/screens/memory_album_screen.dart';
 import '../../pet/screens/pet_screen.dart';
 import '../../relationship/screens/relationship_counter_screen.dart';
+import '../../three_d/models/pawdo_3d_scene.dart';
+import '../../three_d/widgets/pawdo_3d_experience_gate.dart';
 import '../../world/screens/world_screen.dart';
 import 'home_dashboard_screen.dart';
 import 'profile_screen.dart';
@@ -28,6 +30,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   late int index;
+  int petRuntimeVisit = 0;
 
   @override
   void initState() {
@@ -35,7 +38,12 @@ class _MainScreenState extends State<MainScreen> {
     index = widget.initialIndex.clamp(0, 4);
   }
 
-  void changeTab(int newIndex) => setState(() => index = newIndex);
+  void changeTab(int newIndex) => setState(() {
+    index = newIndex;
+    if (newIndex == 1) {
+      petRuntimeVisit++;
+    }
+  });
 
   void _open(Widget screen) {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
@@ -43,22 +51,30 @@ class _MainScreenState extends State<MainScreen> {
 
   void _openGarden() {
     _open(
-      WorldScreen(
-        onNavigate: (legacyIndex) {
-          Navigator.of(context).pop();
-          if (legacyIndex == 4) {
-            WidgetsBinding.instance.addPostFrameCallback(
-              (_) => _open(const DailyMissionsScreen()),
-            );
-            return;
-          }
-          changeTab(legacyIndex == 5 ? 4 : legacyIndex.clamp(0, 4));
-        },
+      Pawdo3DExperienceGate(
+        scene: Pawdo3DScene.garden,
+        legacyBuilder: (_) => WorldScreen(
+          onNavigate: (legacyIndex) {
+            Navigator.of(context).pop();
+            if (legacyIndex == 4) {
+              WidgetsBinding.instance.addPostFrameCallback(
+                (_) => _open(const DailyMissionsScreen()),
+              );
+              return;
+            }
+            changeTab(legacyIndex == 5 ? 4 : legacyIndex.clamp(0, 4));
+          },
+        ),
       ),
     );
   }
 
-  void _openHouse() => _open(const PawdoInteriorScreen());
+  void _openHouse() => _open(
+    Pawdo3DExperienceGate(
+      scene: Pawdo3DScene.interior,
+      legacyBuilder: (_) => const PawdoInteriorScreen(),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +93,11 @@ class _MainScreenState extends State<MainScreen> {
                 _open(RelationshipCounterScreen(coupleCode: code)),
             onNavigate: changeTab,
           ),
-          (_) => const PetScreen(),
+          (_) => Pawdo3DExperienceGate(
+            key: ValueKey('pet-3d-$petRuntimeVisit'),
+            scene: Pawdo3DScene.pet,
+            legacyBuilder: (_) => const PetScreen(),
+          ),
           (_) => const ChatScreen(),
           (_) => const ShopScreen(),
           (_) => const ProfileScreen(),

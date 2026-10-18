@@ -5,6 +5,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 import '../../../characters/models/character_appearance.dart';
+import '../../models/actor_facing_policy.dart';
 import '../depth_priority.dart';
 
 enum ActorAnimationState {
@@ -515,7 +516,7 @@ class AnimatedActorComponent
     if (distance > 4) {
       if (direction.x.abs() > direction.y.abs()) {
         current = ActorAnimationState.walkSide;
-        scale.x = direction.x < 0 ? -1 : 1;
+        scale.x = ActorFacingPolicy.horizontalScaleX(direction.x);
       } else {
         scale.x = 1;
         current = direction.y < 0

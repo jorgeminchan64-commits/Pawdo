@@ -19,9 +19,11 @@ class EconomyService {
   Future<Map<String, dynamic>> performAction({
     required String coupleCode,
     required String actionId,
+    String? operationId,
   }) => _call('performCoupleAction', {
     'coupleCode': coupleCode,
     'actionId': actionId,
+    'operationId': ?operationId,
   });
 
   Future<Map<String, dynamic>> purchaseItem({

@@ -16,6 +16,11 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher_v2">
 
+        <!-- Flutter and Pawdo's held voice control request permissions in context. -->
+        <meta-data
+            android:name="unityplayer.SkipPermissionsDialog"
+            android:value="true" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

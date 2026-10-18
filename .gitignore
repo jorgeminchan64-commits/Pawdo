@@ -63,3 +63,16 @@ app.*.map.json
 # Pawdo legal site is versioned and deployed through its own Sites repository.
 /legal-site/
 /legal-site-package.tar.gz
+
+# Reproducible Unity/Android build derivatives; source lives in unity/Pawdo3D.
+/unity-export/
+/unity-*-test-results.xml
+/unity-*-results.xml
+/artifacts/
+# === Configuraciones específicas de Firebase (App Parejas) ===
+.firebaserc
+firebase.json
+firebase.test.json
+database.rules.json
+storage.rules
+*-debug.log

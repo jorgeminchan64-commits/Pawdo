@@ -1,17 +1,31 @@
-# pawdo
+# Aplicación Móvil para Parejas 💖📱
 
-A new Flutter project.
+Una plataforma móvil interactiva diseñada exclusivamente para parejas, enfocada en mejorar la comunicación, compartir momentos especiales y fortalecer la relación a través de herramientas digitales personalizadas.
 
-## Getting Started
+## 🚀 Características Principales
 
-This project is a starting point for a Flutter application.
+*   **Espacio Compartido:** Un entorno privado e interactivo dedicado exclusivamente a la relación.
+*   **Gestión de Momentos:** Funcionalidades para guardar recuerdos, fechas importantes y notas especiales.
+*   **Interfaz Personalizada:** Diseños únicos y experiencias visuales a medida para los usuarios.
+*   **Sincronización en Tiempo Real:** Comunicación eficiente y actualización de datos al instante entre ambos dispositivos.
 
-A few resources to get you started if this is your first Flutter project:
+## 🛠️ Arquitectura y Tecnologías
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+*   **Frontend Móvil:** Desarrollado con [Flutter](https://flutter.dev) y Dart para una experiencia fluida en Android e iOS.
+*   **Backend & Base de Datos:** Integración completa con Firebase para la gestión de usuarios y almacenamiento seguro de datos.
+*   **Entorno de Desarrollo:** Visual Studio Code.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 📦 Ejecución Local
+
+### Prerrequisitos
+*   Flutter SDK instalado y configurado en la versión estable.
+
+### Instalación
+1. Instalar las dependencias:
+   ```bash
+   flutter pub get
+   ```
+2. Ejecutar el proyecto:
+   ```bash
+   flutter run
+   ```

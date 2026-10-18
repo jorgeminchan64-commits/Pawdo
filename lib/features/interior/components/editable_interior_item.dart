@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
+import '../../world/components/alpha_hit_mask.dart';
 import '../../world/components/depth_priority.dart';
 
 class EditableInteriorItem extends SpriteComponent {
@@ -13,6 +14,7 @@ class EditableInteriorItem extends SpriteComponent {
   final String? catalogItemId;
   final bool isSystemItem;
   final bool deletable;
+  final AlphaHitMask? alphaHitMask;
 
   bool isSelected = false;
   double _lifeTime = 0;
@@ -25,6 +27,7 @@ class EditableInteriorItem extends SpriteComponent {
     this.catalogItemId,
     this.isSystemItem = false,
     bool? deletable,
+    required this.alphaHitMask,
     required Sprite sprite,
     required Vector2 position,
     required Vector2 size,
@@ -60,15 +63,18 @@ class EditableInteriorItem extends SpriteComponent {
   }
 
   bool containsWorldPoint(Vector2 point) {
-    final left = position.x - size.x / 2;
-    final right = position.x + size.x / 2;
-    final top = position.y - size.y / 2;
-    final bottom = position.y + size.y / 2;
+    final mask = alphaHitMask;
+    if (mask == null) return false;
 
-    return point.x >= left &&
-        point.x <= right &&
-        point.y >= top &&
-        point.y <= bottom;
+    final renderedWidth = size.x * scale.x.abs();
+    final renderedHeight = size.y * scale.y.abs();
+    if (renderedWidth <= 0 || renderedHeight <= 0) return false;
+
+    final left = position.x - renderedWidth / 2;
+    final top = position.y - renderedHeight / 2;
+    final normalizedX = (point.x - left) / renderedWidth;
+    final normalizedY = (point.y - top) / renderedHeight;
+    return mask.containsNormalized(normalizedX, normalizedY);
   }
 
   Map<String, dynamic> toJson() {

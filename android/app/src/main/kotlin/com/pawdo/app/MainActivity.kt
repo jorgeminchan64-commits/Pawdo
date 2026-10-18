@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.pm.PackageManager
+import android.content.Intent
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.media.AudioFormat
@@ -26,10 +27,28 @@ class MainActivity : FlutterActivity() {
     private val widgetChannel = "pawdo/android_widget"
     private val widgetPreferences = "pawdo_widget_preferences"
     private val callReadinessChannel = "pawdo/call_readiness"
+    private val localVoiceChannel = "pawdo/local_voice"
+    private val unityRuntimeChannel = "pawdo/unity_runtime"
+    private val unityPlayerActivity = "com.pawdo.app.PawdoUnityActivity"
+    private val unityPlayerBaseActivity = "com.unity3d.player.UnityPlayerGameActivity"
+    private val unityPlayerClass = "com.unity3d.player.UnityPlayer"
+    private val unityBridgeHost = "PawdoBridgeHost"
+    private val unityBridgeMethod = "ReceiveFromFlutter"
+    private val unityInitializationExtra = "pawdo.bridge.initialization"
+    private val unityQaSceneExtra = "pawdo.qa.scene"
     private val callPermissionRequestCode = 8102
+    private val voicePermissionRequestCode = 8103
     private var pendingCallPermissionResult: MethodChannel.Result? = null
+    private var pendingVoicePermissionResult: MethodChannel.Result? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private val hardwareProbeExecutor = Executors.newSingleThreadExecutor()
+    private val localVoiceController by lazy { LocalVoiceController(this) }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        maybeLaunchUnityQaScene(intent)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -114,7 +133,141 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, localVoiceChannel)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "capabilities" -> result.success(localVoiceController.capabilities())
+                    "requestPermission" -> requestVoicePermission(result)
+                    "start" -> result.success(localVoiceController.start())
+                    "level" -> result.success(localVoiceController.level())
+                    "stopAndPlay" -> localVoiceController.stopAndPlay(
+                        onSuccess = result::success,
+                        onError = { code, message -> result.error(code, message, null) },
+                    )
+                    "cancel" -> {
+                        localVoiceController.cancel()
+                        result.success(null)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, unityRuntimeChannel)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "capabilities" -> result.success(unityCapabilities())
+                    "launch" -> {
+                        val scene = call.argument<String>("scene")
+                        val envelope = call.argument<String>("initializationEnvelope")
+                        val validScene = scene in setOf("garden", "interior")
+                        val validEnvelope = envelope != null && envelope.toByteArray().size <= 64 * 1024
+                        if (!validScene || !validEnvelope) {
+                            result.error(
+                                "invalid-unity-launch",
+                                "La solicitud de apertura 3D no cumple el contrato v1.",
+                                null,
+                            )
+                            return@setMethodCallHandler
+                        }
+                        if (!unityRuntimeAvailable()) {
+                            result.success(false)
+                            return@setMethodCallHandler
+                        }
+                        try {
+                            startActivity(
+                                Intent().apply {
+                                    setClassName(this@MainActivity, unityPlayerActivity)
+                                    addFlags(
+                                        Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                                            Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                                    )
+                                    putExtra(unityInitializationExtra, envelope)
+                                    putExtra("pawdo.scene", scene)
+                                },
+                            )
+                            result.success(true)
+                        } catch (error: Exception) {
+                            result.error(
+                                "unity-launch-failed",
+                                error.message ?: "No se pudo iniciar el entorno 3D.",
+                                null,
+                            )
+                        }
+                    }
+                    "send", "pause", "resume", "unload" -> {
+                        val envelope = call.argument<String>("envelope")
+                        if (envelope == null || envelope.toByteArray(Charsets.UTF_8).size > 64 * 1024) {
+                            result.error(
+                                "invalid-unity-message",
+                                "El mensaje para Unity no cumple el contrato v1.",
+                                null,
+                            )
+                            return@setMethodCallHandler
+                        }
+                        result.success(sendUnityMessage(envelope))
+                    }
+                    else -> result.notImplemented()
+                }
+            }
     }
+
+    private fun unityRuntimeAvailable(): Boolean =
+        try {
+            Class.forName(unityPlayerActivity)
+            Class.forName(unityPlayerBaseActivity)
+            Class.forName(unityPlayerClass)
+            true
+        } catch (_: ReflectiveOperationException) {
+            false
+        }
+
+    private fun maybeLaunchUnityQaScene(source: Intent?) {
+        val debuggable =
+            (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        if (!debuggable) return
+        val scene = source?.getStringExtra(unityQaSceneExtra)
+        if (scene !in setOf("garden", "interior")) return
+        source?.removeExtra(unityQaSceneExtra)
+        val envelope =
+            """{"schemaVersion":1,"messageId":"android-qa-$scene","type":"scene.open","issuedAtUtc":"2026-08-27T00:00:00Z","payload":{"scene":"$scene"}}"""
+        mainHandler.postDelayed(
+            {
+                startActivity(
+                    Intent().apply {
+                        setClassName(this@MainActivity, unityPlayerActivity)
+                        addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        putExtra(unityInitializationExtra, envelope)
+                        putExtra("pawdo.scene", scene)
+                    },
+                )
+            },
+            500,
+        )
+    }
+
+    private fun unityCapabilities(): Map<String, Any> {
+        val available = unityRuntimeAvailable()
+        return mapOf(
+            "available" to available,
+            "bridgeSchemaVersion" to 1,
+            "supportedScenes" to if (available) listOf("garden", "interior") else emptyList<String>(),
+            "reason" to if (available) "ready" else "unity-library-not-linked",
+        )
+    }
+
+    private fun sendUnityMessage(envelope: String): Boolean =
+        try {
+            Class.forName(unityPlayerClass)
+                .getMethod(
+                    "UnitySendMessage",
+                    String::class.java,
+                    String::class.java,
+                    String::class.java,
+                )
+                .invoke(null, unityBridgeHost, unityBridgeMethod, envelope)
+            true
+        } catch (_: ReflectiveOperationException) {
+            false
+        }
 
     private fun callCapabilities(): Map<String, Boolean> {
         val manager = packageManager
@@ -150,6 +303,19 @@ class MainActivity : FlutterActivity() {
             permissions.toTypedArray(),
             callPermissionRequestCode,
         )
+    }
+
+    private fun requestVoicePermission(result: MethodChannel.Result) {
+        if (permissionGranted(Manifest.permission.RECORD_AUDIO)) {
+            result.success(true)
+            return
+        }
+        if (pendingVoicePermissionResult != null) {
+            result.error("voice-permission-busy", "Ya hay una solicitud de micrófono activa.", null)
+            return
+        }
+        pendingVoicePermissionResult = result
+        requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), voicePermissionRequestCode)
     }
 
     @SuppressLint("MissingPermission")
@@ -294,10 +460,26 @@ class MainActivity : FlutterActivity() {
             pendingCallPermissionResult?.success(callCapabilities())
             pendingCallPermissionResult = null
         }
+        if (requestCode == voicePermissionRequestCode) {
+            pendingVoicePermissionResult?.success(permissionGranted(Manifest.permission.RECORD_AUDIO))
+            pendingVoicePermissionResult = null
+        }
+    }
+
+    override fun onStop() {
+        localVoiceController.cancel()
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        localVoiceController.dispose()
+        hardwareProbeExecutor.shutdownNow()
+        super.onDestroy()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        maybeLaunchUnityQaScene(intent)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
             val messages = NotificationChannel(

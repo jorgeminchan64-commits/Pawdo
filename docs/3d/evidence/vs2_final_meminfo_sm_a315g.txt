@@ -1,0 +1,62 @@
+Applications Memory Usage (in Kilobytes):
+Uptime: 106525434 Realtime: 147126829
+
+** MEMINFO in pid 20945 [com.pawdo.app] **
+                   Pss  Private  Private  SwapPss      Rss     Heap     Heap     Heap
+                 Total    Dirty    Clean    Dirty    Total     Size    Alloc     Free
+                ------   ------   ------   ------   ------   ------   ------   ------
+  Native Heap    39530    39496        0    31191    40508    79712    74789     4922
+  Dalvik Heap     7583     7480        0      225     8772    14919     7460     7459
+ Dalvik Other     7143     6580        0      672     8264                           
+        Stack     2500     2500        0     1304     2512                           
+       Ashmem       53        0        0        0      716                           
+    Other dev       32       16        8        0      636                           
+     .so mmap     9500      860     6564      176    36108                           
+    .jar mmap     4659        0      876        0    30860                           
+    .apk mmap    46427     5176    33408      424    58780                           
+    .ttf mmap      148        0      132        0      352                           
+    .dex mmap     9113     7020     1232    21788    11448                           
+    .oat mmap       83        0        0        0     1836                           
+    .art mmap     3971     3492        0     4777    13576                           
+   Other mmap      801        8      688        0     1700                           
+   EGL mtrack    24346    24346        0        0    24346                           
+    GL mtrack    74308    74308        0        0    74308                           
+      Unknown   162552   162536        0   130053   162936                           
+        TOTAL   583359   333818    42908   190610   477658    94631    82249    12381
+ 
+ App Summary
+                       Pss(KB)                        Rss(KB)
+                        ------                         ------
+           Java Heap:    10972                          22348
+         Native Heap:    39496                          40508
+                Code:    55272                         140260
+               Stack:     2500                           2512
+            Graphics:    98654                          98654
+       Private Other:   169832
+              System:   206633
+             Unknown:                                  173376
+ 
+           TOTAL PSS:   583359            TOTAL RSS:   477658       TOTAL SWAP PSS:   190610
+ 
+ Objects
+               Views:       17         ViewRootImpl:        2
+         AppContexts:       12           Activities:        2
+              Assets:       29        AssetManagers:        0
+       Local Binders:       32        Proxy Binders:       52
+       Parcel memory:       26         Parcel count:       85
+    Death Recipients:        0      OpenSSL Sockets:        0
+            WebViews:        0
+ 
+ SQL
+         MEMORY_USED:      401
+  PAGECACHE_OVERFLOW:      214          MALLOC_SIZE:       46
+ 
+ DATABASES
+      pgsz     dbsz   Lookaside(b)          cache  Dbname
+         4      352            101     588/232/25  /data/user/0/com.pawdo.app/databases/firestore.%5BDEFAULT%5D.pawdo-aeda8.%28default%29
+         4       56             34         1/27/2  /data/user/0/com.pawdo.app/databases/com.google.android.datatransport.events
+ 
+ Asset Allocations
+    : 1607K
+    : 17K
+    : 21K

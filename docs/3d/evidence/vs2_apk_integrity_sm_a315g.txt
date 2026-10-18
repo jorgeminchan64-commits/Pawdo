@@ -1,0 +1,14 @@
+VS-2 APK integrity evidence
+Date: 2026-08-23 America/Lima
+Device: Samsung SM-A315G
+Serial: RF8R308G09V
+Package: com.pawdo.app
+Installed package path: /data/app/~~OuVAJ_OV1CA_r_KdeIam8w==/com.pawdo.app-azu_f5IGCew1Alqje8r4jg==/base.apk
+Local APK: build/app/outputs/flutter-apk/app-debug.apk
+Local size: 327198423 bytes
+Local SHA-256: a748f0e423a03387292ef890fe1a452ddf7f367dcc3afb80b05eb6f7f42f4924
+Installed SHA-256: a748f0e423a03387292ef890fe1a452ddf7f367dcc3afb80b05eb6f7f42f4924
+Result: MATCH
+
+Installed hash command:
+adb -s RF8R308G09V shell sha256sum <resolved-package-path>

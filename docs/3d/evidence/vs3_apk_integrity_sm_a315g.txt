@@ -1,0 +1,10 @@
+Pawdo VS-3 APK integrity — Samsung SM-A315G
+Date: 2026-08-29 America/Lima
+Package: com.pawdo.app
+Build: debug, Unity garden+interior enabled, pet scene disabled
+APK bytes: 407180475
+Local SHA-256:     50CDF35C1AD8B98A9FCED59479BE86685F714AFDF430D6631555F5EE15BB25F4
+Installed SHA-256: 50CDF35C1AD8B98A9FCED59479BE86685F714AFDF430D6631555F5EE15BB25F4
+Match: true
+Installed path: /data/app/~~BL0kFooJSEDYBEJPrJsDrQ==/com.pawdo.app-MEvUK38rgvC3x3jI6_tXyg==/base.apk
+

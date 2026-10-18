@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pawdo.site/schemas/flutter-unity-bridge-v1.json",
+  "title": "Pawdo Flutter–Unity bridge envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "messageId",
+    "correlationId",
+    "type",
+    "sentAtEpochMs",
+    "payload"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "messageId": { "type": "string", "format": "uuid" },
+    "correlationId": {
+      "oneOf": [
+        { "type": "string", "format": "uuid" },
+        { "type": "null" }
+      ]
+    },
+    "type": {
+      "enum": [
+        "runtime.initialize",
+        "session.context",
+        "scene.load",
+        "scene.pause",
+        "scene.resume",
+        "scene.unload",
+        "avatar.appearance",
+        "pet.snapshot",
+        "inventory.snapshot",
+        "layout.snapshot",
+        "interaction.result",
+        "voice.permission",
+        "voice.level",
+        "voice.playback",
+        "runtime.ready",
+        "runtime.error",
+        "scene.ready",
+        "interaction.request",
+        "layout.save.request",
+        "voice.start.request",
+        "voice.stop.request",
+        "navigation.exit",
+        "telemetry.sample"
+      ]
+    },
+    "sentAtEpochMs": { "type": "integer", "minimum": 1 },
+    "payload": { "type": "object" }
+  }
+}

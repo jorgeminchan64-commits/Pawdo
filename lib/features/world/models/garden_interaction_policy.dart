@@ -3,12 +3,7 @@ enum GardenItemAction { water, sit, none }
 abstract final class GardenInteractionPolicy {
   static GardenItemAction actionForType(String type) {
     return switch (type) {
-      'plant' ||
-      'special_plant' ||
-      'pot' ||
-      'flowers' ||
-      'bush' ||
-      'tree' => GardenItemAction.water,
+      'plant' || 'special_plant' || 'pot' => GardenItemAction.water,
       'table' => GardenItemAction.sit,
       _ => GardenItemAction.none,
     };

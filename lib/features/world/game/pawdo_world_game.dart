@@ -8,10 +8,12 @@ import 'package:flutter/material.dart';
 import '../../characters/models/character_appearance.dart';
 
 import '../components/actors/animated_actor_component.dart';
+import '../components/alpha_hit_mask.dart';
 import '../components/depth_priority.dart';
 import '../components/editable_garden_item.dart';
 import '../components/scene_atmosphere_component.dart';
 import '../models/garden_interaction_policy.dart';
+import '../models/garden_layout_policy.dart';
 
 class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
   PawdoWorldGame({
@@ -40,6 +42,7 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
   bool get isHouseReady => houseSprite != null;
 
   final List<EditableGardenItem> editableItems = [];
+  final Map<String, Future<AlphaHitMask?>> _gardenHitMasks = {};
   EditableGardenItem? selectedEditableItem;
 
   bool get selectedItemCanBeDeleted => selectedEditableItem?.deletable == true;
@@ -129,19 +132,20 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
   }
 
   Vector2 _clampGardenPosition(EditableGardenItem item, Vector2 candidate) {
-    final halfWidth = math.max(36.0, item.size.x / 2);
-    final halfHeight = math.max(36.0, item.size.y / 2);
-    final minX = math.max(120.0, halfWidth);
-    final maxX = math.min(1680.0, worldWidth - halfWidth);
-    final minY = math.max(120.0, halfHeight);
-    final maxY = math.min(820.0, worldHeight - halfHeight);
-    return Vector2(
-      candidate.x.clamp(minX, maxX).toDouble(),
-      candidate.y.clamp(minY, maxY).toDouble(),
+    final center = GardenLayoutPolicy.clampCenter(
+      Offset(candidate.x, candidate.y),
+      Size(item.size.x, item.size.y),
     );
+    return Vector2(center.dx, center.dy);
   }
 
   bool _canPlaceItem(EditableGardenItem item, Vector2 candidate) {
+    if (!GardenLayoutPolicy.isInsideSafeArea(
+      Offset(candidate.x, candidate.y),
+      Size(item.size.x, item.size.y),
+    )) {
+      return false;
+    }
     final footprint = _placementFootprint(item, candidate);
     if (footprint.overlaps(houseBlockZone.inflate(10))) return false;
 
@@ -152,6 +156,34 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
       }
     }
     return true;
+  }
+
+  Vector2? _findValidGardenPosition(
+    EditableGardenItem item,
+    Vector2 preferred,
+  ) {
+    Vector2 clamped;
+    try {
+      clamped = _clampGardenPosition(item, preferred);
+    } on ArgumentError {
+      return null;
+    }
+    if (_canPlaceItem(item, clamped)) return clamped;
+
+    const step = 40.0;
+    for (var radius = 1; radius <= 20; radius++) {
+      for (var y = -radius; y <= radius; y++) {
+        for (var x = -radius; x <= radius; x++) {
+          if (x.abs() != radius && y.abs() != radius) continue;
+          final candidate = _clampGardenPosition(
+            item,
+            Vector2(clamped.x + x * step, clamped.y + y * step),
+          );
+          if (_canPlaceItem(item, candidate)) return candidate;
+        }
+      }
+    }
+    return null;
   }
 
   Rect _rectFromCenter(Vector2 center, double width, double height) {
@@ -403,7 +435,7 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
       id: 'flower_bed_large_01',
       type: 'flowers',
       path: 'garden/flower_bed_large.png',
-      position: Vector2(405, 780),
+      position: Vector2(460, 750),
       size: Vector2(320, 125),
       priority: 805,
     );
@@ -412,7 +444,7 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
       id: 'flower_box_long_01',
       type: 'flowers',
       path: 'garden/flower_box_long.png',
-      position: Vector2(1280, 780),
+      position: Vector2(1280, 750),
       size: Vector2(355, 118),
       priority: 805,
     );
@@ -511,6 +543,10 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
     bool deletable = true,
   }) async {
     final image = await images.load(path);
+    final alphaHitMask = await _gardenHitMasks.putIfAbsent(
+      path,
+      () => AlphaHitMask.fromImage(image),
+    );
 
     final item = EditableGardenItem(
       itemId: id,
@@ -519,6 +555,7 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
       assetPath: path,
       isSystemItem: isSystemItem || _starterAssets.containsKey(id),
       deletable: !_essentialStarterIds.contains(id) && deletable,
+      alphaHitMask: alphaHitMask,
       sprite: Sprite(image),
       position: position,
       size: size,
@@ -540,7 +577,10 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
   }
 
   List<Map<String, dynamic>> exportGardenLayout() {
-    return editableItems.map((item) => item.toJson()).toList();
+    return editableItems
+        .where((item) => _canPlaceItem(item, item.position))
+        .map((item) => item.toJson())
+        .toList();
   }
 
   Future<void> loadGardenLayout(List<dynamic> layout) async {
@@ -590,23 +630,24 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
       final y = rawItem['y'];
       final priority = rawItem['priority'];
 
-      final safeX = x is num && x.isFinite
-          ? x.toDouble().clamp(120, 1680).toDouble()
-          : 900.0;
-      final safeY = y is num && y.isFinite
-          ? y.toDouble().clamp(120, 820).toDouble()
-          : 650.0;
-      final position = Vector2(safeX, safeY);
+      final requestedPosition = Vector2(
+        x is num && x.isFinite ? x.toDouble() : 900.0,
+        y is num && y.isFinite ? y.toDouble() : 650.0,
+      );
       final size = Vector2(canonicalSize.$1, canonicalSize.$2);
 
-      final itemPriority = priority is num
-          ? priority.toInt()
-          : position.y.toInt();
-
       if (existingItem != null) {
-        existingItem.position = position;
         existingItem.size = size;
-        existingItem.priority = itemPriority;
+        final position = _findValidGardenPosition(
+          existingItem,
+          requestedPosition,
+        );
+        if (position != null) {
+          existingItem.position = position;
+          existingItem.priority = priority is num
+              ? priority.toInt()
+              : position.y.toInt();
+        }
 
         if (existingItem.itemType == 'table') {
           tableSprite = existingItem;
@@ -617,12 +658,23 @@ class PawdoWorldGame extends FlameGame with TapCallbacks, DragCallbacks {
           catalogItemId: catalogItemId,
           type: type,
           path: asset,
-          position: position,
+          position: requestedPosition,
           size: size,
-          priority: itemPriority,
+          priority: priority is num ? priority.toInt() : 650,
           isSystemItem: isSystemItem,
           deletable: deletable,
         );
+
+        final position = _findValidGardenPosition(newItem, requestedPosition);
+        if (position == null) {
+          newItem.removeFromParent();
+          editableItems.remove(newItem);
+          continue;
+        }
+        newItem.position = position;
+        newItem.priority = priority is num
+            ? priority.toInt()
+            : position.y.toInt();
 
         if (newItem.itemType == 'table') {
           tableSprite = newItem;

@@ -1026,6 +1026,56 @@ describe('Pawdo callable security', () => {
     assert.equal((await db.doc(`couples/${code}`).get()).data().coins, 55);
   });
 
+  it('makes 3D interaction operations idempotent and binds an id to one action', async () => {
+    await db.doc(`couples/${code}`).update({ coins: 0 });
+    const operationId = '11111111-1111-4111-8111-111111111111';
+    const first = await handlers.performCoupleActionHandler(request(user1, {
+      coupleCode: code, actionId: 'world_water', operationId,
+    }));
+    assert.equal(first.awarded, true);
+    assert.equal(first.operationId, operationId);
+    assert.equal(first.balanceAfter, 25);
+
+    const retry = await handlers.performCoupleActionHandler(request(user1, {
+      coupleCode: code, actionId: 'world_water', operationId,
+    }));
+    assert.equal(retry.awarded, false);
+    assert.equal(retry.idempotentReplay, true);
+    assert.equal(retry.originallyAwarded, true);
+    assert.equal(retry.balanceAfter, 25);
+    assert.equal((await db.doc(`couples/${code}`).get()).data().coins, 25);
+
+    await rejectsCode(
+      () => handlers.performCoupleActionHandler(request(user1, {
+        coupleCode: code, actionId: 'world_pet', operationId,
+      })),
+      'failed-precondition',
+    );
+
+    const secondOperationId = '22222222-2222-4222-8222-222222222222';
+    const alreadyClaimed = await handlers.performCoupleActionHandler(request(user2, {
+      coupleCode: code, actionId: 'world_water', operationId: secondOperationId,
+    }));
+    assert.equal(alreadyClaimed.awarded, false);
+    assert.equal(alreadyClaimed.alreadyClaimed, true);
+    assert.equal((await db.collection(
+      `couples/${code}/interactionOperations`,
+    ).get()).size, 2);
+    assert.equal((await db.collection(
+      `couples/${code}/economyLedger`,
+    ).get()).size, 1);
+  });
+
+  it('rejects malformed 3D operation identifiers before changing economy', async () => {
+    await rejectsCode(
+      () => handlers.performCoupleActionHandler(request(user1, {
+        coupleCode: code, actionId: 'world_water', operationId: '../coins',
+      })),
+      'invalid-argument',
+    );
+    assert.equal((await db.doc(`couples/${code}`).get()).data().coins, 10);
+  });
+
   it('canonicalizes owned layouts, preserves starters and rejects stale revisions', async () => {
     await db.doc(`couples/${code}`).update({
       ownedGardenItems: ['flower_pot_pink'],

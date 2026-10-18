@@ -450,6 +450,16 @@ function requireMessageId(data) {
   return messageId;
 }
 
+function optionalOperationId(data) {
+  const operationId = data?.operationId;
+  if (operationId === undefined || operationId === null) return null;
+  if (typeof operationId !== 'string' ||
+      !/^[A-Za-z0-9_-]{10,80}$/.test(operationId)) {
+    throw new HttpsError('invalid-argument', 'Identificador de operación inválido.');
+  }
+  return operationId;
+}
+
 function requireMemoryId(data) {
   const memoryId = data?.memoryId;
   if (typeof memoryId !== 'string' ||
@@ -2302,21 +2312,56 @@ async function performCoupleActionHandler(request) {
   const actionId = request.data?.actionId;
   const action = typeof actionId === 'string' ? ACTIONS[actionId] : null;
   if (!action) throw new HttpsError('invalid-argument', 'Acción inválida.');
+  const operationId = optionalOperationId(request.data);
 
   const db = getFirestore();
   const coupleRef = db.doc(`couples/${coupleCode}`);
   const today = limaDateKey();
   const claimRef = coupleRef.collection('actionClaims').doc(`${today}_${actionId}`);
   const missionRef = coupleRef.collection('missionClaims').doc(`${today}_${action.mission}`);
+  const operationRef = operationId
+    ? coupleRef.collection('interactionOperations').doc(operationId)
+    : null;
 
   return db.runTransaction(async (tx) => {
-    const [coupleSnapshot, claimSnapshot, missionSnapshot] = await Promise.all([
-      tx.get(coupleRef), tx.get(claimRef), tx.get(missionRef),
+    const [coupleSnapshot, claimSnapshot, missionSnapshot, operationSnapshot] = await Promise.all([
+      tx.get(coupleRef),
+      tx.get(claimRef),
+      tx.get(missionRef),
+      operationRef ? tx.get(operationRef) : Promise.resolve(null),
     ]);
     if (!coupleSnapshot.exists) throw new HttpsError('not-found', 'Pareja no encontrada.');
     const couple = coupleSnapshot.data();
     assertActiveMember(couple, uid);
-    if (claimSnapshot.exists) return { awarded: false, alreadyClaimed: true };
+    if (operationSnapshot?.exists) {
+      const previous = operationSnapshot.data() || {};
+      if (previous.actionId !== actionId) {
+        throw new HttpsError(
+          'failed-precondition',
+          'El identificador de operación ya pertenece a otra acción.',
+        );
+      }
+      return {
+        awarded: false,
+        alreadyClaimed: previous.outcome !== 'awarded',
+        idempotentReplay: true,
+        originallyAwarded: previous.outcome === 'awarded',
+        operationId,
+        receiptId: previous.receiptId || null,
+        balanceAfter: number(previous.balanceAfter),
+      };
+    }
+    if (claimSnapshot.exists) {
+      if (operationRef) {
+        tx.create(operationRef, {
+          actionId,
+          actorUid: uid,
+          outcome: 'already_claimed',
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
+      return { awarded: false, alreadyClaimed: true, operationId };
+    }
 
     const mission = missionSnapshot.exists ? null : MISSION_REWARDS[action.mission];
     const coins = action.coins + (mission?.coins || 0);
@@ -2359,6 +2404,19 @@ async function performCoupleActionHandler(request) {
       dateKey: today,
       createdAt: FieldValue.serverTimestamp(),
     });
+    if (operationRef) {
+      tx.create(operationRef, {
+        actionId,
+        actorUid: uid,
+        outcome: 'awarded',
+        receiptId,
+        balanceAfter,
+        deltaCoins: coins,
+        deltaLove: love,
+        deltaEnergy: energy,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
     if (!missionSnapshot.exists) {
       tx.create(missionRef, { missionId: action.mission, claimedBy: uid, createdAt: FieldValue.serverTimestamp() });
     }
@@ -2369,6 +2427,7 @@ async function performCoupleActionHandler(request) {
       energy,
       balanceAfter,
       receiptId,
+      operationId,
       ...(actionId === 'world_water' ? { plantStage, plantWaterings } : {}),
       missionCompleted: !missionSnapshot.exists,
     };

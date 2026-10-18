@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 2,
+  "messageId": "fece52db-b786-4f52-aad7-ef288605d0a4",
+  "correlationId": null,
+  "type": "runtime.initialize",
+  "sentAtEpochMs": 1787443200000,
+  "payload": {}
+}
+

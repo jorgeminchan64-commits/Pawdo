@@ -20,6 +20,7 @@ pluginManagement {
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "8.11.1" apply false
+    id("com.android.library") version "8.11.1" apply false
     id("org.jetbrains.kotlin.android") version "2.2.20" apply false
     id("com.google.gms.google-services") version "4.4.4" apply false
     id("com.google.firebase.crashlytics") version "3.0.7" apply false
@@ -33,3 +34,11 @@ dependencyResolutionManagement {
 }
 
 include(":app")
+
+val pawdoUnityLibrary = file("../unity-export/android/unityLibrary")
+val pawdoUnityEnabled =
+    providers.gradleProperty("pawdoUnityEnabled").orNull?.toBooleanStrictOrNull() ?: true
+if (pawdoUnityEnabled && pawdoUnityLibrary.resolve("build.gradle").isFile) {
+    include(":unityLibrary")
+    project(":unityLibrary").projectDir = pawdoUnityLibrary
+}

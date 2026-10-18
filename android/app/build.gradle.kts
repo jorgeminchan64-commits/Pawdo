@@ -28,7 +28,7 @@ android {
 
     defaultConfig {
         applicationId = "com.pawdo.app"
-        minSdk = flutter.minSdkVersion
+        minSdk = 26
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -41,6 +41,12 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    // JVM tests exercise session transitions; microphone/player hardware remains
+    // covered by device QA rather than executing Android stubs on the JVM.
+    testOptions {
+        unitTests.isReturnDefaultValues = true
     }
 
     signingConfigs {
@@ -75,5 +81,7 @@ android {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
     implementation(platform("com.google.firebase:firebase-bom:34.13.0"))
+    findProject(":unityLibrary")?.let { implementation(it) }
 }

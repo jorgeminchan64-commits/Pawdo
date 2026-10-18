@@ -6,11 +6,13 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
 import '../../characters/models/character_appearance.dart';
+import '../../world/components/alpha_hit_mask.dart';
 import '../../world/components/actors/animated_actor_component.dart';
 import '../../world/components/depth_priority.dart';
 import '../../world/components/scene_atmosphere_component.dart';
 import '../components/editable_interior_item.dart';
 import '../models/interior_layout_policy.dart';
+import '../models/interior_interaction_policy.dart';
 
 enum InteriorDeleteResult { deleted, noSelection, protected }
 
@@ -49,6 +51,7 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
   double _dogTimer = 4.5;
 
   final List<EditableInteriorItem> furnitureItems = [];
+  final Map<String, Future<AlphaHitMask?>> _interiorHitMasks = {};
   EditableInteriorItem? selectedInteriorItem;
 
   Set<String> get placedCatalogItemIds => furnitureItems
@@ -286,6 +289,10 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
     bool? deletable,
   }) async {
     final image = await images.load(assetPath);
+    final alphaHitMask = await _interiorHitMasks.putIfAbsent(
+      assetPath,
+      () => AlphaHitMask.fromImage(image),
+    );
 
     final item = EditableInteriorItem(
       itemId: id,
@@ -295,6 +302,7 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
       catalogItemId: catalogItemId,
       isSystemItem: isSystemItem ?? starterItemIds.contains(id),
       deletable: deletable,
+      alphaHitMask: alphaHitMask,
       sprite: Sprite(image),
       position: position,
       size: size,
@@ -666,7 +674,11 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
     if (tappedItem != null) {
       switch (tappedItem.itemType) {
         case 'bed':
-          _runInteriorAction(() => _sleepTogether(tappedItem.position));
+          if (InteriorInteractionPolicy.allowsLegacyBedInteraction) {
+            _runInteriorAction(() => _sleepTogether(tappedItem.position));
+          } else {
+            _showBedUpgradeNotice(tappedItem.position);
+          }
           return;
         case 'sofa':
           _runInteriorAction(() => _sitOnSofa(tappedItem.position));
@@ -789,6 +801,13 @@ class PawdoInteriorGame extends FlameGame with TapCallbacks, DragCallbacks {
 
     _addFloatingText(
       text: 'Descanso +18 ⚡',
+      position: Vector2(bed.x, bed.y - 150),
+    );
+  }
+
+  void _showBedUpgradeNotice(Vector2 bed) {
+    _addFloatingText(
+      text: 'Descanso en pareja llegará con la habitación 3D',
       position: Vector2(bed.x, bed.y - 150),
     );
   }

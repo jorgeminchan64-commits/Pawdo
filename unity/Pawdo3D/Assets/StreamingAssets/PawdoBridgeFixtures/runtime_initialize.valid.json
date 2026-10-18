@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "messageId": "1fbc7b4c-e7d4-46cb-bf47-03f8345bc16a",
+  "correlationId": null,
+  "type": "runtime.initialize",
+  "sentAtEpochMs": 1787443200000,
+  "payload": {
+    "appVersion": "1.0.0+1",
+    "locale": "es-PE",
+    "targetQuality": "mobile-balanced"
+  }
+}
+
